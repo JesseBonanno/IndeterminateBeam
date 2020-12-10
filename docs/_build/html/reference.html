@@ -1,0 +1,551 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>IndeterminateBeam Reference &mdash; IndeterminateBeam 0.1 documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+
+  
+  
+  
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+        <script src="_static/jquery.js"></script>
+        <script src="_static/underscore.js"></script>
+        <script src="_static/doctools.js"></script>
+        <script src="_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="prev" title="Beam with two point loads and two distributed loads" href="examples/example_1.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="index.html" class="icon icon-home" alt="Documentation Home"> IndeterminateBeam
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Getting Started</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="installation.html">IndeterminateBeam Reference</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Examples</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="examples/example_1.html">Beam with two point loads and two distributed loads</a></li>
+</ul>
+<p class="caption"><span class="caption-text">User documentation</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">IndeterminateBeam Reference</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#support">Support</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#beam">Beam</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#pointtorque">PointTorque</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#pointload">PointLoad</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#distributedload">DistributedLoad</a></li>
+</ul>
+</li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">IndeterminateBeam</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="index.html" class="icon icon-home"></a> &raquo;</li>
+        
+      <li>IndeterminateBeam Reference</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="_sources/reference.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="module-model">
+<span id="indeterminatebeam-reference"></span><span id="reference"></span><h1>IndeterminateBeam Reference<a class="headerlink" href="#module-model" title="Permalink to this headline">¶</a></h1>
+<p>Main module containing the main class Beam, and auxiliary classes PointLoadH,
+PointLoadV, DistributedLoadH, and DistributedLoadV, PointLoad and Support.
+#
+.. rubric:: Example</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">my_beam</span> <span class="o">=</span> <span class="n">Beam</span><span class="p">(</span><span class="mi">9</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">my_beam</span><span class="o">.</span><span class="n">add_supports</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">my_beam</span><span class="o">.</span><span class="n">add_loads</span><span class="p">([</span><span class="n">PointLoadV</span><span class="p">(</span><span class="o">-</span><span class="mi">20</span><span class="p">,</span> <span class="mi">3</span><span class="p">)])</span>  <span class="c1"># 20 kN downwards, at x=3 m</span>
+<span class="go">&gt;&gt;&gt;</span>
+</pre></div>
+</div>
+<div class="section" id="support">
+<h2>Support<a class="headerlink" href="#support" title="Permalink to this headline">¶</a></h2>
+<dl class="py class">
+<dt id="model.Support">
+<em class="property">class </em><code class="sig-prename descclassname">model.</code><code class="sig-name descname">Support</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">coord</span><span class="o">=</span><span class="default_value">0</span></em>, <em class="sig-param"><span class="n">DOF</span><span class="o">=</span><span class="default_value">(1, 1, 1)</span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.Support" title="Permalink to this definition">¶</a></dt>
+<dd><p>A class to represent a support.</p>
+<p>…</p>
+<dl class="py attribute">
+<dt id="model.Support._position">
+<code class="sig-name descname">_position</code><a class="headerlink" href="#model.Support._position" title="Permalink to this definition">¶</a></dt>
+<dd><p>x coordinate of support on a beam</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>(int or float)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="model.Support._DOF">
+<code class="sig-name descname">_DOF</code><a class="headerlink" href="#model.Support._DOF" title="Permalink to this definition">¶</a></dt>
+<dd><p>Degrees of Freedom representation</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>(tuple of 3 bools)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="model.Support._id">
+<code class="sig-name descname">_id</code><a class="headerlink" href="#model.Support._id" title="Permalink to this definition">¶</a></dt>
+<dd><p>id for support on beam (assigned by beam class)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="model.Support._translation">
+<code class="sig-name descname">_translation</code><a class="headerlink" href="#model.Support._translation" title="Permalink to this definition">¶</a></dt>
+<dd><p>represents DOF as a string translation for __str__ use</p>
+</dd></dl>
+
+<p class="rubric">Examples</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">Support</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">))</span>  <span class="c1">##creates a fixed suppot at location 0</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">Support</span><span class="p">(</span><span class="mi">5</span><span class="p">,</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">0</span><span class="p">))</span>  <span class="c1">##creatse a pinned support at location 5</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">Support</span><span class="p">(</span><span class="mf">5.54</span><span class="p">,</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">0</span><span class="p">))</span>  <span class="c1">##creates a roller support at location 5.54</span>
+</pre></div>
+</div>
+</dd></dl>
+
+</div>
+<div class="section" id="beam">
+<h2>Beam<a class="headerlink" href="#beam" title="Permalink to this headline">¶</a></h2>
+<dl class="py class">
+<dt id="model.Beam">
+<em class="property">class </em><code class="sig-prename descclassname">model.</code><code class="sig-name descname">Beam</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">span</span><span class="p">:</span> <span class="n">float</span> <span class="o">=</span> <span class="default_value">10</span></em>, <em class="sig-param"><span class="n">E</span><span class="o">=</span><span class="default_value">200000</span></em>, <em class="sig-param"><span class="n">I</span><span class="o">=</span><span class="default_value">60000000</span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.Beam" title="Permalink to this definition">¶</a></dt>
+<dd><p>Represents a one-dimensional beam that can take axial and tangential loads.</p>
+<p>Through the method <cite>add_loads</cite>, a Beam object can accept a list of:</p>
+<ul class="simple">
+<li><p>PointLoad objects, and/or</p></li>
+<li><p>DistributedLoad objects.</p></li>
+</ul>
+<p class="rubric">Notes</p>
+<ul class="simple">
+<li><p>The default units package units for length, force and bending moment
+(torque) are respectively (m, kN, kN·m)</p></li>
+</ul>
+</dd></dl>
+
+<dl class="py function">
+<dt id="model.Beam.add_loads">
+<code class="sig-prename descclassname">model.Beam.</code><code class="sig-name descname">add_loads</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">self</span></em>, <em class="sig-param"><span class="o">*</span><span class="n">loads</span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.Beam.add_loads" title="Permalink to this definition">¶</a></dt>
+<dd><p>Apply an arbitrary list of (point- or distributed) loads to the beam.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>loads</strong> (<em>iterable</em>) – An iterable containing DistributedLoad or PointLoad objects to
+be applied to the Beam object. Note that the load application point
+(or segment) must be within the Beam span.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt id="model.Beam.remove_loads">
+<code class="sig-prename descclassname">model.Beam.</code><code class="sig-name descname">remove_loads</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">self</span></em>, <em class="sig-param"><span class="o">*</span><span class="n">loads</span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.Beam.remove_loads" title="Permalink to this definition">¶</a></dt>
+<dd><p>Remove an arbitrary list of (point- or distributed) loads from the beam.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>loads</strong> (<em>iterable</em>) – An iterable containing DistributedLoad or PointLoad objects to
+be removed from the Beam object. If object not on beam then does nothing.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt id="model.Beam.add_supports">
+<code class="sig-prename descclassname">model.Beam.</code><code class="sig-name descname">add_supports</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">self</span></em>, <em class="sig-param"><span class="o">*</span><span class="n">supports</span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.Beam.add_supports" title="Permalink to this definition">¶</a></dt>
+<dd><p>Apply an arbitrary list of supports (Support objects) to the beam.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>supports</strong> (<em>iterable</em>) – An iterable containing Support objects to
+be applied to the Beam object. Note that the load application point
+(or segment) must be within the Beam span.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt id="model.Beam.remove_supports">
+<code class="sig-prename descclassname">model.Beam.</code><code class="sig-name descname">remove_supports</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">self</span></em>, <em class="sig-param"><span class="o">*</span><span class="n">ids</span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.Beam.remove_supports" title="Permalink to this definition">¶</a></dt>
+<dd><p>Remove an arbitrary list of supports (Support objects) from the beam.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>ids</strong> (<em>iterable</em>) – An iterable containing either Support objects or Support object ids to
+be removed from the Beam object. If support not on beam then does nothing.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt id="model.Beam.get_support_details">
+<code class="sig-prename descclassname">model.Beam.</code><code class="sig-name descname">get_support_details</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">self</span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.Beam.get_support_details" title="Permalink to this definition">¶</a></dt>
+<dd><p>Print out a readable summary of all supports on the beam.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>ids</strong> (<em>iterable</em>) – An iterable containing either Support objects or Support object ids to
+be removed from the Beam object. If support not on beam then does nothing.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt id="model.Beam.check_determinancy">
+<code class="sig-prename descclassname">model.Beam.</code><code class="sig-name descname">check_determinancy</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">self</span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.Beam.check_determinancy" title="Permalink to this definition">¶</a></dt>
+<dd><p>Check the determinancy of the beam.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="model.Beam.analyse">
+<code class="sig-prename descclassname">model.Beam.</code><code class="sig-name descname">analyse</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">self</span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.Beam.analyse" title="Permalink to this definition">¶</a></dt>
+<dd><p>Solve the beam structure for reactoin and internal forces</p>
+<p>Parameters</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="model.Beam.get_bending_moment">
+<code class="sig-prename descclassname">model.Beam.</code><code class="sig-name descname">get_bending_moment</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">self</span></em>, <em class="sig-param"><span class="o">*</span><span class="n">x_coord</span></em>, <em class="sig-param"><span class="n">return_max</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">return_min</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">return_absmax</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.Beam.get_bending_moment" title="Permalink to this definition">¶</a></dt>
+<dd><p>Find the bending moment(s) on the beam object. (see get_query_value for further documentation)</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="model.Beam.get_shear_force">
+<code class="sig-prename descclassname">model.Beam.</code><code class="sig-name descname">get_shear_force</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">self</span></em>, <em class="sig-param"><span class="o">*</span><span class="n">x_coord</span></em>, <em class="sig-param"><span class="n">return_max</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">return_min</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">return_absmax</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.Beam.get_shear_force" title="Permalink to this definition">¶</a></dt>
+<dd><p>Find the shear force(s) on the beam object. (see get_query_value for further documentation)</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="model.Beam.get_normal_force">
+<code class="sig-prename descclassname">model.Beam.</code><code class="sig-name descname">get_normal_force</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">self</span></em>, <em class="sig-param"><span class="o">*</span><span class="n">x_coord</span></em>, <em class="sig-param"><span class="n">return_max</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">return_min</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">return_absmax</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.Beam.get_normal_force" title="Permalink to this definition">¶</a></dt>
+<dd><p>Find the normal force(s) on the beam object. (see get_query_value for further documentation)</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="model.Beam.get_deflection">
+<code class="sig-prename descclassname">model.Beam.</code><code class="sig-name descname">get_deflection</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">self</span></em>, <em class="sig-param"><span class="o">*</span><span class="n">x_coord</span></em>, <em class="sig-param"><span class="n">return_max</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">return_min</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">return_absmax</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.Beam.get_deflection" title="Permalink to this definition">¶</a></dt>
+<dd><p>Find the deflection(s) on the beam object. (see get_query_value for further documentation)</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="model.Beam.add_query_points">
+<code class="sig-prename descclassname">model.Beam.</code><code class="sig-name descname">add_query_points</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">self</span></em>, <em class="sig-param"><span class="o">*</span><span class="n">x_coords</span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.Beam.add_query_points" title="Permalink to this definition">¶</a></dt>
+<dd><p>Document the forces on a beam at position x_coord when plotting.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>x_coord</strong> (<em>list</em>) – The x_coordinates on the beam to be queried on plot.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt id="model.Beam.remove_query_points">
+<code class="sig-prename descclassname">model.Beam.</code><code class="sig-name descname">remove_query_points</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">self</span></em>, <em class="sig-param"><span class="o">*</span><span class="n">x_coords</span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.Beam.remove_query_points" title="Permalink to this definition">¶</a></dt>
+<dd><p>Remove a query point added by add_query_points function.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>x_coord</strong> (<em>list</em>) – The x_coordinates on the beam to be removed from query on plot.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt id="model.Beam.plot">
+<code class="sig-prename descclassname">model.Beam.</code><code class="sig-name descname">plot</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">self</span></em>, <em class="sig-param"><span class="n">switch_axes</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">inverted</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.Beam.plot" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generates a single figure with 4 plots corresponding respectively to:</p>
+<ul class="simple">
+<li><p>a schematic of the loaded beam</p></li>
+<li><p>normal force diagram,</p></li>
+<li><p>shear force diagram, and</p></li>
+<li><p>bending moment diagram.</p></li>
+</ul>
+<p>These plots can be generated separately with dedicated functions.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p><strong>figure</strong> – Returns a handle to a figure with the 3 subplots: Beam schematic,
+shear force diagram, and bending moment diagram.</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><cite>~matplotlib.figure.Figure</cite></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt id="model.Beam.plot_beam_diagram">
+<code class="sig-prename descclassname">model.Beam.</code><code class="sig-name descname">plot_beam_diagram</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">self</span></em>, <em class="sig-param"><span class="n">ax</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.Beam.plot_beam_diagram" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a schematic of the beam and all the loads applied on it.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="model.Beam.plot_normal_force">
+<code class="sig-prename descclassname">model.Beam.</code><code class="sig-name descname">plot_normal_force</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">self</span></em>, <em class="sig-param"><span class="n">ax</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">switch_axes</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">inverted</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">maxmin_hline</span><span class="p">:</span> <span class="n">bool</span> <span class="o">=</span> <span class="default_value">True</span></em>, <em class="sig-param"><span class="n">maxmin_vline</span><span class="p">:</span> <span class="n">bool</span> <span class="o">=</span> <span class="default_value">False</span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.Beam.plot_normal_force" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a plot of the normal force as a function of the x-coordinate.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="model.Beam.plot_shear_force">
+<code class="sig-prename descclassname">model.Beam.</code><code class="sig-name descname">plot_shear_force</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">self</span></em>, <em class="sig-param"><span class="n">ax</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">switch_axes</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">inverted</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">maxmin_hline</span><span class="p">:</span> <span class="n">bool</span> <span class="o">=</span> <span class="default_value">True</span></em>, <em class="sig-param"><span class="n">maxmin_vline</span><span class="p">:</span> <span class="n">bool</span> <span class="o">=</span> <span class="default_value">False</span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.Beam.plot_shear_force" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a plot of the shear force as a function of the x-coordinate.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="model.Beam.plot_bending_moment">
+<code class="sig-prename descclassname">model.Beam.</code><code class="sig-name descname">plot_bending_moment</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">self</span></em>, <em class="sig-param"><span class="n">ax</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">switch_axes</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">inverted</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">maxmin_hline</span><span class="p">:</span> <span class="n">bool</span> <span class="o">=</span> <span class="default_value">True</span></em>, <em class="sig-param"><span class="n">maxmin_vline</span><span class="p">:</span> <span class="n">bool</span> <span class="o">=</span> <span class="default_value">False</span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.Beam.plot_bending_moment" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a plot of the bending moment as a function of the x-coordinate.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="model.Beam.plot_deflection">
+<code class="sig-prename descclassname">model.Beam.</code><code class="sig-name descname">plot_deflection</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">self</span></em>, <em class="sig-param"><span class="n">ax</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">switch_axes</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">inverted</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">maxmin_hline</span><span class="p">:</span> <span class="n">bool</span> <span class="o">=</span> <span class="default_value">True</span></em>, <em class="sig-param"><span class="n">maxmin_vline</span><span class="p">:</span> <span class="n">bool</span> <span class="o">=</span> <span class="default_value">False</span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.Beam.plot_deflection" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a plot of the beam deflection as a function of the x-coordinate.</p>
+</dd></dl>
+
+</div>
+<div class="section" id="pointtorque">
+<h2>PointTorque<a class="headerlink" href="#pointtorque" title="Permalink to this headline">¶</a></h2>
+<dl class="py class">
+<dt id="model.PointTorque">
+<em class="property">class </em><code class="sig-prename descclassname">model.</code><code class="sig-name descname">PointTorque</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">torque</span></em>, <em class="sig-param"><span class="n">coord</span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.PointTorque" title="Permalink to this definition">¶</a></dt>
+<dd><p>Point clockwise torque, described by a tuple of floats: (torque, coord).</p>
+<p class="rubric">Examples</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">motor_torque</span> <span class="o">=</span> <span class="n">PointTorque</span><span class="p">(</span><span class="mi">30</span><span class="p">,</span> <span class="mi">4</span><span class="p">)</span>  <span class="c1"># 30 kN·m (clockwise) torque at x=4 m</span>
+</pre></div>
+</div>
+</dd></dl>
+
+</div>
+<div class="section" id="pointload">
+<h2>PointLoad<a class="headerlink" href="#pointload" title="Permalink to this headline">¶</a></h2>
+<dl class="py class">
+<dt id="model.PointLoad">
+<em class="property">class </em><code class="sig-prename descclassname">model.</code><code class="sig-name descname">PointLoad</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">force</span></em>, <em class="sig-param"><span class="n">coord</span></em>, <em class="sig-param"><span class="n">angle</span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.PointLoad" title="Permalink to this definition">¶</a></dt>
+<dd><p>Point load described by a tuple of floats: (force, coord, angle).</p>
+<p>Angle is in range 0 to 90 where 0 degrees is purely vertical and 90 degrees is purely horizontal</p>
+<p class="rubric">Examples</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">external_force</span> <span class="o">=</span> <span class="n">PointLoadH</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">9</span><span class="p">,</span> <span class="mi">90</span><span class="p">)</span>  <span class="c1"># 10 kN towards the right at x=9 m</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">external_force</span> <span class="o">=</span> <span class="n">PointLoadV</span><span class="p">(</span><span class="o">-</span><span class="mi">30</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>  <span class="c1"># 30 kN downwards at x=3 m</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">external_force</span>
+<span class="go">PointLoadV(force=-30, coord=3, angle=0)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py class">
+<dt id="model.PointLoadH">
+<em class="property">class </em><code class="sig-prename descclassname">model.</code><code class="sig-name descname">PointLoadH</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">force</span></em>, <em class="sig-param"><span class="n">coord</span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.PointLoadH" title="Permalink to this definition">¶</a></dt>
+<dd><p>Horizontal point load described by a tuple of floats: (force, coord).</p>
+<p class="rubric">Examples</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">external_force</span> <span class="o">=</span> <span class="n">PointLoadH</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">9</span><span class="p">)</span>  <span class="c1"># 10 kN towards the right at x=9 m</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">external_force</span>
+<span class="go">PointLoadH(force=10, coord=9)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py class">
+<dt id="model.PointLoadV">
+<em class="property">class </em><code class="sig-prename descclassname">model.</code><code class="sig-name descname">PointLoadV</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">force</span></em>, <em class="sig-param"><span class="n">coord</span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.PointLoadV" title="Permalink to this definition">¶</a></dt>
+<dd><p>Vertical point load described by a tuple of floats: (force, coord).</p>
+<p class="rubric">Examples</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">external_force</span> <span class="o">=</span> <span class="n">PointLoadV</span><span class="p">(</span><span class="o">-</span><span class="mi">30</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>  <span class="c1"># 30 kN downwards at x=3 m</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">external_force</span>
+<span class="go">PointLoadV(force=-30, coord=3)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+</div>
+<div class="section" id="distributedload">
+<h2>DistributedLoad<a class="headerlink" href="#distributedload" title="Permalink to this headline">¶</a></h2>
+<dl class="py class">
+<dt id="model.DistributedLoadV">
+<em class="property">class </em><code class="sig-prename descclassname">model.</code><code class="sig-name descname">DistributedLoadV</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">expr</span></em>, <em class="sig-param"><span class="n">span</span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.DistributedLoadV" title="Permalink to this definition">¶</a></dt>
+<dd><p>Distributed vertical load, described by its functional form and application interval.</p>
+<p class="rubric">Examples</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">snow_load</span> <span class="o">=</span> <span class="n">DistributedLoadV</span><span class="p">(</span><span class="s2">&quot;10*x+5&quot;</span><span class="p">,</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="p">))</span>  <span class="c1"># Linearly growing load for 0&lt;x&lt;2 m</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">trapezoidal_load</span> <span class="o">=</span> <span class="n">DistributedLoadV</span><span class="p">(</span><span class="s2">&quot;-5 + 10 * x), (1,2)) # Linearly growing load starting at 5kN/m ending at 15kn/m</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">UDL</span> <span class="o">=</span> <span class="n">DistributedLoadV</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="mi">3</span><span class="p">))</span>
+</pre></div>
+</div>
+</dd></dl>
+
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+      
+        <a href="examples/example_1.html" class="btn btn-neutral float-left" title="Beam with two point loads and two distributed loads" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        
+        &copy; Copyright 2020, Jesse Bonanno
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

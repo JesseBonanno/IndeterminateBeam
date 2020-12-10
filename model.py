@@ -1,15 +1,16 @@
-##float precision error when linsolve combined with angled point load (cos and sin functions from math)
-##currently resolved with sympify evaluated to 10dp - didnt work when i tried using python round function 
-
-"""Main module containing the main class Beam, and auxiliary classes PointLoadH,
+"""Main module that contains the main classes Support and Beam, and auxiliary classes PointLoadH,
 PointLoadV, DistributedLoadH, and DistributedLoadV, PointLoad and Support.
-#
+
 Example
 -------
->>> my_beam = Beam(9)
->>> my_beam.add_supports()
->>> my_beam.add_loads([PointLoadV(-20, 3)])  # 20 kN downwards, at x=3 m
->>> 
+>>> beam = Beam(6)
+>>> a = Support()
+>>> c = Support(6,(0,1,0))
+>>> beam.add_supports(a,c)
+>>> beam.add_loads(PointLoadV(-15,3))
+>>> beam.add_query_points(2,4)
+>>> beam.analyse()
+>>> beam.plot()
 """
 
 from collections import namedtuple
@@ -27,19 +28,13 @@ class Support:
     """
     A class to represent a support.
 
-    ...
-
-    Attributes
-    ----------
-    _position : (int or float)
-        x coordinate of support on a beam
-    _DOF : (tuple of 3 bools)
-        Degrees of Freedom representation
-    _id : int
-        id for support on beam (assigned by beam class)
-    _translation: 
-        represents DOF as a string translation for __str__ use
-
+    Attributes:
+    ---------------
+        coord: (int)
+            x coordinate of support on a beam (default 0)
+        DOF: (tuple of 3 bools) 
+            Degrees of freedom on a beam for movement in x, y and bending, 
+            1 represents fixed and 0 represents free (default (1,1,1))
 
     Examples
     --------
@@ -103,19 +98,27 @@ class Support:
 class PointLoad(namedtuple("PointLoad", "force, coord, angle")):
     """Point load described by a tuple of floats: (force, coord, angle).
 
-    Angle is in range 0 to 90 where 0 degrees is purely vertical and 90 degrees is purely horizontal
+    Force: force in kN
+    coord: x coordinate of load on beam
+    angle: angle of point load in range 0 to 180 where: 
+        - 0 degrees is purely vertical
+        - 90 degrees is purely horizontal
+        - 180 degrees is purely vertical acting in the opposite direction
 
 
     Examples
     --------
-    >>> external_force = PointLoadH(10, 9, 90)  # 10 kN towards the right at x=9 m
-    >>> external_force = PointLoadV(-30, 3, 0)  # 30 kN downwards at x=3 m
+    >>> external_force = PointLoad(10, 9, 90)  # 10 kN towards the right at x=9 m
+    >>> external_force = PointLoad(-30, 3, 0)  # 30 kN downwards at x=3 m
     >>> external_force
-    PointLoadV(force=-30, coord=3, angle=0)
+    PointLoad(force=-30, coord=3, angle=0)
     """
 
 class PointLoadV(namedtuple("PointLoadV", "force, coord")):
     """Vertical point load described by a tuple of floats: (force, coord).
+    
+    Force: force in kN
+    coord: x coordinate of load on beam
 
     Examples
     --------
@@ -126,6 +129,9 @@ class PointLoadV(namedtuple("PointLoadV", "force, coord")):
 
 class PointLoadH(namedtuple("PointLoadH", "force, coord")):
     """Horizontal point load described by a tuple of floats: (force, coord).
+
+    Force: force in kN
+    coord: x coordinate of load on beam
 
     Examples
     --------
@@ -161,11 +167,27 @@ class PointTorque(namedtuple("PointTorque", "torque, coord")):
 class Beam:
     """
     Represents a one-dimensional beam that can take axial and tangential loads.
+
+    Parameters
+    ----------
+    span : float or int
+        Length of the beam span. Must be positive, and the pinned and rolling
+        supports can only be placed within this span. The default value is 10.
+    E: float or int
+        Youngs modulus for the beam. The default value is 200 000 MPa, which
+        is the youngs modulus for steel.
+    I: float or int
+        Second moment of area for the beam about the z axis. The default value
+        is 60 000 000 mm4.
     
     Through the method `add_loads`, a Beam object can accept a list of:
     
     * PointLoad objects, and/or
     * DistributedLoad objects.
+
+    Through the method `add_supports`, a Beam object can accept a list of Supports.
+
+    Through the method `analyse` the unknown forces on the Beam object can be calculated.
 
     Notes
     -----
@@ -174,21 +196,8 @@ class Beam:
     """
      
     def __init__(self, span: float=10, E = 2*10**5, I= 6*10**7):
-        """Initializes a Beam object of a given length.
+        """Initializes a Beam object of a given length. """
 
-        Parameters
-        ----------
-        span : float or int
-            Length of the beam span. Must be positive, and the pinned and rolling
-            supports can only be placed within this span. The default value is 10.
-        E: float or int
-            Youngs modulus for the beam. The default value is 200 000 MPa, which
-            is the youngs modulus for steel.
-        I: float or int
-            Second moment of area for the beam about the z axis. The default value
-            is 60 000 000 mm4.
-
-        """
         self._x0 = 0
         self._x1 = span
 
@@ -308,15 +317,8 @@ class Beam:
     ##does not display error if ask to remove somethign that isnt there, is this okay?
 
     def get_support_details(self):
-        """Print out a readable summary of all supports on the beam.
+        """Print out a readable summary of all supports on the beam. """
 
-        Parameters
-        ----------
-        ids : iterable
-            An iterable containing either Support objects or Support object ids to
-            be removed from the Beam object. If support not on beam then does nothing.
-
-        """
         print(f"There are {str(len(self._supports))} supports:",end ='\n\n')
         for support in self._supports:
             print(support, end ='\n\n')
@@ -324,7 +326,8 @@ class Beam:
 
     ##SECTION - ANALYSE
     def check_determinancy(self):
-        """Check the determinancy of the beam. """
+        """Check the determinancy of the beam. If 0 then beam is determinate."""
+
         unknowns = np.array([0,0,0])
         equations = 3
 
@@ -350,10 +353,8 @@ class Beam:
             return (unknowns - equations)
 
     def analyse(self):
-        """Solve the beam structure for reactoin and internal forces
+        """Solve the beam structure for reaction and internal forces  """
 
-        Parameters
-        """
         x0, x1 = self._x0, self._x1
 
         ##create unknown sympy variables
@@ -476,7 +477,7 @@ class Beam:
         return 0
 
     ##SECTION - QUERY VALUE
-    def get_query_value(self, x_coord, sym_func, return_max=False, return_min=False, return_absmax=False):  ##check if sym_func is the sum of the functions already in plot_analytical
+    def _get_query_value(self, x_coord, sym_func, return_max=False, return_min=False, return_absmax=False):  ##check if sym_func is the sum of the functions already in plot_analytical
         """Find the value of a function at position x_coord.
 
         Note: Priority of query parameters is return_max, return_min, return_absmax, x_coord.
@@ -519,20 +520,87 @@ class Beam:
             return round(max(abs(min_), max_),3)
 
     def get_bending_moment(self, *x_coord,return_max=False,return_min=False, return_absmax = False):
-        """Find the bending moment(s) on the beam object. (see get_query_value for further documentation)"""
-        return self.get_query_value(x_coord, sym_func = self._bending_moments, return_max = return_max, return_min = return_min, return_absmax=return_absmax )
+        """Find the bending moment(s) on the beam object.
+
+         Note: Priority of query parameters is return_max, return_min, return_absmax, x_coord.
+
+        Parameters
+        ----------
+        x_coord: list
+            The x_coordinates on the beam to be substituted into the equation.
+            List returned (if bools all false)
+        sym_func: sympy function?
+            The function to be analysed
+        return_max: bool
+            return max value of function if true
+        return_min: bool
+            return minx value of function if true
+        return_absmax: bool
+            return absolute max value of function if true"""
+
+        return self._get_query_value(x_coord, sym_func = self._bending_moments, return_max = return_max, return_min = return_min, return_absmax=return_absmax )
 
     def get_shear_force(self, *x_coord,return_max=False,return_min=False, return_absmax=False):
-        """Find the shear force(s) on the beam object. (see get_query_value for further documentation)"""
-        return self.get_query_value(x_coord, sym_func = self._shear_forces, return_max = return_max, return_min = return_min, return_absmax=return_absmax )
+        """Find the shear force(s) on the beam object. 
+
+        Note: Priority of query parameters is return_max, return_min, return_absmax, x_coord.
+
+        Parameters
+        ----------
+        x_coord: list
+            The x_coordinates on the beam to be substituted into the equation.
+            List returned (if bools all false)
+        sym_func: sympy function?
+            The function to be analysed
+        return_max: bool
+            return max value of function if true
+        return_min: bool
+            return minx value of function if true
+        return_absmax: bool
+            return absolute max value of function if true"""
+
+        return self._get_query_value(x_coord, sym_func = self._shear_forces, return_max = return_max, return_min = return_min, return_absmax=return_absmax )
 
     def get_normal_force(self, *x_coord,return_max=False,return_min=False,return_absmax=False):
-        """Find the normal force(s) on the beam object. (see get_query_value for further documentation)"""
-        return self.get_query_value(x_coord, sym_func =self._normal_forces, return_max = return_max, return_min = return_min, return_absmax=return_absmax )
+        """Find the normal force(s) on the beam object.
+        
+        Note: Priority of query parameters is return_max, return_min, return_absmax, x_coord.
+
+        Parameters
+        ----------
+        x_coord: list
+            The x_coordinates on the beam to be substituted into the equation.
+            List returned (if bools all false)
+        sym_func: sympy function?
+            The function to be analysed
+        return_max: bool
+            return max value of function if true
+        return_min: bool
+            return minx value of function if true
+        return_absmax: bool
+            return absolute max value of function if true"""
+        return self._get_query_value(x_coord, sym_func =self._normal_forces, return_max = return_max, return_min = return_min, return_absmax=return_absmax )
 
     def get_deflection(self, *x_coord,return_max=False,return_min=False,return_absmax=False):
-        """Find the deflection(s) on the beam object. (see get_query_value for further documentation)"""
-        return self.get_query_value(x_coord, sym_func =self._deflection_equation, return_max = return_max, return_min = return_min, return_absmax=return_absmax )
+        """Find the deflection(s) on the beam object. 
+        
+        Note: Priority of query parameters is return_max, return_min, return_absmax, x_coord.
+
+        Parameters
+        ----------
+        x_coord: list
+            The x_coordinates on the beam to be substituted into the equation.
+            List returned (if bools all false)
+        sym_func: sympy function?
+            The function to be analysed
+        return_max: bool
+            return max value of function if true
+        return_min: bool
+            return minx value of function if true
+        return_absmax: bool
+            return absolute max value of function if true"""
+
+        return self._get_query_value(x_coord, sym_func =self._deflection_equation, return_max = return_max, return_min = return_min, return_absmax=return_absmax )
 
 
     #SECTION - PLOTTING
@@ -575,6 +643,13 @@ class Beam:
         - bending moment diagram.
 
         These plots can be generated separately with dedicated functions.
+
+        Parameters
+        ----------
+        switch_axes: bool
+            True if want the beam to be plotted along the y axis and beam equations to be plotted along the x axis.
+        inverted: bool
+            True if want to flip a function about the x axis.
 
         Returns
         -------
@@ -804,7 +879,7 @@ class Beam:
                 else:
                     ax.axvline(x=q_val, linestyle='--', color="g", alpha=0.5)
                 ##need to get values by a differnt method -- cant use id
-                q_res = self.get_query_value(q_val, sym_func)
+                q_res = self._get_query_value(q_val, sym_func)
                 if switch_axes:
                     plt.annotate('${:0.1f}'.format(q_res).rstrip('0').rstrip('.') + " $ {}".format(original_yunits),
                                 xy=(q_res, q_val*(1-2*inverted)), xytext=(0, 0), xycoords=('data', 'data'),

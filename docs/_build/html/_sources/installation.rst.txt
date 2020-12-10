@@ -1,0 +1,7 @@
+.. _installation:
+
+===========================
+IndeterminateBeam Reference
+===========================
+
+This is how to install the module
