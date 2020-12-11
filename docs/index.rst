@@ -18,7 +18,7 @@ This project is based on the `beambending project
    :maxdepth: 2
    :caption: Getting Started
 
-   installation
+   indeterminatebeam
 
 .. toctree::
    :maxdepth: 2

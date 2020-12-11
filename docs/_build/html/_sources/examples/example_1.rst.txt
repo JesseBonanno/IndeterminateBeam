@@ -3,7 +3,7 @@
 Beam with two point loads and two distributed loads
 ===================================================
 
-This example demonstrates some functionality of the beambending_ package.
+This example demonstrates some functionality of the indeterminatebeam_ package.
 
 
 Specifications
