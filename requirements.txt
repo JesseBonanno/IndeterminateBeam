@@ -1,8 +1,6 @@
 matplotlib  # for plotting
 numpy  # for numerical calculations
-numpydoc  # numpy-style docstrings for sphinx
-pytest>=4.6  # for testing
-pytest-cov  # for calculating coverage
+unittest  # for testing
 sphinx  # generating documentation
 sphinx_rtd_theme  # docs theme
 sympy  # for analytical integration
