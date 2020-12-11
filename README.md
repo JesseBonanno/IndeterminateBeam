@@ -1,2 +1,2 @@
 # IndeterminateBeam
-A solver for 1D indeterminate beams
+ Solver for 1D Indeterminate Beams
