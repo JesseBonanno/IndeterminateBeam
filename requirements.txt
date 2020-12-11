@@ -1,10 +1,8 @@
-cycler==0.10.0
-kiwisolver==1.3.1
-matplotlib==3.3.3
-mpmath==1.1.0
-numpy==1.19.4
-Pillow==8.0.1
-pyparsing==2.4.7
-python-dateutil==2.8.1
-six==1.15.0
-sympy==1.7
+matplotlib  # for plotting
+numpy  # for numerical calculations
+numpydoc  # numpy-style docstrings for sphinx
+pytest>=4.6  # for testing
+pytest-cov  # for calculating coverage
+sphinx  # generating documentation
+sphinx_rtd_theme  # docs theme
+sympy  # for analytical integration
