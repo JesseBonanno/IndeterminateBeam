@@ -3,45 +3,45 @@
 ===========================
 IndeterminateBeam Reference
 ===========================
-.. automodule:: model
+.. automodule:: indeterminatebeam
 
 Support
 ---------
-.. autoclass:: model.Support
+.. autoclass:: indeterminatebeam.Support
 
 Beam
 ----
-.. autoclass:: model.Beam
-.. autofunction:: model.Beam.add_loads
-.. autofunction:: model.Beam.remove_loads
-.. autofunction:: model.Beam.add_supports
-.. autofunction:: model.Beam.remove_supports
-.. autofunction:: model.Beam.get_support_details
-.. autofunction:: model.Beam.check_determinancy
-.. autofunction:: model.Beam.analyse
-.. autofunction:: model.Beam.get_bending_moment
-.. autofunction:: model.Beam.get_shear_force
-.. autofunction:: model.Beam.get_normal_force
-.. autofunction:: model.Beam.get_deflection
-.. autofunction:: model.Beam.add_query_points
-.. autofunction:: model.Beam.remove_query_points
-.. autofunction:: model.Beam.plot
-.. autofunction:: model.Beam.plot_beam_diagram
-.. autofunction:: model.Beam.plot_normal_force
-.. autofunction:: model.Beam.plot_shear_force
-.. autofunction:: model.Beam.plot_bending_moment
-.. autofunction:: model.Beam.plot_deflection
+.. autoclass:: indeterminatebeam.Beam
+.. autofunction:: indeterminatebeam.Beam.add_loads
+.. autofunction:: indeterminatebeam.Beam.remove_loads
+.. autofunction:: indeterminatebeam.Beam.add_supports
+.. autofunction:: indeterminatebeam.Beam.remove_supports
+.. autofunction:: indeterminatebeam.Beam.get_support_details
+.. autofunction:: indeterminatebeam.Beam.check_determinancy
+.. autofunction:: indeterminatebeam.Beam.analyse
+.. autofunction:: indeterminatebeam.Beam.get_bending_moment
+.. autofunction:: indeterminatebeam.Beam.get_shear_force
+.. autofunction:: indeterminatebeam.Beam.get_normal_force
+.. autofunction:: indeterminatebeam.Beam.get_deflection
+.. autofunction:: indeterminatebeam.Beam.add_query_points
+.. autofunction:: indeterminatebeam.Beam.remove_query_points
+.. autofunction:: indeterminatebeam.Beam.plot
+.. autofunction:: indeterminatebeam.Beam.plot_beam_diagram
+.. autofunction:: indeterminatebeam.Beam.plot_normal_force
+.. autofunction:: indeterminatebeam.Beam.plot_shear_force
+.. autofunction:: indeterminatebeam.Beam.plot_bending_moment
+.. autofunction:: indeterminatebeam.Beam.plot_deflection
 
 PointTorque
 ------------
-.. autoclass:: model.PointTorque
+.. autoclass:: indeterminatebeam.PointTorque
 
 PointLoad
 ---------
-.. autoclass:: model.PointLoad
-.. autoclass:: model.PointLoadH
-.. autoclass:: model.PointLoadV
+.. autoclass:: indeterminatebeam.PointLoad
+.. autoclass:: indeterminatebeam.PointLoadH
+.. autoclass:: indeterminatebeam.PointLoadV
 
 DistributedLoad
 ---------------
-.. autoclass:: model.DistributedLoadV
+.. autoclass:: indeterminatebeam.DistributedLoadV
