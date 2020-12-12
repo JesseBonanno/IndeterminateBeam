@@ -195,7 +195,7 @@ class Beam:
       (torque) are respectively (m, kN, kN·m)
     """
      
-    def __init__(self, span: float=10, E = 2*10**5, I= 6*10**7):
+    def __init__(self, span: float=10, E = 2*10**5, I= 9.05*10**6):
         """Initializes a Beam object of a given length. """
 
         self._x0 = 0
@@ -509,7 +509,7 @@ class Beam:
 
         x_vec = np.linspace(self._x0, self._x1, int(min(self._x1 * 1000 + 1, 1e4)))  ## numpy array for x positions closely spaced (allow for graphing)                                      ##i think lambdify is needed to let the function work with numpy
         y_vec = np.array([func(t) for t in x_vec])  
-        min_ = float(y_vec.max())
+        min_ = float(y_vec.min())
         max_ = float(y_vec.max())
 
         if return_max:
@@ -1084,7 +1084,6 @@ class Beam:
 
 
 if __name__ == "__main__":
-    print("HI")
     # ##intialise a beam object
     beam_1 = Beam(5)            ##intialises a 5m long beam (assuming E = 2*10^5, I = )
     beam_2 = Beam(5, E=1, I=1)

@@ -22,9 +22,9 @@ This project is based on the `beambending project
 
 .. toctree::
    :maxdepth: 2
-   :caption: Examples
+   :caption: Example
 
-   examples/example_1
+   example
 
 .. toctree::
    :maxdepth: 2

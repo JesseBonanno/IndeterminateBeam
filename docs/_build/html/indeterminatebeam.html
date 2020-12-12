@@ -1,7 +1,8 @@
 
 
 <!DOCTYPE html>
-<html class="writer-html5" lang="en" >
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
 <head>
   <meta charset="utf-8">
   
@@ -11,18 +12,12 @@
   
 
   
-  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
-  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
-
-  
   
   
   
 
   
-  <!--[if lt IE 9]>
-    <script src="_static/js/html5shiv.min.js"></script>
-  <![endif]-->
+  <script type="text/javascript" src="_static/js/modernizr.min.js"></script>
   
     
       <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
@@ -34,9 +29,13 @@
     <script type="text/javascript" src="_static/js/theme.js"></script>
 
     
+
+  
+  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="Beam with two point loads and two distributed loads" href="examples/example_1.html" />
+    <link rel="next" title="Beam with two point loads and two distributed loads" href="example.html" />
     <link rel="prev" title="Welcome to IndeterminateBeam’s documentation!" href="index.html" /> 
 </head>
 
@@ -51,7 +50,7 @@
           
 
           
-            <a href="index.html" class="icon icon-home" alt="Documentation Home"> IndeterminateBeam
+            <a href="index.html" class="icon icon-home"> IndeterminateBeam
           
 
           
@@ -74,7 +73,6 @@
           
         </div>
 
-        
         <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
           
             
@@ -86,9 +84,9 @@
 <ul class="current">
 <li class="toctree-l1 current"><a class="current reference internal" href="#">indeterminatebeam module</a></li>
 </ul>
-<p class="caption"><span class="caption-text">Examples</span></p>
+<p class="caption"><span class="caption-text">Example</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="examples/example_1.html">Beam with two point loads and two distributed loads</a></li>
+<li class="toctree-l1"><a class="reference internal" href="example.html">Beam with two point loads and two distributed loads</a></li>
 </ul>
 <p class="caption"><span class="caption-text">User documentation</span></p>
 <ul>
@@ -98,7 +96,6 @@
             
           
         </div>
-        
       </div>
     </nav>
 
@@ -137,7 +134,7 @@
 
   <ul class="wy-breadcrumbs">
     
-      <li><a href="index.html" class="icon icon-home"></a> &raquo;</li>
+      <li><a href="index.html">Docs</a> &raquo;</li>
         
       <li>indeterminatebeam module</li>
     
@@ -175,7 +172,7 @@ PointLoadV, DistributedLoadH, and DistributedLoadV, PointLoad and Support.</p>
 </div>
 <dl class="py class">
 <dt id="indeterminatebeam.Beam">
-<em class="property">class </em><code class="sig-prename descclassname">indeterminatebeam.</code><code class="sig-name descname">Beam</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">span</span><span class="p">:</span> <span class="n">float</span> <span class="o">=</span> <span class="default_value">10</span></em>, <em class="sig-param"><span class="n">E</span><span class="o">=</span><span class="default_value">200000</span></em>, <em class="sig-param"><span class="n">I</span><span class="o">=</span><span class="default_value">60000000</span></em><span class="sig-paren">)</span><a class="headerlink" href="#indeterminatebeam.Beam" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="sig-prename descclassname">indeterminatebeam.</code><code class="sig-name descname">Beam</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">span</span><span class="p">:</span> <span class="n">float</span> <span class="o">=</span> <span class="default_value">10</span></em>, <em class="sig-param"><span class="n">E</span><span class="o">=</span><span class="default_value">200000</span></em>, <em class="sig-param"><span class="n">I</span><span class="o">=</span><span class="default_value">9050000.0</span></em><span class="sig-paren">)</span><a class="headerlink" href="#indeterminatebeam.Beam" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>Represents a one-dimensional beam that can take axial and tangential loads.</p>
 <dl class="field-list simple">
@@ -441,7 +438,7 @@ be removed from the Beam object. If support not on beam then does nothing.</p>
 <dl class="py class">
 <dt id="indeterminatebeam.DistributedLoadV">
 <em class="property">class </em><code class="sig-prename descclassname">indeterminatebeam.</code><code class="sig-name descname">DistributedLoadV</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">expr</span></em>, <em class="sig-param"><span class="n">span</span></em><span class="sig-paren">)</span><a class="headerlink" href="#indeterminatebeam.DistributedLoadV" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="#indeterminatebeam.DistributedLoadV" title="indeterminatebeam.DistributedLoadV"><code class="xref py py-class docutils literal notranslate"><span class="pre">indeterminatebeam.DistributedLoadV</span></code></a></p>
+<dd><p>Bases: <a class="reference internal" href="reference.html#indeterminatebeam.DistributedLoadV" title="indeterminatebeam.DistributedLoadV"><code class="xref py py-class docutils literal notranslate"><span class="pre">indeterminatebeam.DistributedLoadV</span></code></a></p>
 <p>Distributed vertical load, described by its functional form and application interval.</p>
 <p class="rubric">Examples</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">snow_load</span> <span class="o">=</span> <span class="n">DistributedLoadV</span><span class="p">(</span><span class="s2">&quot;10*x+5&quot;</span><span class="p">,</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="p">))</span>  <span class="c1"># Linearly growing load for 0&lt;x&lt;2 m</span>
@@ -454,7 +451,7 @@ be removed from the Beam object. If support not on beam then does nothing.</p>
 <dl class="py class">
 <dt id="indeterminatebeam.PointLoad">
 <em class="property">class </em><code class="sig-prename descclassname">indeterminatebeam.</code><code class="sig-name descname">PointLoad</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">force</span></em>, <em class="sig-param"><span class="n">coord</span></em>, <em class="sig-param"><span class="n">angle</span></em><span class="sig-paren">)</span><a class="headerlink" href="#indeterminatebeam.PointLoad" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="#indeterminatebeam.PointLoad" title="indeterminatebeam.PointLoad"><code class="xref py py-class docutils literal notranslate"><span class="pre">indeterminatebeam.PointLoad</span></code></a></p>
+<dd><p>Bases: <a class="reference internal" href="reference.html#indeterminatebeam.PointLoad" title="indeterminatebeam.PointLoad"><code class="xref py py-class docutils literal notranslate"><span class="pre">indeterminatebeam.PointLoad</span></code></a></p>
 <p>Point load described by a tuple of floats: (force, coord, angle).</p>
 <p>Force: force in kN
 coord: x coordinate of load on beam
@@ -478,7 +475,7 @@ angle: angle of point load in range 0 to 180 where:</p>
 <dl class="py class">
 <dt id="indeterminatebeam.PointLoadH">
 <em class="property">class </em><code class="sig-prename descclassname">indeterminatebeam.</code><code class="sig-name descname">PointLoadH</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">force</span></em>, <em class="sig-param"><span class="n">coord</span></em><span class="sig-paren">)</span><a class="headerlink" href="#indeterminatebeam.PointLoadH" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="#indeterminatebeam.PointLoadH" title="indeterminatebeam.PointLoadH"><code class="xref py py-class docutils literal notranslate"><span class="pre">indeterminatebeam.PointLoadH</span></code></a></p>
+<dd><p>Bases: <a class="reference internal" href="reference.html#indeterminatebeam.PointLoadH" title="indeterminatebeam.PointLoadH"><code class="xref py py-class docutils literal notranslate"><span class="pre">indeterminatebeam.PointLoadH</span></code></a></p>
 <p>Horizontal point load described by a tuple of floats: (force, coord).</p>
 <p>Force: force in kN
 coord: x coordinate of load on beam</p>
@@ -493,7 +490,7 @@ coord: x coordinate of load on beam</p>
 <dl class="py class">
 <dt id="indeterminatebeam.PointLoadV">
 <em class="property">class </em><code class="sig-prename descclassname">indeterminatebeam.</code><code class="sig-name descname">PointLoadV</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">force</span></em>, <em class="sig-param"><span class="n">coord</span></em><span class="sig-paren">)</span><a class="headerlink" href="#indeterminatebeam.PointLoadV" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="#indeterminatebeam.PointLoadV" title="indeterminatebeam.PointLoadV"><code class="xref py py-class docutils literal notranslate"><span class="pre">indeterminatebeam.PointLoadV</span></code></a></p>
+<dd><p>Bases: <a class="reference internal" href="reference.html#indeterminatebeam.PointLoadV" title="indeterminatebeam.PointLoadV"><code class="xref py py-class docutils literal notranslate"><span class="pre">indeterminatebeam.PointLoadV</span></code></a></p>
 <p>Vertical point load described by a tuple of floats: (force, coord).</p>
 <p>Force: force in kN
 coord: x coordinate of load on beam</p>
@@ -508,7 +505,7 @@ coord: x coordinate of load on beam</p>
 <dl class="py class">
 <dt id="indeterminatebeam.PointTorque">
 <em class="property">class </em><code class="sig-prename descclassname">indeterminatebeam.</code><code class="sig-name descname">PointTorque</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">torque</span></em>, <em class="sig-param"><span class="n">coord</span></em><span class="sig-paren">)</span><a class="headerlink" href="#indeterminatebeam.PointTorque" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="#indeterminatebeam.PointTorque" title="indeterminatebeam.PointTorque"><code class="xref py py-class docutils literal notranslate"><span class="pre">indeterminatebeam.PointTorque</span></code></a></p>
+<dd><p>Bases: <a class="reference internal" href="reference.html#indeterminatebeam.PointTorque" title="indeterminatebeam.PointTorque"><code class="xref py py-class docutils literal notranslate"><span class="pre">indeterminatebeam.PointTorque</span></code></a></p>
 <p>Point clockwise torque, described by a tuple of floats: (torque, coord).</p>
 <p class="rubric">Examples</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">motor_torque</span> <span class="o">=</span> <span class="n">PointTorque</span><span class="p">(</span><span class="mi">30</span><span class="p">,</span> <span class="mi">4</span><span class="p">)</span>  <span class="c1"># 30 kN·m (clockwise) torque at x=4 m</span>
@@ -548,7 +545,7 @@ coord: x coordinate of load on beam</p>
   
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
       
-        <a href="examples/example_1.html" class="btn btn-neutral float-right" title="Beam with two point loads and two distributed loads" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+        <a href="example.html" class="btn btn-neutral float-right" title="Beam with two point loads and two distributed loads" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
       
       
         <a href="index.html" class="btn btn-neutral float-left" title="Welcome to IndeterminateBeam’s documentation!" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
@@ -560,19 +557,11 @@ coord: x coordinate of load on beam</p>
 
   <div role="contentinfo">
     <p>
-        
         &copy; Copyright 2020, Jesse Bonanno
 
     </p>
   </div>
-    
-    
-    
-    Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a
-    
-    <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a>
-    
-    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
 
 </footer>
 
@@ -583,6 +572,7 @@ coord: x coordinate of load on beam</p>
 
   </div>
   
+
 
   <script type="text/javascript">
       jQuery(function () {
