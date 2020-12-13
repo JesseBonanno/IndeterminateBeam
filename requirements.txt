@@ -1,5 +1,5 @@
-matplotlib  # for plotting
-numpy  # for numerical calculations
-sphinx  # generating documentation
-sphinx_rtd_theme  # docs theme
-sympy  # for analytical integration
+matplotlib>=3.3.2  # for plotting
+numpy>=1.19.2 # for numerical calculations
+sphinx>=3.3.1  # generating documentation
+sphinx_rtd_theme>=0.4.3  # docs theme
+sympy>=1.4  # for analytical integration
