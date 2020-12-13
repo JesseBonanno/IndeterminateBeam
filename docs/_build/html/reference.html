@@ -81,7 +81,7 @@
             
               <p class="caption"><span class="caption-text">Getting Started</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="indeterminatebeam.html">indeterminatebeam module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="installation.html">First steps</a></li>
 </ul>
 <p class="caption"><span class="caption-text">Example</span></p>
 <ul>
@@ -403,7 +403,7 @@ List returned (if bools all false)</p></li>
 
 <dl class="py function">
 <dt id="indeterminatebeam.Beam.plot">
-<code class="sig-prename descclassname">indeterminatebeam.Beam.</code><code class="sig-name descname">plot</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">self</span></em>, <em class="sig-param"><span class="n">switch_axes</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">inverted</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="headerlink" href="#indeterminatebeam.Beam.plot" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">indeterminatebeam.Beam.</code><code class="sig-name descname">plot</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">self</span></em>, <em class="sig-param"><span class="n">switch_axes</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">inverted</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">draw_reactions</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="headerlink" href="#indeterminatebeam.Beam.plot" title="Permalink to this definition">¶</a></dt>
 <dd><p>Generates a single figure with 4 plots corresponding respectively to:</p>
 <ul class="simple">
 <li><p>a schematic of the loaded beam</p></li>
@@ -431,7 +431,7 @@ shear force diagram, and bending moment diagram.</p>
 
 <dl class="py function">
 <dt id="indeterminatebeam.Beam.plot_beam_diagram">
-<code class="sig-prename descclassname">indeterminatebeam.Beam.</code><code class="sig-name descname">plot_beam_diagram</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">self</span></em>, <em class="sig-param"><span class="n">ax</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#indeterminatebeam.Beam.plot_beam_diagram" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">indeterminatebeam.Beam.</code><code class="sig-name descname">plot_beam_diagram</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">self</span></em>, <em class="sig-param"><span class="n">ax</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">draw_reactions</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="headerlink" href="#indeterminatebeam.Beam.plot_beam_diagram" title="Permalink to this definition">¶</a></dt>
 <dd><p>Returns a schematic of the beam and all the loads applied on it.</p>
 </dd></dl>
 
@@ -449,7 +449,7 @@ shear force diagram, and bending moment diagram.</p>
 
 <dl class="py function">
 <dt id="indeterminatebeam.Beam.plot_bending_moment">
-<code class="sig-prename descclassname">indeterminatebeam.Beam.</code><code class="sig-name descname">plot_bending_moment</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">self</span></em>, <em class="sig-param"><span class="n">ax</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">switch_axes</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">inverted</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">maxmin_hline</span><span class="p">:</span> <span class="n">bool</span> <span class="o">=</span> <span class="default_value">True</span></em>, <em class="sig-param"><span class="n">maxmin_vline</span><span class="p">:</span> <span class="n">bool</span> <span class="o">=</span> <span class="default_value">False</span></em><span class="sig-paren">)</span><a class="headerlink" href="#indeterminatebeam.Beam.plot_bending_moment" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">indeterminatebeam.Beam.</code><code class="sig-name descname">plot_bending_moment</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">self</span></em>, <em class="sig-param"><span class="n">ax</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">switch_axes</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">inverted</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">maxmin_hline</span><span class="p">:</span> <span class="n">bool</span> <span class="o">=</span> <span class="default_value">True</span></em>, <em class="sig-param"><span class="n">maxmin_vline</span><span class="p">:</span> <span class="n">bool</span> <span class="o">=</span> <span class="default_value">False</span></em><span class="sig-paren">)</span><a class="headerlink" href="#indeterminatebeam.Beam.plot_bending_moment" title="Permalink to this definition">¶</a></dt>
 <dd><p>Returns a plot of the bending moment as a function of the x-coordinate.</p>
 </dd></dl>
 

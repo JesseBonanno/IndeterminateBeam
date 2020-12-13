@@ -1,31 +1,24 @@
 .. _installation:
 
-===========================
-IndeterminateBeam Reference
-===========================
+===========
+First steps
+===========
 
-This is how to install the module
+* The easiest way to try this package is using a web-based notebook:
 
-Intuition
-Excel better, unless equations use references to cell positions rather than names
+|colab|
 
-Readability
-Excel generally better, however this often relates to the intuitive section.
-Actually code is probably often more readable, since can comment.
+.. |colab| image:: https://colab.research.google.com/assets/colab-badge.svg
+   :target: https://colab.research.google.com/github/JesseBonanno/IndeterminateBeam/blob/main/IndeterminateBeam/simple_demo.ipynb
 
-Shareability
-Excel generally better.
+* You can also download and install the ``indeterminatebeam`` package, which runs on Python 3.
 
-Verification
-Coding better
+  * If you do not have a Python 3 interpreter on your machine, you can install the last version following the instructions in `this tutorial <https://realpython.com/installing-python/>`_.
+  * Once you have Python 3, you can open a terminal and install the package with this one-liner::
 
-Robustness
-Coding better
+      python3 -m pip install --user indeterminatebeam
 
-Debugging
-Coding better
+    **NOTE**: You may need to replace ``python3`` above by the path to your Python 3 executable, or simply ``python`` if you are running Windows.
 
-chance of bugs
-Excel better
-
-
+This project is completely open source, and the code can be found in this `GitHub repository
+<https://github.com/JesseBonanno/IndeterminateBeam/>`_.

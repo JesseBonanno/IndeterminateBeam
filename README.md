@@ -1,7 +1,7 @@
 # Indeterminate Beam
 
 
-[![Version](https://img.shields.io/badge/version-0.1-blue.svg)](https://github.com/JesseBonanno/IndeterminateBeam/releases/tag/0.1) [![License](https://img.shields.io/badge/license-MIT-lightgreen.svg)](https://github.com/JesseBonanno/IndeterminateBeam/blob/main/LICENSE.txt) [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/alfredocarella/simplebendingpractice/master?filepath=simple_demo.ipynb) [![Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/alfredocarella/simplebendingpractice/blob/master/simple_demo.ipynb)
+[![Version](https://img.shields.io/badge/version-0.1-blue.svg)](https://github.com/JesseBonanno/IndeterminateBeam/releases/tag/0.1) [![License](https://img.shields.io/badge/license-MIT-lightgreen.svg)](https://github.com/JesseBonanno/IndeterminateBeam/blob/main/LICENSE.txt) [![Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/JesseBonanno/IndeterminateBeam/blob/main/IndeterminateBeam/simple_demo.ipynb)
 
 IndeterminateBeam is a Python Package aiming to serve as a foundation for civil and structural engineering projects in Python. The module can also serve as a standalone program and is useful for determining:
 
@@ -10,18 +10,21 @@ IndeterminateBeam is a Python Package aiming to serve as a foundation for civil 
   - deflection of the beam due to resulting forces
   - axial force, shear force, and bending moment diagrams
 
-The package documentation can be accessed here.
+The package documentation can be accessed [here](https://indeterminatebeam.readthedocs.io/en/main/).
 
 
 # Statement of Need
 
 In the civil and structural engineering industry in-house software generally consists of numerous standalone excel files. Although the excel files can often be greatly valueable once created, they are often created from scratch with difficulty in making use of previous excel projects.
 
-Python can be utilised to combat this problem, allowing for the adoption of previous work as a python module. This will allow for in house engineering software to be more uniform, readable, manageable, and reliable.
+Python can be utilised to combat this problem, allowing for the adoption of previous work as a python module. This will allow for in-house engineering software to be more uniform, readable, manageable, and reliable.
 
 Although there are many websites that allow for solving indeterminate beams, there are no well documented python packages.
 
-This python package was heavily inspired by beambending, a module created by alfredo carolla of the university of X for educational purposes. The beambending module, although well documented, can only solve for simply supported beams.
+This python package was heavily inspired by [simplebendingpractice](https://github.com/alfredocarella/simplebendingpractice), a module created by [Alfredo Carella](https://github.com/alfredocarella) of the Oslo Metropolitan University
+for educational purposes. The beambending module, although well documented, can only solve for simply supported beams. The full documentation for this project can be found [here](https://alfredocarella.github.io/simplebendingpractice/index.html).
+
+Carella, (2019). BeamBending: a teaching aid for 1-D shear force and bending moment diagrams. Journal of Open Source Education, 2(19), 65, https://doi.org/10.21105/jose.00065
 
 # Functionality and Usage
 
@@ -35,7 +38,9 @@ A typical use case of the `indeterminatebeam` package involves the following ste
 
 Default units are kN, m, and kN.m   _(except for E (MPa), and I (mm4))_
 
-Load convention is described in the [package documentation]('https://google.com').
+Load convention is described in the [package documentation](https://indeterminatebeam.readthedocs.io/en/main/).
+
+You can follow along with the example below in this web based notebook: [![Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/JesseBonanno/IndeterminateBeam/blob/main/docs/examples/readme_example.ipynb)
 
 ##### Creating Beam
 
@@ -93,7 +98,7 @@ The script above produces the following figure:
 If you want to install the `indeterminatebeam` package, you run this one-liner:
 
 ```shell
-pip install --user indeterminatebeam
+pip install indeterminatebeam
 ```
 
 > **NOTE**: You need Python 3 to install this package (you may need to write `pip3` instead of `pip`).
@@ -110,10 +115,6 @@ The following are areas that can be implemented in future:
 - better graphing (a more readable or interactive graph)
 - GUI user interface
 - Latex or PDF output of calculations
-
-## Contributing
-
-Refer to the contributing document here.
 
 License
 ----

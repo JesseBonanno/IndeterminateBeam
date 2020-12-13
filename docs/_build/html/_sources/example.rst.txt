@@ -3,15 +3,13 @@
 Beam with two point loads and two distributed loads
 ===================================================
 
-This example demonstrates some functionality of the indeterminatebeam_ package. It has been taken from example 4.17 of this `Document <https://engineering.purdue.edu/~ce474/Docs/Beam_Examples02.pdf>`_ [document](
+This example demonstrates some functionality of the `indeterminatebeam` package. It has been taken from example 4.17 of this 
+`Document <https://engineering.purdue.edu/~ce474/Docs/Beam_Examples02.pdf>`_
 
-Try it in online: |binder| |colab|
-
-.. |binder| image:: https://mybinder.org/badge_logo.svg
-   :target: https://mybinder.org/v2/gh/alfredocarella/simplebendingpractice/master?filepath=simple_demo.ipynb
+Try it in online: |colab|
 
 .. |colab| image:: https://colab.research.google.com/assets/colab-badge.svg
-   :target: https://colab.research.google.com/github/alfredocarella/simplebendingpractice/blob/master/simple_demo.ipynb
+   :target: https://colab.research.google.com/github/JesseBonanno/IndeterminateBeam/blob/main/docs/examples/example_1.ipynb
 
 Specifications
 --------------
