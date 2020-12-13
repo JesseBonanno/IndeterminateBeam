@@ -1,6 +1,5 @@
 matplotlib  # for plotting
 numpy  # for numerical calculations
-unittest  # for testing
 sphinx  # generating documentation
 sphinx_rtd_theme  # docs theme
 sympy  # for analytical integration
