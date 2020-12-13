@@ -15,7 +15,7 @@ Example
 
 from collections import namedtuple
 import matplotlib.pyplot as plt
-from matplotlib.patches import Arc, Polygon, Rectangle, RegularPolygon, Wedge
+from matplotlib.patches import Arc, Polygon, Rectangle, RegularPolygon, Wedge, Circle
 from matplotlib.collections import PatchCollection
 import numpy as np
 import os
@@ -368,11 +368,11 @@ class Beam:
         ##need to know locations where y is fixed
         v_0  = [a._position for a in self._supports if a._DOF[1] == 1]
 
-        ##locations where x is fixed
-        sup_x = [a._position for a in self._supports if a._DOF[0] == 1]
-        sup_x.sort()
+        ##locations where x is fixed and order
+        x_0 = [a._position for a in self._supports if a._DOF[0] == 1]
+        x_0.sort()
 
-        ##grab the set of all the sympy vectors and change to a list
+        ##grab the set of all the sympy unknowns for y and m and change to a list
         unknowns = [a[0] for a in unknowns_y + unknowns_m]
 
         ##external reaction equations
@@ -384,6 +384,7 @@ class Beam:
                sum(f.force for f in self._point_loads_y()) + \
                sum([a[0] for a in unknowns_y])
 
+        ##moments taken at the left of the beam, anti-clockwise is positive
         M_R = sum(integrate(load * x, (x, x0, x1)) for load in self._distributed_forces_y) + \
             sum(f.force * f.coord for f in self._point_loads_y()) + \
             sum(-1 * f.torque for f in self._point_torques()) + \
@@ -399,11 +400,16 @@ class Beam:
         N_i = sum(self._effort_from_pointload(f) for f in self._point_loads_x()) + \
                sum(self._effort_from_pointload(PointLoadH(*a)) for a in unknowns_x) 
 
+        ## shear forces, an internal force acting down would be considered positive by adopted convention
+        ##hence if the sum of forces on the beam are all positive, our internal force would also be positive due to difference in convention
         F_i = sum(integrate(load, x) for load in self._distributed_forces_y) + \
                sum(self._effort_from_pointload(f) for f in self._point_loads_y()) + \
                sum(self._effort_from_pointload(PointLoadV(*a)) for a in unknowns_y)  
 
-        M_i = integrate(F_i,x) + \
+        ##bending moments at internal point means we are now looking left along the beam when we take our moments (vs when we did external external reactions and we looked right)
+        ##A clockwise moment is adopted as positive internally. 
+        ## Hence we need to consider a postive for our shear forces and negative for our moments by our sign convention
+        M_i = -(integrate(F_i,x)) + \
             sum(self._effort_from_pointload(PointTorque(*a)) for a in unknowns_m) + \
             sum(self._effort_from_pointload(f) for f in self._point_torques())
 
@@ -427,10 +433,10 @@ class Beam:
         equations_x = [F_Rx]
         unknowns_xx = [a[0] for a in unknowns_x if a[0]!=0]
 
-        if len(sup_x)>1:
-            for position in sup_x[1:]: ##dont consider the starting point? only want to look between supports and not at cantilever sections i think
+        if len(x_0)>1:
+            for position in x_0[1:]: ##dont consider the starting point? only want to look between supports and not at cantilever sections i think
                 equations_x.append(
-                    integrate(N_i, (x,sup_x[0], position)))
+                    integrate(N_i, (x,x_0[0], position)))
             
         if unknowns_xx == [] and equations_x ==[0]:
             solutions_x = []
@@ -471,10 +477,8 @@ class Beam:
         ## EI unit is N/mm2 , mm4 --> N.mm2
         self._shear_forces = F_i
         self._bending_moments = M_i
-        self._deflection_equation = v_EI * 10 **12 / ( self._E * self._I )
+        self._deflection_equation = (-1)*v_EI * 10 **12 / ( self._E * self._I )   ## multiply by -1 so that deflection convention is down as positive (makes graph more intuitive)
         self._normal_forces = N_i
-    
-        return 0
 
     ##SECTION - QUERY VALUE
     def _get_query_value(self, x_coord, sym_func, return_max=False, return_min=False, return_absmax=False):  ##check if sym_func is the sum of the functions already in plot_analytical
@@ -634,7 +638,7 @@ class Beam:
             else:
                 return ValueError("Not an existing query point on beam")
 
-    def plot(self, switch_axes=False, inverted=False):
+    def plot(self, switch_axes=False, inverted=False,draw_reactions=False):
         """Generates a single figure with 4 plots corresponding respectively to:
 
         - a schematic of the loaded beam
@@ -684,7 +688,7 @@ class Beam:
         fig.subplots_adjust(hspace=0.8)
 
         ax1 = fig.add_subplot(5, 1, 1)
-        self.plot_beam_diagram(ax1)
+        self.plot_beam_diagram(ax1, draw_reactions=draw_reactions) ##inverted hasnt been completed for beam diagram
 
         ax2 = fig.add_subplot(5, 1, 2)
         self.plot_normal_force(ax2, inverted=inverted)
@@ -700,7 +704,7 @@ class Beam:
 
         return fig
 
-    def plot_beam_diagram(self, ax=None):
+    def plot_beam_diagram(self, ax=None, draw_reactions=False):
         """Returns a schematic of the beam and all the loads applied on it.
         """
         plot01_params = {'ylabel': "Beam loads", 'yunits': r'kN / m',
@@ -712,7 +716,7 @@ class Beam:
             ax = plt.figure(figsize=(6, 2.5)).add_subplot(1,1,1)
         ax.set_title("Loaded beam diagram")
         self._plot_analytical(ax, sum(self._distributed_forces_y), **plot01_params)
-        self._draw_beam_schematic(ax)
+        self._draw_beam_schematic(ax, draw_reactions=draw_reactions)
         return ax.get_figure()
 
     def plot_normal_force(self, ax=None, switch_axes=False, inverted=False,maxmin_hline: bool = True, maxmin_vline:bool=False):
@@ -751,7 +755,7 @@ class Beam:
         self._plot_analytical(ax, self._shear_forces, **plot03_params)
         return ax.get_figure()
 
-    def plot_bending_moment(self, ax=None, switch_axes=False, inverted=False,maxmin_hline: bool = True, maxmin_vline:bool=False):
+    def plot_bending_moment(self, ax=None, switch_axes=False, inverted=True,maxmin_hline: bool = True, maxmin_vline:bool=False):
         """Returns a plot of the bending moment as a function of the x-coordinate.
         """
         plot04_params = {'ylabel': "Bending moment", 'yunits': r'kN·m',
@@ -913,7 +917,7 @@ class Beam:
 
         return ax
 
-    def _draw_beam_schematic(self, ax):
+    def _draw_beam_schematic(self, ax, draw_reactions=False):
         """Auxiliary function for plotting the beam object and its applied loads.
         """
         # Adjust y-axis
@@ -950,7 +954,15 @@ class Beam:
         # Draw arrows at point loads
         arrowprops = dict(arrowstyle="simple", color="darkgreen", shrinkA=0.1, mutation_scale=18)
         ply = [a for a in self._point_loads_y()]
-        for load in ply + self._reactions['y']:
+        plx = [a for a in self._point_loads_x()]
+        plm = [a for a in self._point_torques()]
+        
+        if draw_reactions:
+            ply += self._reactions['y']
+            plx += self._reactions['x']
+            plm += self._reactions['y']
+
+        for load in ply:
             x0 = x1 = load[1]
             if load[0] < 0:
                 y0, y1,y2 = beam_top, beam_top + 0.17 * yspan, beam_top + 0.17 * yspan + 0.6
@@ -969,8 +981,9 @@ class Beam:
             plt.annotate('${:0.1f}'.format(load[0]).rstrip('0').rstrip('.') + " $ {}".format('kN'),
                                 xy=(x1, y2), xytext=(0, 0), xycoords=('data', 'data'),
                                 textcoords='offset points', size=8)
-        plx = [a for a in self._point_loads_x()]
-        for load in plx + self._reactions['x']:
+        
+
+        for load in plx:
             x0 = load[1]
             y0 = y1 = (beam_top + beam_bottom) / 2.0
             if load[0] < 0:
@@ -989,15 +1002,15 @@ class Beam:
                     textcoords='offset points', size=8)
         
         # Draw a round arrow at point torques
-        plm = [a for a in self._point_torques()]
-        for load in plm + self._reactions['m']:
+
+        for load in plm:
             xc = load[1]
             yc = (beam_top + beam_bottom) / 2.0
             width = yspan * 0.17
             height = xspan * 0.05
             arc_len= 180
 
-            if load[0] < 0:
+            if load[0] > 0:
                 start_angle = 90
                 endX = xc + (height/2)*np.cos(np.radians(arc_len + start_angle))
                 endY = yc + (width/2)*np.sin(np.radians(arc_len + start_angle))
@@ -1007,10 +1020,12 @@ class Beam:
                 endY = yc + (width/2)*np.sin(np.radians(start_angle))
 
             orientation = start_angle + arc_len
-            arc = Arc([xc, yc], width, height, angle=start_angle, theta2=arc_len, capstyle='round', linestyle='-', lw=2.5, color="darkgreen")
-            arrow_head = RegularPolygon((endX, endY), 3, height * 0.35, np.radians(orientation), color="darkgreen")
+            arc = Arc([xc, yc], width, height, angle=start_angle, theta2=arc_len, capstyle='round', linestyle='-', lw=2.5, color="blue")
+            arrow_head = RegularPolygon((endX, endY), 3, height * 0.5, np.radians(orientation), color="blue")
+            centre_point = Circle((xc,yc), yc/8, color="blue")
             ax.add_patch(arc)
             ax.add_patch(arrow_head)
+            ax.add_patch(centre_point)
             plt.annotate('${:0.1f}'.format(load[0]).rstrip('0').rstrip('.') + " $ {}".format('kN.m'),
                     xy=(xc, beam_top+height), xytext=(0, 0), xycoords=('data', 'data'),
                     textcoords='offset points', size=8)
