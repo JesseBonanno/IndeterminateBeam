@@ -22,6 +22,12 @@ This project is based on the `beambending project
 
 .. toctree::
    :maxdepth: 2
+   :caption: Theory
+
+   theory
+
+.. toctree::
+   :maxdepth: 2
    :caption: Example
 
    example
@@ -30,5 +36,12 @@ This project is based on the `beambending project
    :maxdepth: 2
    :caption: User documentation
 
-   reference
+   docstrings
+
+.. toctree::
+   :maxdepth: 2
+   :caption: References
+
+   references
+
 

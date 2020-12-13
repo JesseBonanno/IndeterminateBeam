@@ -1,5 +1,5 @@
-"""Main module that contains the main classes Support and Beam, and auxiliary classes PointLoadH,
-PointLoadV, DistributedLoadH, and DistributedLoadV, PointLoad and Support.
+"""Main module that contains the main class Beam, and auxiliary classes Support, PointLoadH,
+PointLoadV, DistributedLoadH, and DistributedLoadV, PointLoad and PointTorque.
 
 Example
 -------
@@ -8,7 +8,6 @@ Example
 >>> c = Support(6,(0,1,0))
 >>> beam.add_supports(a,c)
 >>> beam.add_loads(PointLoadV(-15,3))
->>> beam.add_query_points(2,4)
 >>> beam.analyse()
 >>> beam.plot()
 """
@@ -101,9 +100,9 @@ class PointLoad(namedtuple("PointLoad", "force, coord, angle")):
     Force: force in kN
     coord: x coordinate of load on beam
     angle: angle of point load in range 0 to 180 where: 
-        - 0 degrees is purely vertical
-        - 90 degrees is purely horizontal
-        - 180 degrees is purely vertical acting in the opposite direction
+        - 0 degrees is purely horizontal +ve
+        - 90 degrees is purely vertical +ve
+        - 180 degrees is purely horizontal -ve of force sign specified.
 
 
     Examples
@@ -180,15 +179,6 @@ class Beam:
         Second moment of area for the beam about the z axis. The default value
         is 60 000 000 mm4.
     
-    Through the method `add_loads`, a Beam object can accept a list of:
-    
-    * PointLoad objects, and/or
-    * DistributedLoad objects.
-
-    Through the method `add_supports`, a Beam object can accept a list of Supports.
-
-    Through the method `analyse` the unknown forces on the Beam object can be calculated.
-
     Notes
     -----
     * The default units package units for length, force and bending moment 
@@ -233,15 +223,20 @@ class Beam:
             else:
                 left = right = load[1]    
             if self._x0 > left or right > self._x1:
-                return ValueError(f"{load[1]} is not a point on beam")
+                raise ValueError(f"{load[1]} is not a point on beam")
 
             supported_load_types = (DistributedLoadH, DistributedLoadV, PointLoadH, PointLoadV, PointTorque)
             if isinstance(load, supported_load_types):
                 self._loads.append(load)
             elif isinstance(load,PointLoad):
                 force, position, angle = load
-                load_x = PointLoadH(sympify(force*sin(radians(angle))).evalf(10), position)     ###when angle = 90 then force is 1
-                load_y = PointLoadV(sympify(force*cos(radians(angle))).evalf(10), position)     ##when angle = 0 then force is 1
+
+                if angle > 180 or angle <0:
+                    raise ValueError('Angle should be between 0 and 180 degrees')
+
+                load_y = PointLoadV(sympify(force*sin(radians(angle))).evalf(10), position)     ###when angle = 90 then force is 1
+                load_x = PointLoadH(sympify(force*cos(radians(angle))).evalf(10), position)     ##when angle = 0 then force is 1
+
                 if abs(load_x.force) >0:
                     self._loads.append(load_x)
                 if abs(load_y.force) >0:
@@ -484,8 +479,6 @@ class Beam:
     def _get_query_value(self, x_coord, sym_func, return_max=False, return_min=False, return_absmax=False):  ##check if sym_func is the sum of the functions already in plot_analytical
         """Find the value of a function at position x_coord.
 
-        Note: Priority of query parameters is return_max, return_min, return_absmax, x_coord.
-
         Parameters
         ----------
         x_coord: list
@@ -499,6 +492,10 @@ class Beam:
             return minx value of function if true
         return_absmax: bool
             return absolute max value of function if true
+
+        Notes
+        -----
+        * Priority of query parameters is return_max, return_min, return_absmax, x_coord.
 
         """
         if type(sym_func) == list:
@@ -533,76 +530,86 @@ class Beam:
         x_coord: list
             The x_coordinates on the beam to be substituted into the equation.
             List returned (if bools all false)
-        sym_func: sympy function?
-            The function to be analysed
         return_max: bool
             return max value of function if true
         return_min: bool
             return minx value of function if true
         return_absmax: bool
-            return absolute max value of function if true"""
+            return absolute max value of function if true
+            
+        Notes
+        -----
+        * Priority of query parameters is return_max, return_min, return_absmax, x_coord.
+
+        """
 
         return self._get_query_value(x_coord, sym_func = self._bending_moments, return_max = return_max, return_min = return_min, return_absmax=return_absmax )
 
     def get_shear_force(self, *x_coord,return_max=False,return_min=False, return_absmax=False):
         """Find the shear force(s) on the beam object. 
 
-        Note: Priority of query parameters is return_max, return_min, return_absmax, x_coord.
-
         Parameters
         ----------
         x_coord: list
             The x_coordinates on the beam to be substituted into the equation.
             List returned (if bools all false)
-        sym_func: sympy function?
-            The function to be analysed
         return_max: bool
             return max value of function if true
         return_min: bool
             return minx value of function if true
         return_absmax: bool
-            return absolute max value of function if true"""
+            return absolute max value of function if true
+            
+        Notes
+        -----
+        * Priority of query parameters is return_max, return_min, return_absmax, x_coord.
+
+        """
 
         return self._get_query_value(x_coord, sym_func = self._shear_forces, return_max = return_max, return_min = return_min, return_absmax=return_absmax )
 
     def get_normal_force(self, *x_coord,return_max=False,return_min=False,return_absmax=False):
         """Find the normal force(s) on the beam object.
         
-        Note: Priority of query parameters is return_max, return_min, return_absmax, x_coord.
-
         Parameters
         ----------
         x_coord: list
             The x_coordinates on the beam to be substituted into the equation.
             List returned (if bools all false)
-        sym_func: sympy function?
-            The function to be analysed
         return_max: bool
             return max value of function if true
         return_min: bool
             return minx value of function if true
         return_absmax: bool
-            return absolute max value of function if true"""
+            return absolute max value of function if true
+            
+        Notes
+        -----
+        * Priority of query parameters is return_max, return_min, return_absmax, x_coord.
+
+        """
         return self._get_query_value(x_coord, sym_func =self._normal_forces, return_max = return_max, return_min = return_min, return_absmax=return_absmax )
 
     def get_deflection(self, *x_coord,return_max=False,return_min=False,return_absmax=False):
         """Find the deflection(s) on the beam object. 
         
-        Note: Priority of query parameters is return_max, return_min, return_absmax, x_coord.
-
         Parameters
         ----------
         x_coord: list
             The x_coordinates on the beam to be substituted into the equation.
             List returned (if bools all false)
-        sym_func: sympy function?
-            The function to be analysed
         return_max: bool
             return max value of function if true
         return_min: bool
             return minx value of function if true
         return_absmax: bool
-            return absolute max value of function if true"""
+            return absolute max value of function if true
+            
+        Notes
+        -----
+        * Priority of query parameters is return_max, return_min, return_absmax, x_coord.
+
+        """
 
         return self._get_query_value(x_coord, sym_func =self._deflection_equation, return_max = return_max, return_min = return_min, return_absmax=return_absmax )
 
@@ -639,14 +646,13 @@ class Beam:
                 return ValueError("Not an existing query point on beam")
 
     def plot(self, switch_axes=False, inverted=False,draw_reactions=False):
-        """Generates a single figure with 4 plots corresponding respectively to:
+        """A wrapper of several plotting functions that generates a single figure with 5 plots corresponding respectively to:
 
         - a schematic of the loaded beam
         - normal force diagram,
-        - shear force diagram, and
-        - bending moment diagram.
-
-        These plots can be generated separately with dedicated functions.
+        - shear force diagram, 
+        - bending moment diagram, and
+        - deflection diagram 
 
         Parameters
         ----------
@@ -654,6 +660,8 @@ class Beam:
             True if want the beam to be plotted along the y axis and beam equations to be plotted along the x axis.
         inverted: bool
             True if want to flip a function about the x axis.
+        draw_reactions: bool
+            True if want to show the reaction forces in the beam schematic
 
         Returns
         -------
@@ -706,7 +714,13 @@ class Beam:
 
     def plot_beam_diagram(self, ax=None, draw_reactions=False):
         """Returns a schematic of the beam and all the loads applied on it.
+
+        Parameters
+        ----------
+        draw_reactions: bool
+            True if want to show the reaction forces in the beam schematic
         """
+
         plot01_params = {'ylabel': "Beam loads", 'yunits': r'kN / m',
                          # 'xlabel':"Beam axis", 'xunits':"m",
                          'color': "g",
@@ -721,6 +735,17 @@ class Beam:
 
     def plot_normal_force(self, ax=None, switch_axes=False, inverted=False,maxmin_hline: bool = True, maxmin_vline:bool=False):
         """Returns a plot of the normal force as a function of the x-coordinate.
+        
+        Parameters
+        ----------
+        switch_axes: bool
+            True if want the beam to be plotted along the y axis and beam equations to be plotted along the x axis.
+        inverted: bool
+            True if want to flip a function about the x axis.
+        maxmin_hline: bool
+            True if want a horizontal line displaying the maximum and minimum value reached on the y-axis
+        maxmin_vline: bool 
+            True if want a vertical line displaying the maximum and minimum value reached on the x-axis
         """
         plot02_params = {'ylabel': "Normal force", 'yunits': r'kN',
                          # 'xlabel':"Beam axis", 'xunits':"m",
@@ -739,7 +764,19 @@ class Beam:
 
     def plot_shear_force(self, ax=None, switch_axes=False, inverted=False,maxmin_hline: bool = True, maxmin_vline:bool=False):
         """Returns a plot of the shear force as a function of the x-coordinate.
+
+        Parameters
+        ----------
+        switch_axes: bool
+            True if want the beam to be plotted along the y axis and beam equations to be plotted along the x axis.
+        inverted: bool
+            True if want to flip a function about the x axis.
+        maxmin_hline: bool
+            True if want a horizontal line displaying the maximum and minimum value reached on the y-axis
+        maxmin_vline: bool 
+            True if want a vertical line displaying the maximum and minimum value reached on the x-axis
         """
+
         plot03_params = {'ylabel': "Shear force", 'yunits': r'kN',
                           'xlabel':"Beam axis", 'xunits':"m",
                          'color': "r",
@@ -757,7 +794,19 @@ class Beam:
 
     def plot_bending_moment(self, ax=None, switch_axes=False, inverted=True,maxmin_hline: bool = True, maxmin_vline:bool=False):
         """Returns a plot of the bending moment as a function of the x-coordinate.
+
+        Parameters
+        ----------
+        switch_axes: bool
+            True if want the beam to be plotted along the y axis and beam equations to be plotted along the x axis.
+        inverted: bool
+            True if want to flip a function about the x axis.
+        maxmin_hline: bool
+            True if want a horizontal line displaying the maximum and minimum value reached on the y-axis
+        maxmin_vline: bool 
+            True if want a vertical line displaying the maximum and minimum value reached on the x-axis
         """
+
         plot04_params = {'ylabel': "Bending moment", 'yunits': r'kN·m',
                          'xlabel': "Beam axis", 'xunits': "m",
                          'color': "y",
@@ -775,7 +824,19 @@ class Beam:
 
     def plot_deflection(self, ax= None, switch_axes=False, inverted=False,maxmin_hline: bool = True, maxmin_vline:bool=False):
         """Returns a plot of the beam deflection as a function of the x-coordinate.
+
+        Parameters
+        ----------
+        switch_axes: bool
+            True if want the beam to be plotted along the y axis and beam equations to be plotted along the x axis.
+        inverted: bool
+            True if want to flip a function about the x axis.
+        maxmin_hline: bool
+            True if want a horizontal line displaying the maximum and minimum value reached on the y-axis
+        maxmin_vline: bool 
+            True if want a vertical line displaying the maximum and minimum value reached on the x-axis
         """
+
         plot05_params = {'ylabel': "Deflection", 'yunits': r'mm',
                          'xlabel': "Beam axis", 'xunits': "m",
                          'color': "c",
@@ -919,7 +980,13 @@ class Beam:
 
     def _draw_beam_schematic(self, ax, draw_reactions=False):
         """Auxiliary function for plotting the beam object and its applied loads.
+        
+        Parameters
+        ----------
+        draw_reactions: bool
+            True if want to show the reaction forces in the beam schematic
         """
+
         # Adjust y-axis
         ymin, ymax = -5, 5
         ylim = (min(ax.get_ylim()[0], ymin), max(ax.get_ylim()[1], ymax))

@@ -1,7 +1,7 @@
 # Indeterminate Beam
 
 
-[![Version](https://img.shields.io/badge/version-0.1-blue.svg)](https://github.com/JesseBonanno/IndeterminateBeam/releases/tag/0.1) [![License](https://img.shields.io/badge/license-MIT-lightgreen.svg)](https://github.com/JesseBonanno/IndeterminateBeam/blob/main/LICENSE.txt) [![Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/JesseBonanno/IndeterminateBeam/blob/main/IndeterminateBeam/simple_demo.ipynb)
+[![Version](https://img.shields.io/badge/version-0.5-blue.svg)](https://github.com/JesseBonanno/IndeterminateBeam/releases/tag/0.5) [![License](https://img.shields.io/badge/license-MIT-lightgreen.svg)](https://github.com/JesseBonanno/IndeterminateBeam/blob/main/LICENSE.txt) [![Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/JesseBonanno/IndeterminateBeam/blob/main/IndeterminateBeam/simple_demo.ipynb)
 
 IndeterminateBeam is a Python Package aiming to serve as a foundation for civil and structural engineering projects in Python. The module can also serve as a standalone program and is useful for determining:
 
@@ -13,7 +13,7 @@ IndeterminateBeam is a Python Package aiming to serve as a foundation for civil 
 The package documentation can be accessed [here](https://indeterminatebeam.readthedocs.io/en/main/).
 
 
-# Statement of Need
+## Statement of Need
 
 In the civil and structural engineering industry in-house software generally consists of numerous standalone excel files. Although the excel files can often be greatly valueable once created, they are often created from scratch with difficulty in making use of previous excel projects.
 
@@ -24,9 +24,7 @@ Although there are many websites that allow for solving indeterminate beams, the
 This python package was heavily inspired by [simplebendingpractice](https://github.com/alfredocarella/simplebendingpractice), a module created by [Alfredo Carella](https://github.com/alfredocarella) of the Oslo Metropolitan University
 for educational purposes. The beambending module, although well documented, can only solve for simply supported beams. The full documentation for this project can be found [here](https://alfredocarella.github.io/simplebendingpractice/index.html).
 
-Carella, (2019). BeamBending: a teaching aid for 1-D shear force and bending moment diagrams. Journal of Open Source Education, 2(19), 65, https://doi.org/10.21105/jose.00065
-
-# Functionality and Usage
+## Functionality and Usage
 
 A typical use case of the `indeterminatebeam` package involves the following steps:
 
@@ -62,7 +60,7 @@ from indeterminatebeam import Support
 a = Support(5,(1,1,0))                  # Defines a pin support at location x = 5m  
 b = Support(0,(0,1,0))                  # Defines a roller support at location x = 0m
 c = Support(7,(1,1,1))                  # Defines a fixed support at location x = 7m
-beam.add_supports(a,b,c)                  # Assign the support objects to a beam object created earlier
+beam.add_supports(a,b,c)                # Assign the support objects to a beam object created earlier
 ```
 ##### Defining loads
 Load objects are created seperatly from the beam object, and are generally defined by a force value and then a coordinate value, however this varies slightly for different types of loading classes.
@@ -71,8 +69,8 @@ Load objects are created seperatly from the beam object, and are generally defin
 from indeterminatebeam import PointLoadV, PointTorque, DistributedLoadV
 load_1 = PointLoadV(1,2)                # Defines a point load of 1kn acting up, at location x = 2m
 load_2 = DistributedLoadV(2,(1,4))      # Defines a 2kN UDL from location x = 1m to x = 4m 
-load_3 = PointTorque(2, 3.5)              # Defines a 2kN.m point torque at location x = 3.5m
-beam.add_loads(load_1,load_2,load_3)           # Assign the support objects to a beam object created earlier
+load_3 = PointTorque(2, 3.5)            # Defines a 2kN.m point torque at location x = 3.5m
+beam.add_loads(load_1,load_2,load_3)    # Assign the support objects to a beam object created earlier
 ```
 
 ##### Solving for Forces
@@ -116,8 +114,8 @@ The following are areas that can be implemented in future:
 - GUI user interface
 - Latex or PDF output of calculations
 
-License
-----
+## License
 
-MIT
+[![License](https://img.shields.io/badge/license-MIT-lightgreen.svg)](https://github.com/JesseBonanno/IndeterminateBeam/blob/main/LICENSE.txt)
 
+Copyright (c) 2020, Jesse Bonanno

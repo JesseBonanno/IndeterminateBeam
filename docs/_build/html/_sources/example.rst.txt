@@ -3,7 +3,7 @@
 Beam with two point loads and two distributed loads
 ===================================================
 
-This example demonstrates some functionality of the `indeterminatebeam` package. It has been taken from example 4.17 of this 
+This example demonstrates some functionality of the ``indeterminatebeam`` package. It has been taken from example 4.17 of this 
 `Document <https://engineering.purdue.edu/~ce474/Docs/Beam_Examples02.pdf>`_
 
 Try it in online: |colab|
@@ -31,6 +31,8 @@ A plot of the axial force, shear force, and bending moments is shown below. A de
 As a default the values E and I are taken as the values for a 150UB18.0 steel beam. 
 
 .. figure:: examples/example_1.png
+  :width: 400
+  :alt: example_1
 
 Code
 ----

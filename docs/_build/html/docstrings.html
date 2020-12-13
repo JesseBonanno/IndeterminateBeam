@@ -35,6 +35,7 @@
   <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="References" href="references.html" />
     <link rel="prev" title="Beam with two point loads and two distributed loads" href="example.html" /> 
 </head>
 
@@ -83,6 +84,10 @@
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="installation.html">First steps</a></li>
 </ul>
+<p class="caption"><span class="caption-text">Theory</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="theory.html">Theory</a></li>
+</ul>
 <p class="caption"><span class="caption-text">Example</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="example.html">Beam with two point loads and two distributed loads</a></li>
@@ -97,6 +102,10 @@
 <li class="toctree-l2"><a class="reference internal" href="#distributedload">DistributedLoad</a></li>
 </ul>
 </li>
+</ul>
+<p class="caption"><span class="caption-text">References</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="references.html">References</a></li>
 </ul>
 
             
@@ -148,7 +157,7 @@
       <li class="wy-breadcrumbs-aside">
         
             
-            <a href="_sources/reference.rst.txt" rel="nofollow"> View page source</a>
+            <a href="_sources/docstrings.rst.txt" rel="nofollow"> View page source</a>
           
         
       </li>
@@ -162,16 +171,15 @@
            <div itemprop="articleBody">
             
   <div class="section" id="module-indeterminatebeam">
-<span id="indeterminatebeam-reference"></span><span id="reference"></span><h1>IndeterminateBeam Reference<a class="headerlink" href="#module-indeterminatebeam" title="Permalink to this headline">¶</a></h1>
-<p>Main module that contains the main classes Support and Beam, and auxiliary classes PointLoadH,
-PointLoadV, DistributedLoadH, and DistributedLoadV, PointLoad and Support.</p>
+<span id="indeterminatebeam-reference"></span><span id="docstrings"></span><h1>IndeterminateBeam Reference<a class="headerlink" href="#module-indeterminatebeam" title="Permalink to this headline">¶</a></h1>
+<p>Main module that contains the main class Beam, and auxiliary classes Support, PointLoadH,
+PointLoadV, DistributedLoadH, and DistributedLoadV, PointLoad and PointTorque.</p>
 <p class="rubric">Example</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">beam</span> <span class="o">=</span> <span class="n">Beam</span><span class="p">(</span><span class="mi">6</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">a</span> <span class="o">=</span> <span class="n">Support</span><span class="p">()</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">c</span> <span class="o">=</span> <span class="n">Support</span><span class="p">(</span><span class="mi">6</span><span class="p">,(</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">0</span><span class="p">))</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">beam</span><span class="o">.</span><span class="n">add_supports</span><span class="p">(</span><span class="n">a</span><span class="p">,</span><span class="n">c</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">beam</span><span class="o">.</span><span class="n">add_loads</span><span class="p">(</span><span class="n">PointLoadV</span><span class="p">(</span><span class="o">-</span><span class="mi">15</span><span class="p">,</span><span class="mi">3</span><span class="p">))</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">beam</span><span class="o">.</span><span class="n">add_query_points</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span><span class="mi">4</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">beam</span><span class="o">.</span><span class="n">analyse</span><span class="p">()</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">beam</span><span class="o">.</span><span class="n">plot</span><span class="p">()</span>
 </pre></div>
@@ -215,14 +223,6 @@ supports can only be placed within this span. The default value is 10.</p></li>
 is the youngs modulus for steel.</p></li>
 <li><p><strong>I</strong> (<em>float</em><em> or </em><em>int</em>) – Second moment of area for the beam about the z axis. The default value
 is 60 000 000 mm4.</p></li>
-<li><p><strong>the method add_loads</strong> (<em>Through</em>) – </p></li>
-<li><p><strong>Beam object can accept a list of</strong> (<em>a</em>) – </p></li>
-<li><p><strong>PointLoad objects</strong> (<em>*</em>) – </p></li>
-<li><p><strong>and/or</strong> – </p></li>
-<li><p><strong>DistributedLoad objects.</strong> (<em>*</em>) – </p></li>
-<li><p><strong>the method add_supports</strong> (<em>Through</em>) – </p></li>
-<li><p><strong>Beam object can accept a list of Supports.</strong> (<em>a</em>) – </p></li>
-<li><p><strong>the method analyse the unknown forces on the Beam object can be calculated.</strong> (<em>Through</em>) – </p></li>
 </ul>
 </dd>
 </dl>
@@ -313,70 +313,79 @@ be removed from the Beam object. If support not on beam then does nothing.</p>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>x_coord</strong> (<em>list</em>) – The x_coordinates on the beam to be substituted into the equation.
 List returned (if bools all false)</p></li>
-<li><p><strong>sym_func</strong> (<em>sympy function?</em>) – The function to be analysed</p></li>
 <li><p><strong>return_max</strong> (<em>bool</em>) – return max value of function if true</p></li>
 <li><p><strong>return_min</strong> (<em>bool</em>) – return minx value of function if true</p></li>
 <li><p><strong>return_absmax</strong> (<em>bool</em>) – return absolute max value of function if true</p></li>
 </ul>
 </dd>
 </dl>
+<p class="rubric">Notes</p>
+<ul class="simple">
+<li><p>Priority of query parameters is return_max, return_min, return_absmax, x_coord.</p></li>
+</ul>
 </dd></dl>
 
 <dl class="py function">
 <dt id="indeterminatebeam.Beam.get_shear_force">
 <code class="sig-prename descclassname">indeterminatebeam.Beam.</code><code class="sig-name descname">get_shear_force</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">self</span></em>, <em class="sig-param"><span class="o">*</span><span class="n">x_coord</span></em>, <em class="sig-param"><span class="n">return_max</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">return_min</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">return_absmax</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="headerlink" href="#indeterminatebeam.Beam.get_shear_force" title="Permalink to this definition">¶</a></dt>
 <dd><p>Find the shear force(s) on the beam object.</p>
-<p>Note: Priority of query parameters is return_max, return_min, return_absmax, x_coord.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>x_coord</strong> (<em>list</em>) – The x_coordinates on the beam to be substituted into the equation.
 List returned (if bools all false)</p></li>
-<li><p><strong>sym_func</strong> (<em>sympy function?</em>) – The function to be analysed</p></li>
 <li><p><strong>return_max</strong> (<em>bool</em>) – return max value of function if true</p></li>
 <li><p><strong>return_min</strong> (<em>bool</em>) – return minx value of function if true</p></li>
 <li><p><strong>return_absmax</strong> (<em>bool</em>) – return absolute max value of function if true</p></li>
 </ul>
 </dd>
 </dl>
+<p class="rubric">Notes</p>
+<ul class="simple">
+<li><p>Priority of query parameters is return_max, return_min, return_absmax, x_coord.</p></li>
+</ul>
 </dd></dl>
 
 <dl class="py function">
 <dt id="indeterminatebeam.Beam.get_normal_force">
 <code class="sig-prename descclassname">indeterminatebeam.Beam.</code><code class="sig-name descname">get_normal_force</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">self</span></em>, <em class="sig-param"><span class="o">*</span><span class="n">x_coord</span></em>, <em class="sig-param"><span class="n">return_max</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">return_min</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">return_absmax</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="headerlink" href="#indeterminatebeam.Beam.get_normal_force" title="Permalink to this definition">¶</a></dt>
 <dd><p>Find the normal force(s) on the beam object.</p>
-<p>Note: Priority of query parameters is return_max, return_min, return_absmax, x_coord.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>x_coord</strong> (<em>list</em>) – The x_coordinates on the beam to be substituted into the equation.
 List returned (if bools all false)</p></li>
-<li><p><strong>sym_func</strong> (<em>sympy function?</em>) – The function to be analysed</p></li>
 <li><p><strong>return_max</strong> (<em>bool</em>) – return max value of function if true</p></li>
 <li><p><strong>return_min</strong> (<em>bool</em>) – return minx value of function if true</p></li>
 <li><p><strong>return_absmax</strong> (<em>bool</em>) – return absolute max value of function if true</p></li>
 </ul>
 </dd>
 </dl>
+<p class="rubric">Notes</p>
+<ul class="simple">
+<li><p>Priority of query parameters is return_max, return_min, return_absmax, x_coord.</p></li>
+</ul>
 </dd></dl>
 
 <dl class="py function">
 <dt id="indeterminatebeam.Beam.get_deflection">
 <code class="sig-prename descclassname">indeterminatebeam.Beam.</code><code class="sig-name descname">get_deflection</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">self</span></em>, <em class="sig-param"><span class="o">*</span><span class="n">x_coord</span></em>, <em class="sig-param"><span class="n">return_max</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">return_min</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">return_absmax</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="headerlink" href="#indeterminatebeam.Beam.get_deflection" title="Permalink to this definition">¶</a></dt>
 <dd><p>Find the deflection(s) on the beam object.</p>
-<p>Note: Priority of query parameters is return_max, return_min, return_absmax, x_coord.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>x_coord</strong> (<em>list</em>) – The x_coordinates on the beam to be substituted into the equation.
 List returned (if bools all false)</p></li>
-<li><p><strong>sym_func</strong> (<em>sympy function?</em>) – The function to be analysed</p></li>
 <li><p><strong>return_max</strong> (<em>bool</em>) – return max value of function if true</p></li>
 <li><p><strong>return_min</strong> (<em>bool</em>) – return minx value of function if true</p></li>
 <li><p><strong>return_absmax</strong> (<em>bool</em>) – return absolute max value of function if true</p></li>
 </ul>
 </dd>
 </dl>
+<p class="rubric">Notes</p>
+<ul class="simple">
+<li><p>Priority of query parameters is return_max, return_min, return_absmax, x_coord.</p></li>
+</ul>
 </dd></dl>
 
 <dl class="py function">
@@ -404,19 +413,20 @@ List returned (if bools all false)</p></li>
 <dl class="py function">
 <dt id="indeterminatebeam.Beam.plot">
 <code class="sig-prename descclassname">indeterminatebeam.Beam.</code><code class="sig-name descname">plot</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">self</span></em>, <em class="sig-param"><span class="n">switch_axes</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">inverted</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">draw_reactions</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="headerlink" href="#indeterminatebeam.Beam.plot" title="Permalink to this definition">¶</a></dt>
-<dd><p>Generates a single figure with 4 plots corresponding respectively to:</p>
+<dd><p>A wrapper of several plotting functions that generates a single figure with 5 plots corresponding respectively to:</p>
 <ul class="simple">
 <li><p>a schematic of the loaded beam</p></li>
 <li><p>normal force diagram,</p></li>
-<li><p>shear force diagram, and</p></li>
-<li><p>bending moment diagram.</p></li>
+<li><p>shear force diagram,</p></li>
+<li><p>bending moment diagram, and</p></li>
+<li><p>deflection diagram</p></li>
 </ul>
-<p>These plots can be generated separately with dedicated functions.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>switch_axes</strong> (<em>bool</em>) – True if want the beam to be plotted along the y axis and beam equations to be plotted along the x axis.</p></li>
 <li><p><strong>inverted</strong> (<em>bool</em>) – True if want to flip a function about the x axis.</p></li>
+<li><p><strong>draw_reactions</strong> (<em>bool</em>) – True if want to show the reaction forces in the beam schematic</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
@@ -433,30 +443,75 @@ shear force diagram, and bending moment diagram.</p>
 <dt id="indeterminatebeam.Beam.plot_beam_diagram">
 <code class="sig-prename descclassname">indeterminatebeam.Beam.</code><code class="sig-name descname">plot_beam_diagram</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">self</span></em>, <em class="sig-param"><span class="n">ax</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">draw_reactions</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="headerlink" href="#indeterminatebeam.Beam.plot_beam_diagram" title="Permalink to this definition">¶</a></dt>
 <dd><p>Returns a schematic of the beam and all the loads applied on it.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>draw_reactions</strong> (<em>bool</em>) – True if want to show the reaction forces in the beam schematic</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py function">
 <dt id="indeterminatebeam.Beam.plot_normal_force">
 <code class="sig-prename descclassname">indeterminatebeam.Beam.</code><code class="sig-name descname">plot_normal_force</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">self</span></em>, <em class="sig-param"><span class="n">ax</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">switch_axes</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">inverted</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">maxmin_hline</span><span class="p">:</span> <span class="n">bool</span> <span class="o">=</span> <span class="default_value">True</span></em>, <em class="sig-param"><span class="n">maxmin_vline</span><span class="p">:</span> <span class="n">bool</span> <span class="o">=</span> <span class="default_value">False</span></em><span class="sig-paren">)</span><a class="headerlink" href="#indeterminatebeam.Beam.plot_normal_force" title="Permalink to this definition">¶</a></dt>
 <dd><p>Returns a plot of the normal force as a function of the x-coordinate.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>switch_axes</strong> (<em>bool</em>) – True if want the beam to be plotted along the y axis and beam equations to be plotted along the x axis.</p></li>
+<li><p><strong>inverted</strong> (<em>bool</em>) – True if want to flip a function about the x axis.</p></li>
+<li><p><strong>maxmin_hline</strong> (<em>bool</em>) – True if want a horizontal line displaying the maximum and minimum value reached on the y-axis</p></li>
+<li><p><strong>maxmin_vline</strong> (<em>bool</em>) – True if want a vertical line displaying the maximum and minimum value reached on the x-axis</p></li>
+</ul>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py function">
 <dt id="indeterminatebeam.Beam.plot_shear_force">
 <code class="sig-prename descclassname">indeterminatebeam.Beam.</code><code class="sig-name descname">plot_shear_force</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">self</span></em>, <em class="sig-param"><span class="n">ax</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">switch_axes</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">inverted</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">maxmin_hline</span><span class="p">:</span> <span class="n">bool</span> <span class="o">=</span> <span class="default_value">True</span></em>, <em class="sig-param"><span class="n">maxmin_vline</span><span class="p">:</span> <span class="n">bool</span> <span class="o">=</span> <span class="default_value">False</span></em><span class="sig-paren">)</span><a class="headerlink" href="#indeterminatebeam.Beam.plot_shear_force" title="Permalink to this definition">¶</a></dt>
 <dd><p>Returns a plot of the shear force as a function of the x-coordinate.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>switch_axes</strong> (<em>bool</em>) – True if want the beam to be plotted along the y axis and beam equations to be plotted along the x axis.</p></li>
+<li><p><strong>inverted</strong> (<em>bool</em>) – True if want to flip a function about the x axis.</p></li>
+<li><p><strong>maxmin_hline</strong> (<em>bool</em>) – True if want a horizontal line displaying the maximum and minimum value reached on the y-axis</p></li>
+<li><p><strong>maxmin_vline</strong> (<em>bool</em>) – True if want a vertical line displaying the maximum and minimum value reached on the x-axis</p></li>
+</ul>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py function">
 <dt id="indeterminatebeam.Beam.plot_bending_moment">
 <code class="sig-prename descclassname">indeterminatebeam.Beam.</code><code class="sig-name descname">plot_bending_moment</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">self</span></em>, <em class="sig-param"><span class="n">ax</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">switch_axes</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">inverted</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">maxmin_hline</span><span class="p">:</span> <span class="n">bool</span> <span class="o">=</span> <span class="default_value">True</span></em>, <em class="sig-param"><span class="n">maxmin_vline</span><span class="p">:</span> <span class="n">bool</span> <span class="o">=</span> <span class="default_value">False</span></em><span class="sig-paren">)</span><a class="headerlink" href="#indeterminatebeam.Beam.plot_bending_moment" title="Permalink to this definition">¶</a></dt>
 <dd><p>Returns a plot of the bending moment as a function of the x-coordinate.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>switch_axes</strong> (<em>bool</em>) – True if want the beam to be plotted along the y axis and beam equations to be plotted along the x axis.</p></li>
+<li><p><strong>inverted</strong> (<em>bool</em>) – True if want to flip a function about the x axis.</p></li>
+<li><p><strong>maxmin_hline</strong> (<em>bool</em>) – True if want a horizontal line displaying the maximum and minimum value reached on the y-axis</p></li>
+<li><p><strong>maxmin_vline</strong> (<em>bool</em>) – True if want a vertical line displaying the maximum and minimum value reached on the x-axis</p></li>
+</ul>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py function">
 <dt id="indeterminatebeam.Beam.plot_deflection">
 <code class="sig-prename descclassname">indeterminatebeam.Beam.</code><code class="sig-name descname">plot_deflection</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">self</span></em>, <em class="sig-param"><span class="n">ax</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">switch_axes</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">inverted</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">maxmin_hline</span><span class="p">:</span> <span class="n">bool</span> <span class="o">=</span> <span class="default_value">True</span></em>, <em class="sig-param"><span class="n">maxmin_vline</span><span class="p">:</span> <span class="n">bool</span> <span class="o">=</span> <span class="default_value">False</span></em><span class="sig-paren">)</span><a class="headerlink" href="#indeterminatebeam.Beam.plot_deflection" title="Permalink to this definition">¶</a></dt>
 <dd><p>Returns a plot of the beam deflection as a function of the x-coordinate.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>switch_axes</strong> (<em>bool</em>) – True if want the beam to be plotted along the y axis and beam equations to be plotted along the x axis.</p></li>
+<li><p><strong>inverted</strong> (<em>bool</em>) – True if want to flip a function about the x axis.</p></li>
+<li><p><strong>maxmin_hline</strong> (<em>bool</em>) – True if want a horizontal line displaying the maximum and minimum value reached on the y-axis</p></li>
+<li><p><strong>maxmin_vline</strong> (<em>bool</em>) – True if want a vertical line displaying the maximum and minimum value reached on the x-axis</p></li>
+</ul>
+</dd>
+</dl>
 </dd></dl>
 
 </div>
@@ -484,9 +539,9 @@ coord: x coordinate of load on beam
 angle: angle of point load in range 0 to 180 where:</p>
 <blockquote>
 <div><ul class="simple">
-<li><p>0 degrees is purely vertical</p></li>
-<li><p>90 degrees is purely horizontal</p></li>
-<li><p>180 degrees is purely vertical acting in the opposite direction</p></li>
+<li><p>0 degrees is purely horizontal +ve</p></li>
+<li><p>90 degrees is purely vertical +ve</p></li>
+<li><p>180 degrees is purely horizontal -ve of force sign specified.</p></li>
 </ul>
 </div></blockquote>
 <p class="rubric">Examples</p>
@@ -551,6 +606,8 @@ coord: x coordinate of load on beam</p>
           <footer>
   
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="references.html" class="btn btn-neutral float-right" title="References" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
       
       
         <a href="example.html" class="btn btn-neutral float-left" title="Beam with two point loads and two distributed loads" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>

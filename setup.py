@@ -2,13 +2,13 @@ from distutils.core import setup
 setup(
   name = 'indeterminatebeam',         # How you named your package folder (MyLib)
   packages = ['indeterminatebeam'],   # Chose the same as "name"
-  version = '0.4',      # Start with a small number and increase it with every change you make
+  version = '0.5',      # Start with a small number and increase it with every change you make
   license='MIT',        # Chose a license from here: https://help.github.com/articles/licensing-a-repository
   description = 'A solver for 1D indeterminate beams',   # Give a short description about your library
   author = 'Jesse Bonanno',                   # Type in your name
   author_email = 'jessebonanno@gmail.com',      # Type in your E-Mail
   url = 'https://github.com/JesseBonanno/IndeterminateBeam',   # Provide either the link to your github or to your website
-  download_url = 'https://github.com/JesseBonanno/IndeterminateBeam/archive/0.4.tar.gz',    # I explain this later on
+  download_url = 'https://github.com/JesseBonanno/IndeterminateBeam/archive/0.5.tar.gz',    # I explain this later on
   keywords = ['statics', 'indeterminate', 'beam', 'civil','structural', 'shear-force','bending-moment','deflection'],   # Keywords that define your package best
   install_requires=[            # I get to this in a second
           'matplotlib',

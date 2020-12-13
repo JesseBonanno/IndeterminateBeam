@@ -1,0 +1,318 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>Theory &mdash; IndeterminateBeam 0.1 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+  <script type="text/javascript" src="_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+        <script src="_static/jquery.js"></script>
+        <script src="_static/underscore.js"></script>
+        <script src="_static/doctools.js"></script>
+        <script src="_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+
+    
+
+  
+  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Beam with two point loads and two distributed loads" href="example.html" />
+    <link rel="prev" title="First steps" href="installation.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="index.html" class="icon icon-home"> IndeterminateBeam
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Getting Started</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="installation.html">First steps</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Theory</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Theory</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#sign-convention">Sign Convention</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#calculation-theory">Calculation Theory</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#forces-in-the-x-direction">Forces in the x-direction</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#forces-in-the-y-direction-and-m-direction">Forces in the y-direction and m-direction</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<p class="caption"><span class="caption-text">Example</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="example.html">Beam with two point loads and two distributed loads</a></li>
+</ul>
+<p class="caption"><span class="caption-text">User documentation</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="docstrings.html">IndeterminateBeam Reference</a></li>
+</ul>
+<p class="caption"><span class="caption-text">References</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="references.html">References</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">IndeterminateBeam</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="index.html">Docs</a> &raquo;</li>
+        
+      <li>Theory</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="_sources/theory.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="theory">
+<span id="id1"></span><h1>Theory<a class="headerlink" href="#theory" title="Permalink to this headline">¶</a></h1>
+<p>A brief overview of the engineering theory and conventions used in this program are illustrated below.</p>
+<div class="section" id="sign-convention">
+<h2>Sign Convention<a class="headerlink" href="#sign-convention" title="Permalink to this headline">¶</a></h2>
+<p>For External Forces the following convention is used:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>For x direction: To the right is positive</p></li>
+<li><p>For y direction: A force up is positive</p></li>
+<li><p>For Moments: A moment anti-clockwise is positive</p></li>
+</ul>
+</div></blockquote>
+<a class="reference internal image-reference" href="_images/ex.png"><img alt="external force convention" src="_images/ex.png" style="width: 250px;" /></a>
+<p>For internal forces considering the left of a cut:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>For Axial force (x direction): To the right is positive</p></li>
+<li><p>For shear force (y direction): Down is positive</p></li>
+<li><p>For Moment: clockwise is positive</p></li>
+</ul>
+</div></blockquote>
+<a class="reference internal image-reference" href="_images/internal.png"><img alt="internal force convention" src="_images/internal.png" style="width: 400px;" /></a>
+<p>For deflections:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>Up is considered positive</p></li>
+</ul>
+</div></blockquote>
+<p>For angled point loads (assuming a postive force is used):</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>An angle of 0 indicates a positive force to the right</p></li>
+<li><p>An angle between 0 and 90 indicates a positive force to the right and a positive force up</p></li>
+<li><p>An angle of 90 indicates a positive force up</p></li>
+<li><p>An angle between 90 and 180 degrees indicates a force acting left (negative direction) and a positive force acting up</p></li>
+<li><p>An angle of 180 indicates a negative horizontal force</p></li>
+</ul>
+</div></blockquote>
+<a class="reference internal image-reference" href="_images/angle.jpg"><img alt="angle convention" src="_images/angle.jpg" style="width: 400px;" /></a>
+</div>
+<div class="section" id="calculation-theory">
+<h2>Calculation Theory<a class="headerlink" href="#calculation-theory" title="Permalink to this headline">¶</a></h2>
+<p>The calculation is based upon the slope deflection method for beams for unknown moments and forces in the y direction.
+For unknowns in the x direction compatability equations are used.</p>
+<p>The theory can be read up on in chapter 10.3 of this <a class="reference external" href="http://ocw.nthu.edu.tw/ocw/upload/8/259/Chapter_10-98.pdf">textbook extract</a></p>
+<p>In short, it can be said in algebra that to be able to solve for <strong>n</strong> number of unknowns we will also need <strong>n</strong> number of equations (assuming all equations are independent).</p>
+<p>We know that from simple statics to solve a determinate beam we have three equations, that the sum of external forces in all the indepent directions will equal 0.</p>
+<p>Since our moment equations will never help us to resolve axial forces on our 1D beam, let us consider two indepent systems of indeterminancy:</p>
+<blockquote>
+<div><ol class="arabic simple">
+<li><p>Forces in the <strong>x</strong> direction</p></li>
+<li><p>Forces in the <strong>y</strong> and <strong>m</strong> direction</p></li>
+</ol>
+</div></blockquote>
+<p>If we have more than one unknown in the <strong>x</strong> direction, or more than two unknowns in the <strong>y</strong> and <strong>m</strong> directions collectively, then equilibrium will not be enough to solve for the forces on the beam.</p>
+<div class="section" id="forces-in-the-x-direction">
+<h3>Forces in the x-direction<a class="headerlink" href="#forces-in-the-x-direction" title="Permalink to this headline">¶</a></h3>
+<p>For a single <strong>x</strong> restraint we can resolve our unknown force by equilibrium.
+When we introduce a second restraint we can use our knowledge that both of these restraints will be fixed in space, and hence the axial deformation between them will amount to 0.</p>
+<p>For forces in the x-direction we can get our axial displacement from:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>e = (N * L) /( E * A ) OR</p></li>
+<li><p>e = ∫ N(x) / (E(x) * A(x)) dx</p></li>
+</ul>
+</div></blockquote>
+<p>Assuming E*A is constant we can simply integrate our normal force diagram between supports and the result will be 0.
+Hence for each additional support in the x direction we can have a new equation, and we can solve for all our unknowns in the x-direction.</p>
+</div>
+<div class="section" id="forces-in-the-y-direction-and-m-direction">
+<h3>Forces in the y-direction and m-direction<a class="headerlink" href="#forces-in-the-y-direction-and-m-direction" title="Permalink to this headline">¶</a></h3>
+<p>For supports totalling a maximum total of two unknowns in the y-direction and m-direction we can solve for our forces with equilibrium.
+When we introduce an additional unknown we can use the following geometrical information to help establish additional equations:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>For additional supports in the y-direction we know that the vertical displacement will be 0.</p></li>
+<li><p>For additional supports in the m-direction we know that the slope of the beam will be 0.</p></li>
+</ul>
+</div></blockquote>
+<p>We can get slope and vertical displacement equations by integrating the moment equation with respect to x.</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>EIv’’ = M</p></li>
+<li><p>EIv’  = ∫ M dx + C1</p></li>
+<li><p>EIv   = ∫∫ M dx dx + C1*x + C2</p></li>
+</ul>
+</div></blockquote>
+<p>This introduces two new unknowns, C1 and C2, which are the constants for integration.
+Luckily, we still have our two equilibrium equations so we can solve for the integration constants.</p>
+<p>In order to establish the internal moment equation (M) as a single equation piecewise functions are helpful.</p>
+</div>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="example.html" class="btn btn-neutral float-right" title="Beam with two point loads and two distributed loads" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="installation.html" class="btn btn-neutral float-left" title="First steps" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2020, Jesse Bonanno
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>
