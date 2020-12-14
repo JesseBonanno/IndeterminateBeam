@@ -21,8 +21,7 @@ import os
 from sympy import integrate, lambdify, Piecewise, sympify, symbols, linsolve, sin, cos
 from sympy.abc import x
 from math import radians 
-
-
+    
 class Support:
     """
     A class to represent a support.
@@ -237,9 +236,9 @@ class Beam:
                 load_y = PointLoadV(sympify(force*sin(radians(angle))).evalf(10), position)     ###when angle = 90 then force is 1
                 load_x = PointLoadH(sympify(force*cos(radians(angle))).evalf(10), position)     ##when angle = 0 then force is 1
 
-                if abs(load_x.force) >0:
+                if abs(round(load_x.force,3)) >0:
                     self._loads.append(load_x)
-                if abs(load_y.force) >0:
+                if abs(round(load_y.force,3)) >0:
                     self._loads.append(load_y)
             else:
                 raise TypeError("The provided loads must be one of the supported types: {0}".format(supported_load_types))
@@ -382,10 +381,9 @@ class Beam:
         ##moments taken at the left of the beam, anti-clockwise is positive
         M_R = sum(integrate(load * x, (x, x0, x1)) for load in self._distributed_forces_y) + \
             sum(f.force * f.coord for f in self._point_loads_y()) + \
-            sum(-1 * f.torque for f in self._point_torques()) + \
-            sum([a[0] for a in unknowns_m]) + \
-            sum([f[0]*f[1] for f in unknowns_y]) 
-        
+            sum([f[0]*f[1] for f in unknowns_y]) + \
+            sum(f.torque for f in self._point_torques()) + \
+            sum([a[0] for a in unknowns_m])
 
         ##internal beam equations
         C1, C2 = symbols('C1'), symbols('C2')
@@ -402,10 +400,10 @@ class Beam:
                sum(self._effort_from_pointload(PointLoadV(*a)) for a in unknowns_y)  
 
         ##bending moments at internal point means we are now looking left along the beam when we take our moments (vs when we did external external reactions and we looked right)
-        ##A clockwise moment is adopted as positive internally. 
+        ##An anti-clockwise moment is adopted as positive internally. 
         ## Hence we need to consider a postive for our shear forces and negative for our moments by our sign convention
-        M_i = -(integrate(F_i,x)) + \
-            sum(self._effort_from_pointload(PointTorque(*a)) for a in unknowns_m) + \
+        M_i = + (integrate(F_i,x)) - \
+            sum(self._effort_from_pointload(PointTorque(*a)) for a in unknowns_m) - \
             sum(self._effort_from_pointload(f) for f in self._point_torques())
 
              #with respect to x, + constants but the constants are the M at fixed supports
@@ -472,7 +470,7 @@ class Beam:
         ## EI unit is N/mm2 , mm4 --> N.mm2
         self._shear_forces = F_i
         self._bending_moments = M_i
-        self._deflection_equation = (-1)*v_EI * 10 **12 / ( self._E * self._I )   ## multiply by -1 so that deflection convention is down as positive (makes graph more intuitive)
+        self._deflection_equation = v_EI * 10 **12 / ( self._E * self._I )   ## a positive moment indicates a negative deflection, i thought??
         self._normal_forces = N_i
 
     ##SECTION - QUERY VALUE
@@ -792,7 +790,7 @@ class Beam:
         self._plot_analytical(ax, self._shear_forces, **plot03_params)
         return ax.get_figure()
 
-    def plot_bending_moment(self, ax=None, switch_axes=False, inverted=True,maxmin_hline: bool = True, maxmin_vline:bool=False):
+    def plot_bending_moment(self, ax=None, switch_axes=False, inverted=False,maxmin_hline: bool = True, maxmin_vline:bool=False):
         """Returns a plot of the bending moment as a function of the x-coordinate.
 
         Parameters
@@ -819,7 +817,7 @@ class Beam:
                 ax = plt.figure(figsize=(2.5, 6)).add_subplot(1,1,1)
             else:
                 ax = plt.figure(figsize=(6, 2.5)).add_subplot(1,1,1)
-        self._plot_analytical(ax, -1* self._bending_moments, **plot04_params)
+        self._plot_analytical(ax, self._bending_moments, **plot04_params)
         return ax.get_figure()
 
     def plot_deflection(self, ax= None, switch_axes=False, inverted=False,maxmin_hline: bool = True, maxmin_vline:bool=False):
@@ -1166,34 +1164,51 @@ class Beam:
 
 
 if __name__ == "__main__":
-    # ##intialise a beam object
-    beam_1 = Beam(5)            ##intialises a 5m long beam (assuming E = 2*10^5, I = )
-    beam_2 = Beam(5, E=1, I=1)
+    # # ##intialise a beam object
+    # beam_1 = Beam(5)            ##intialises a 5m long beam (assuming E = 2*10^5, I = )
+    # beam_2 = Beam(5, E=1, I=1)
 
-    ##create support objects
-    a = Support(0,(1,1,1))      ##defines a fixed support at point 0m point
-    b = Support(2,(0,1,0))      ##defines a roller support restaint only in the y direction at 2m point
-    c = Support(5,(1,1,0))      ##defines pinned support at 5m point
+    # ##create support objects
+    # a = Support(0,(1,1,1))      ##defines a fixed support at point 0m point
+    # b = Support(2,(0,1,0))      ##defines a roller support restaint only in the y direction at 2m point
+    # c = Support(5,(1,1,0))      ##defines pinned support at 5m point
 
-    ##add supports to beam object
-    beam_1.add_supports(a,b,c)        ##create a statically indeterminate beam
-    beam_2.add_supports(a,b,c)        ##intially create as a statically determinate beam
-    beam_2.remove_supports(a)         ## remove support a to make beam statically determinate
+    # ##add supports to beam object
+    # beam_1.add_supports(a,b,c)        ##create a statically indeterminate beam
+    # beam_2.add_supports(a,b,c)        ##intially create as a statically determinate beam
+    # beam_2.remove_supports(a)         ## remove support a to make beam statically determinate
 
-    ##create load objects
-    load_1 = PointLoad(1,3,45)
-    load_2 = DistributedLoadV(2,(0,1))
-    load_3 = PointTorque(3,4)
+    # ##create load objects
+    # load_1 = PointLoad(1,3,45)
+    # load_2 = DistributedLoadV(2,(0,1))
+    # load_3 = PointTorque(3,4)
 
-    ##add load objects to beams
-    beam_1.add_loads(load_1,)
-    beam_1.add_loads(load_2,load_3)
-    beam_2.add_loads(load_1, load_2, load_3)
-    beam_2.remove_loads((load_2,))
+    # ##add load objects to beams
+    # beam_1.add_loads(load_1,)
+    # beam_1.add_loads(load_2,load_3)
+    # beam_2.add_loads(load_1, load_2, load_3)
+    # beam_2.remove_loads((load_2,))
 
-    ##compute solutions for beams
-    print("TIME TO ANALYSE")
-    beam_1.analyse()
-    beam_2.analyse()
-    print("ALL DONE")
-    beam_1.plot()
+    # ##compute solutions for beams
+    # print("TIME TO ANALYSE")
+    # beam_1.analyse()
+    # beam_2.analyse()
+    # print("ALL DONE")
+    # beam_1.plot()
+    # beam = Beam(6)
+
+    # a = Support(0,(1,1,0))
+    # c = Support(6,(0,1,0))
+
+    # beam.add_supports(a,c)
+    # beam.add_loads(PointLoadV(-15,3))
+
+    # beam.analyse()
+
+    beam = Beam(5)
+    beam.add_supports(Support(0,(1,1,0)), Support(5,(0,1,0)))
+    beam.add_loads(PointLoad(-15,2.5,90))
+
+    beam.analyse()
+    beam.plot()
+        
