@@ -3,7 +3,7 @@ __pycache__
 indeterminatebeam/__pycache__
 
 ipynb_renumber.py
-docs/build
+docs/_build
 
 dist/
 
