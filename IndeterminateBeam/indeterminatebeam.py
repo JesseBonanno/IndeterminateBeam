@@ -278,11 +278,14 @@ class Beam:
         A list containing x coordinates that are to have values explicitly written on graphs.
     _supports: list
         A list of support objects associated with the beam.
-    _reactions: dictionary of lists
+    _reactions_plot_tuples: dictionary of lists
         A dictionary where the first key is either 'x', 'y' or 'm'. Each value associated with
         these keys is a list of tuples where the tuples are (force, position) and can be thought
         of as PointLoadV (for 'y'), PointLoadH (for 'x') or PointTorque (for 'm') objects 
         although it isnt explicitly defined.
+    reactions: dictionary of lists
+        A dictionary with keys for support positions. Each key is associated with a list of forces
+        of the form ['x','y','m']
 
     _E: float
         Young's Modulus of the beam (N/mm2 or MPa)
@@ -332,13 +335,15 @@ class Beam:
         self._loads = []
         self._distributed_forces_x = []
         self._distributed_forces_y = []
+        
         self._normal_forces = []
         self._shear_forces = []
         self._bending_moments = []
 
         self._query = []
         self._supports = []
-        self._reactions = {'x':[], 'y':[], 'm':[]}
+        self._reactions_plot_tuple = {'x':[], 'y':[], 'm':[]}
+        self.reactions = {}
         
         self._E = E
         self._I = I
@@ -385,7 +390,7 @@ class Beam:
 
         self._update_loads()
 
-    def remove_loads(self, *loads):
+    def remove_loads(self, *loads, remove_all = False):
         """Remove an arbitrary list of (point- or distributed) loads from the beam.
 
         Parameters
@@ -393,8 +398,15 @@ class Beam:
         loads : iterable
             An iterable containing DistributedLoad or PointLoad objects to
             be removed from the Beam object. If object not on beam then does nothing.
+        remove_all: boolean
+            If true all loads associated with beam will be removed.
 
         """
+        if remove_all:
+            self._loads = []
+            self._update_loads()
+            return None
+
         for load in loads:
             if isinstance(load,PointLoad):
                 force, position, angle = load
@@ -436,7 +448,7 @@ class Beam:
             else:
                 raise ValueError(f"This coordinate {support._position} already has a support associated with it")
 
-    def remove_supports(self, *ids):
+    def remove_supports(self, *supports, remove_all = False):
         """Remove an arbitrary list of supports (Support objects) from the beam.
 
         Parameters
@@ -444,10 +456,16 @@ class Beam:
         ids : iterable
             An iterable containing either Support objects or Support object ids to
             be removed from the Beam object. If support not on beam then does nothing.
+        remove_all: boolean
+            If true all supports associated with beam will be removed.
 
         """
+        if remove_all:
+            self._supports = []
+            return None
+
         for support in self._supports:
-            if support._id in ids or support in ids:
+            if support._id in supports or support in supports:
                 self._supports.remove(support)
     ##does not display error if ask to remove somethign that isnt there, is this okay?
 
@@ -590,7 +608,8 @@ class Beam:
                     unknowns_x[start][0]/unknowns_x[start][1] - \
                     unknowns_x[position][0]/unknowns_x[position][1]   ##represents elongation displacment on right
                     )
-                    
+        
+        ##compute analysis with linsolve
         solutions_ym = list(linsolve(equations_ym, unknowns_ym))[0]
         solutions_xx = list(linsolve(equations_xx, unknowns_xx))[0]
         
@@ -598,18 +617,27 @@ class Beam:
 
         solution_dict = dict(zip(unknowns_ym+unknowns_xx, solutions))
 
-        self._reactions = {'x': [], 'y': [], 'm': []}
+        self._reactions_plot_tuple = {'x': [], 'y': [], 'm': []}
 
+        ##substitue in value instead of variable in functions
         for var, ans in solution_dict.items():
             v_EI = v_EI.subs(var,ans) ##complete deflection equation
             M_i  = M_i.subs(var,ans)  ##complete moment equation
             F_i  = F_i.subs(var,ans)  ##complete shear force equation
             N_i = N_i.subs(var,ans)   ##complete normal force equation
 
+            ##create self._reactions_plot_tuple to allow for plotting of reaction forces if wanted.
             if var not in [C1,C2]:
                 vec, num = str(var).split('_')
                 position = [a._position for a in self._supports if a._id == int(num)][0]
-                self._reactions[vec].append((float(ans), position))
+                self._reactions_plot_tuple[vec].append((float(ans), position))
+
+        ##create self.reactions, to allow for user to get reactions at a point      
+        self.reactions = {a._position : [0,0,0] for a in self._supports}
+        for i, a in enumerate(['x','y','m']):
+            if self._reactions_plot_tuple[a]:
+                for f,p in self._reactions_plot_tuple[a]:
+                    self.reactions[p][i] = round(f,5)
 
         ##moment unit is kn.m, dv_EI kn.m2, v_EI Kn.m3 --> *10^3, *10^9 to get base units 
         ## EI unit is N/mm2 , mm4 --> N.mm2
@@ -806,15 +834,21 @@ class Beam:
             else:
                 return ValueError("Not a point on beam")
 
-    def remove_query_points(self, *x_coords):
+    def remove_query_points(self, *x_coords, remove_all=False):
         """Remove a query point added by add_query_points function.
 
         Parameters
         ----------
         x_coord: list
             The x_coordinates on the beam to be removed from query on plot.
+        remove_all: boolean
+            if true all query points will be removed.
 
         """
+        if remove_all:
+            self._query = []
+            return None
+
         for x_coord in x_coords:
             if x_coord in self._query:
                 self._query.remove(x_coord)
@@ -1239,9 +1273,9 @@ class Beam:
         plm = [a for a in self._point_torques()]
         
         if draw_reactions:
-            ply += self._reactions['y']
-            plx += self._reactions['x']
-            plm += self._reactions['y']
+            ply += self._reactions_plot_tuple['y']
+            plx += self._reactions_plot_tuple['x']
+            plm += self._reactions_plot_tuple['m']
 
         for load in ply:
             x0 = x1 = load[1]
@@ -1392,6 +1426,9 @@ class Beam:
 if __name__ == "__main__":
     # ##intialise a beam object
     beam_1 = Beam(5)            ##intialises a 5m long beam (assuming E = 2*10^5, I = )
+    beam_1.add_query_points(1,3,5)
+    beam_1.remove_query_points(3)
+    
     beam_2 = Beam(5, E=1, I=1)
 
     ##create support objects
