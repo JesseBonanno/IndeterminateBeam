@@ -18,72 +18,86 @@ from matplotlib.patches import Arc, Polygon, Rectangle, RegularPolygon, Wedge, C
 from matplotlib.collections import PatchCollection
 import numpy as np
 import os
-from sympy import integrate, lambdify, Piecewise, sympify, symbols, linsolve, sin, cos
+from sympy import integrate, lambdify, Piecewise, sympify, symbols, linsolve, sin, cos,oo
 from sympy.abc import x
 from math import radians 
-    
+from data_validation import assert_number, assert_positive_number
+
 class Support:
     """
     A class to represent a support.
 
     Attributes:
-    ---------------
-        coord: (int)
+    -------------
+        _position: float
             x coordinate of support on a beam (default 0)
-        DOF: (tuple of 3 bools) 
-            Degrees of freedom on a beam for movement in x, y and bending, 
-            1 represents fixed and 0 represents free (default (1,1,1))
+        _stiffness: tuple of 3 floats or infinity
+            stiffness K (kN/mm) for movement in x, y and bending, oo represents infinity in sympy
+            and means a completely fixed conventional support, and 0 means free to move.
+        _DOF : tuple of 3 booleans
+            Degrees of freedom that are fixed on a beam for movement in x, y and bending, 1 
+            represents that a reaction force exists and 0 represents free (default (1,1,1))
+        _id : positive number
+            id assigned when support associated with Beam object, to help remove supports.
 
     Examples
     --------
     >>> Support(0, (1,1,1))  ##creates a fixed suppot at location 0
     >>> Support(5, (1,1,0))  ##creatse a pinned support at location 5
     >>> Support(5.54, (0,1,0))  ##creates a roller support at location 5.54
+    >>> Support(7.5, (0,1,0), ky = 5)  ##creates a y direction spring support at location 7.5
     """
 
-    def __init__(self, coord=0, DOF=(1,1,1)):
+    def __init__(self, coord=0, fixed =(1,1,1), kx = None, ky = None):
         """
-        Constructs all the necessary attributes for the support object
+        Constructs all the necessary attributes for the Support object
 
-        Attributes:
+        Parameters:
         -----------
-        coord: (int)
+        coord: float
             x coordinate of support on a beam (default 0)
-        DOF: (tuple of 3 bools) 
-            Degrees of freedom on a beam for movement in x, y and bending, 
-            1 represents fixed and 0 represents free (default (1,1,1))
-
+            (default not 0.0 due to a float precision error that previously occured)
+        fixed: tuple of 3 booleans
+            Degrees of freedom that are fixed on a beam for movement in x, y and 
+            bending, 1 represents fixed and 0 represents free (default (1,1,1))
+        kx : 
+            stiffness of x support (kN/mm), if set will overide the value placed in the fixed tuple. (default = None)
+        ky : (positive number)
+            stiffness of y support (kN/mm), if set will overide the value placed in the fixed tuple. (default = None)
         """
-        if type(coord) not in [int, float]:
-            raise ValueError("coord should be an integer or a float")
-        if coord<0:
-            raise ValueError("coord should be greater than 0")
+        ##input validation
+        assert_positive_number(coord, 'coordinate')
 
-        self._position = coord
+        if kx:
+            assert_positive_number(kx, 'kx')
+        if ky:
+            assert_positive_number(ky, 'ky')
 
-        for a in DOF:
+        for a in fixed:
             if a not in [0,1]:
-                raise ValueError("The provided DOF, must be a tuple of BOOLS of length 3")
-        if len(DOF) != 3:
-            raise ValueError("The provided DOF, must be a tuple of BOOLS of length 3")
+                raise ValueError("The provided DOF, must be a tuple of booleans of length 3")
+        if len(fixed) != 3:
+            raise ValueError("The provided DOF, must be a tuple of booleans of length 3")
 
-        self._DOF = DOF
+        ##lets change our formulation so that now our springs are represented 
+        self._stiffness = [oo if a else 0 for a in fixed]
+
+        if kx:
+            self._stiffness[0] = kx
+        if ky:
+            self._stiffness[1] = ky
+
+        self._DOF = [int(bool(e)) for e in self._stiffness]
+        self._position = coord
         self._id = None
-        self._translation = []
-        for a in DOF:
-            if a ==1:
-                self._translation.append("Fixed")
-            else:
-                self._translation.append("Free")
-
 
     def __str__(self):
         return f"""--------------------------------
         id = {self._id}
         position = {float(self._position)}
-        Translation_x = {self._translation[0]}
-        Translation_y = {self._translation[1]}
-        Translation_M = {self._translation[2]} """
+        Stiffness_x = {self._stiffness[0]}
+        Stiffness_y = {self._stiffness[1]}
+        Stiffness_M = {self._stiffness[2]} """
 
     def __repr__(self):
         if self._id:
@@ -96,9 +110,14 @@ class Support:
 class PointLoad(namedtuple("PointLoad", "force, coord, angle")):
     """Point load described by a tuple of floats: (force, coord, angle).
 
-    Force: force in kN
-    coord: x coordinate of load on beam
-    angle: angle of point load in range 0 to 180 where: 
+    Parameters:
+    -----------
+    Force: float
+        Force in kN
+    coord: float 
+        x coordinate of load on beam
+    angle: float (between 0 and 180)
+        angle of point load in range 0 to 180 where: 
         - 0 degrees is purely horizontal +ve
         - 90 degrees is purely vertical +ve
         - 180 degrees is purely horizontal -ve of force sign specified.
@@ -115,8 +134,12 @@ class PointLoad(namedtuple("PointLoad", "force, coord, angle")):
 class PointLoadV(namedtuple("PointLoadV", "force, coord")):
     """Vertical point load described by a tuple of floats: (force, coord).
     
-    Force: force in kN
-    coord: x coordinate of load on beam
+    Parameters:
+    -----------
+    Force: float
+        Force in kN
+    coord: float 
+        x coordinate of load on beam
 
     Examples
     --------
@@ -128,8 +151,13 @@ class PointLoadV(namedtuple("PointLoadV", "force, coord")):
 class PointLoadH(namedtuple("PointLoadH", "force, coord")):
     """Horizontal point load described by a tuple of floats: (force, coord).
 
-    Force: force in kN
-    coord: x coordinate of load on beam
+    Parameters:
+    -----------
+    Force: float
+        Force in kN
+    coord: float 
+        x coordinate of load on beam
+
 
     Examples
     --------
@@ -141,19 +169,47 @@ class PointLoadH(namedtuple("PointLoadH", "force, coord")):
 class DistributedLoadV(namedtuple("DistributedLoadV", "expr, span")):
     """Distributed vertical load, described by its functional form and application interval.
 
+    Parameters:
+    -----------
+    expr: sympy expression
+        Sympy expression of the distributed load function expressed using variable x
+        which represents the beam x-coordinate. Requires quotation marks around expression.
+    span: tuple of floats
+        A tuple containing the starting and ending coordinate that the function is applied to.
+
+
     Examples
     --------
     >>> snow_load = DistributedLoadV("10*x+5", (0, 2))  # Linearly growing load for 0<x<2 m
-    >>> trapezoidal_load = DistributedLoadV("-5 + 10 * x), (1,2)) # Linearly growing load starting at 5kN/m ending at 15kn/m 
+    >>> trapezoidal_load = DistributedLoadV("-5 + 10 * x", (1,2)) # Linearly growing load starting at 5kN/m ending at 15kn/m 
     >>> UDL = DistributedLoadV(10, (1,3))
     """
 
 class DistributedLoadH(namedtuple("DistributedLoadH", "expr, span")):
     """Distributed horizontal load, described by its functional form and application interval.
+
+    Parameters:
+    -----------
+    expr: sympy expression
+        Sympy expression of the distributed load function expressed using variable x
+        which represents the beam x-coordinate. Requires quotation marks around expression.
+    span: tuple of floats
+        A tuple containing the starting and ending coordinate that the function is applied to.
+
+        Examples
+    --------
+    >>> weight = DistributedLoadH("10*x+5", (0, 2))  # Linearly growing load for 0<x<2 m
     """
 
 class PointTorque(namedtuple("PointTorque", "torque, coord")):
     """Point clockwise torque, described by a tuple of floats: (torque, coord).
+
+    Parameters:
+    -----------
+    torque: float
+        Torque in kN.m
+    coord: float 
+        x coordinate of torque on beam
 
     Examples
     --------
@@ -161,31 +217,114 @@ class PointTorque(namedtuple("PointTorque", "torque, coord")):
     
     """
 
+def TrapezoidalLoad(force = (0, 0), span = (0, 0)):
+    """Wrapper for the DistributedLoadV class, used to express a trapezoidal load distribution.
+
+    Parameters
+    ------------
+        force : tuple of two floats
+            Describes the starting force value and ending force value (kN/m)
+        span : tuple of two floats
+            Describes the starting coordinate value and ending coordinate value (m)
+
+    Examples
+    --------
+    >>> trapezoidal_load = TrapezoidalLoad((5,15), (1,2)) # Linearly growing load starting at 5kN/m ending at 15kn/m
+    >>> trapezoidal_load = DistributedLoadV("-5 + 10 * x", (1,2)) #Equivalent expression created using DistributedLoadV
+    """
+
+    if len(force) != 2 or len(span) != 2:
+        raise TypeError("A tuple of length 2 is required for both the force and span arguments")
+
+    start_load, end_load = force
+    start_coordinate, end_coordinate = span
+
+    assert_number(start_load, "force[0] (The starting force)")
+    assert_number(end_load, "force[1] (The ending force)")
+    assert_number(start_coordinate, "span[0] (The starting coordinate) ")
+    assert_number(end_coordinate, "span[1] (The ending coordinate)")
+
+    a = (end_load - start_load) / (end_coordinate - start_coordinate)
+    b = start_load - start_coordinate  *a
+
+    return DistributedLoadV(f"{a}*x+{b}", (start_coordinate, end_coordinate))
 
 class Beam:
     """
     Represents a one-dimensional beam that can take axial and tangential loads.
 
-    Parameters
-    ----------
-    span : float or int
-        Length of the beam span. Must be positive, and the pinned and rolling
-        supports can only be placed within this span. The default value is 10.
-    E: float or int
-        Youngs modulus for the beam. The default value is 200 000 MPa, which
-        is the youngs modulus for steel.
-    I: float or int
-        Second moment of area for the beam about the z axis. The default value
-        is 60 000 000 mm4.
-    
+    Attributes
+    --------------
+    _x0 :float
+        Left end coordinate of beam. This module always takes this value as 0.
+    _x1 :float
+        Right end coordinate of beam. This module always takes this to be the same as the beam span.
+
+    _loads: list
+        list of load objects associated with the beam
+    _distributed_forces_x: list
+        list of distributed forces implemented as piecewise functions
+    _distributed_forces_y:
+        list of distributed forces implemented as piecewise functions
+
+    _normal_forces: sympy piecewise function
+        A sympy function representing the internal axial force as a function of x.
+    _shear_forces: sympy piecewise function
+        A sympy function representing the internal shear force as a function of x.
+    _bending_moments: sympy piecewise function
+        A sympy function representing the internal bending moments as a function of x.
+
+    _query: list
+        A list containing x coordinates that are to have values explicitly written on graphs.
+    _supports: list
+        A list of support objects associated with the beam.
+    _reactions: dictionary of lists
+        A dictionary where the first key is either 'x', 'y' or 'm'. Each value associated with
+        these keys is a list of tuples where the tuples are (force, position) and can be thought
+        of as PointLoadV (for 'y'), PointLoadH (for 'x') or PointTorque (for 'm') objects 
+        although it isnt explicitly defined.
+
+    _E: float
+        Young's Modulus of the beam (N/mm2 or MPa)
+    _I: float
+        Second Moment of Area of the beam (mm4)
+    _A: float
+        Cross-sectional area of the beam (mm2)
+
     Notes
     -----
-    * The default units package units for length, force and bending moment 
-      (torque) are respectively (m, kN, kN·m)
+    * The default units for length, force and bending moment 
+      (torque) are in kN and m (m, kN, kN·m)
+    * The default units for beam properties (E, I, A) are in N and mm 
+       (N/mm2, mm4, mm2)
+    * The default unit for spring supports is kN/mm
+    * Default properties are for a 150UB18.0 steel beam.
     """
-     
-    def __init__(self, span: float=10, E = 2*10**5, I= 9.05*10**6):
-        """Initializes a Beam object of a given length. """
+
+    def __init__(self, span: float=10, E = 2*10**5, I= 9.05*10**6, A = 2300):
+        """Initializes a Beam object of a given length.
+        
+        Parameters
+        ----------
+        span : float
+            Length of the beam span. Must be positive, and the pinned and rolling
+            supports can only be placed within this span. The default value is 10.
+        E: float
+            Youngs modulus for the beam. The default value is 200 000 MPa, which
+            is the youngs modulus for steel.
+        I: float
+            Second moment of area for the beam about the z axis. The default value
+            is 905 000 000 mm4.
+        A: float
+            Cross-sectional area for the beam about the z axis. The default value
+            is 2300 mm4.
+        """
+
+        assert_positive_number(span, 'span')
+        assert_positive_number(E, "Young's Modulus (E)")
+        assert_positive_number(I, 'Second Moment of Area (I)')
+        assert_positive_number(A, 'Area (A)')
+
 
         self._x0 = 0
         self._x1 = span
@@ -203,7 +342,8 @@ class Beam:
         
         self._E = E
         self._I = I
-    
+        self._A = A
+
     def add_loads(self, *loads):
         """Apply an arbitrary list of (point- or distributed) loads to the beam.
 
@@ -215,8 +355,8 @@ class Beam:
             (or segment) must be within the Beam span.
 
         """
-        for load in loads:
-            if type(load[1]) ==tuple:
+        for load in loads:          
+            if isinstance(load[1],tuple):
                 left = min(load[1])
                 right = max(load[1])
             else:
@@ -225,23 +365,24 @@ class Beam:
                 raise ValueError(f"{load[1]} is not a point on beam")
 
             supported_load_types = (DistributedLoadH, DistributedLoadV, PointLoadH, PointLoadV, PointTorque)
+
             if isinstance(load, supported_load_types):
                 self._loads.append(load)
+
             elif isinstance(load,PointLoad):
                 force, position, angle = load
-
+                assert_number(angle, 'angle')
                 if angle > 180 or angle <0:
                     raise ValueError('Angle should be between 0 and 180 degrees')
-
                 load_y = PointLoadV(sympify(force*sin(radians(angle))).evalf(10), position)     ###when angle = 90 then force is 1
                 load_x = PointLoadH(sympify(force*cos(radians(angle))).evalf(10), position)     ##when angle = 0 then force is 1
-
                 if abs(round(load_x.force,3)) >0:
                     self._loads.append(load_x)
                 if abs(round(load_y.force,3)) >0:
                     self._loads.append(load_y)
             else:
                 raise TypeError("The provided loads must be one of the supported types: {0}".format(supported_load_types))
+
         self._update_loads()
 
     def remove_loads(self, *loads):
@@ -280,7 +421,7 @@ class Beam:
         """
         for support in supports:
             if not isinstance(support, Support):
-                raise ValueError("support must be of type class Support")
+                raise TypeError("support must be of type class Support")
             
             if self._x0 > support._position or support._position > self._x1:
                 return ValueError("Not a point on beam")
@@ -320,7 +461,16 @@ class Beam:
 
     ##SECTION - ANALYSE
     def check_determinancy(self):
-        """Check the determinancy of the beam. If 0 then beam is determinate."""
+        """Check the determinancy of the beam.
+        
+        Returns
+        ---------
+        int
+            < 0 if the beam is unstable
+            0 if the beam is statically determinate
+            > 0 if the beam is statically indeterminate
+        
+        """
 
         unknowns = np.array([0,0,0])
         equations = 3
@@ -349,61 +499,65 @@ class Beam:
     def analyse(self):
         """Solve the beam structure for reaction and internal forces  """
 
-        x0, x1 = self._x0, self._x1
+        x0,x1 = self._x0, self._x1
 
         ##create unknown sympy variables
-        unknowns_x = [(symbols("x_"+str(a._id)), a._position) for a in self._supports if a._DOF[0] !=0]
-        unknowns_y = [(symbols("y_"+str(a._id)), a._position) for a in self._supports if a._DOF[1] !=0]
-        unknowns_m = [(symbols("m_"+str(a._id)), a._position) for a in self._supports if a._DOF[2] !=0]
+        unknowns_x = {a._position: [symbols("x_"+str(a._id)), a._stiffness[0]] for a in self._supports if a._stiffness[0] !=0}
+        unknowns_y = {a._position: [symbols("y_"+str(a._id)), a._stiffness[1]] for a in self._supports if a._stiffness[1] !=0}
+        unknowns_m = {a._position: [symbols("m_"+str(a._id)), a._stiffness[2]] for a in self._supports if a._stiffness[2] !=0}
 
-        ##need to know locations where moment is fixed 
-        dv_0 = [a._position for a in self._supports if a._DOF[2] == 1]
+        ##grab the set of all the sympy unknowns for y and m and change to a list, do same for x unknowns
+        unknowns_ym = [a[0] for a in unknowns_y.values()] + [a[0] for a in unknowns_m.values()]
+        unknowns_xx = [a[0] for a in unknowns_x.values()]
 
-        ##need to know locations where y is fixed
-        v_0  = [a._position for a in self._supports if a._DOF[1] == 1]
+        ##Assert that there are enough supports. Even though it logically works to have no x support if you have no
+        ## x loading, it works much better in the program and makes the code alot shorter to just enforce that an x support is 
+        ## there, even when there is no load.
+        if len(unknowns_xx) < 1:
+            raise ValueError('You need at least one x restraint, even if there are no x forces')
 
-        ##locations where x is fixed and order
-        x_0 = [a._position for a in self._supports if a._DOF[0] == 1]
+        if len(unknowns_ym) <2 :
+            raise ValueError('You need at least two y or m restraints, even if there are no y or m forces')
+
+        ##locations where x reaction is and order, for indeterminate axial determaintion
+        x_0 = [a for a in unknowns_x.keys()]
         x_0.sort()
-
-        ##grab the set of all the sympy unknowns for y and m and change to a list
-        unknowns = [a[0] for a in unknowns_y + unknowns_m]
 
         ##external reaction equations
         F_Rx = sum(integrate(load, (x, x0, x1)) for load in self._distributed_forces_x) + \
             sum(f.force for f in self._point_loads_x()) + \
-            sum([a[0] for a in unknowns_x])   
+            sum([a[0] for a in unknowns_x.values()])   
 
         F_Ry = sum(integrate(load, (x, x0, x1)) for load in self._distributed_forces_y) + \
                sum(f.force for f in self._point_loads_y()) + \
-               sum([a[0] for a in unknowns_y])
+               sum([a[0] for a in unknowns_y.values()])
 
         ##moments taken at the left of the beam, anti-clockwise is positive
         M_R = sum(integrate(load * x, (x, x0, x1)) for load in self._distributed_forces_y) + \
             sum(f.force * f.coord for f in self._point_loads_y()) + \
-            sum([f[0]*f[1] for f in unknowns_y]) + \
+            sum([p*v[0] for p,v in unknowns_y.items()]) + \
             sum(f.torque for f in self._point_torques()) + \
-            sum([a[0] for a in unknowns_m])
+            sum([a[0] for a in unknowns_m.values()])
 
         ##internal beam equations
         C1, C2 = symbols('C1'), symbols('C2')
-        unknowns = unknowns + [C1] +[C2]
+        unknowns_ym = unknowns_ym + [C1] +[C2]
 
-        ##normal forces is same concept as shear forces only 
+        ##normal forces is same concept as shear forces only no distributed for now.
         N_i = sum(self._effort_from_pointload(f) for f in self._point_loads_x()) + \
-               sum(self._effort_from_pointload(PointLoadH(*a)) for a in unknowns_x) 
+               sum(self._effort_from_pointload(PointLoadH(v[0],p)) for p,v in unknowns_x.items()) 
 
         ## shear forces, an internal force acting down would be considered positive by adopted convention
         ##hence if the sum of forces on the beam are all positive, our internal force would also be positive due to difference in convention
         F_i = sum(integrate(load, x) for load in self._distributed_forces_y) + \
                sum(self._effort_from_pointload(f) for f in self._point_loads_y()) + \
-               sum(self._effort_from_pointload(PointLoadV(*a)) for a in unknowns_y)  
+               sum(self._effort_from_pointload(PointLoadV(v[0],p)) for p,v in unknowns_y.items())  
 
         ##bending moments at internal point means we are now looking left along the beam when we take our moments (vs when we did external external reactions and we looked right)
         ##An anti-clockwise moment is adopted as positive internally. 
         ## Hence we need to consider a postive for our shear forces and negative for our moments by our sign convention
-        M_i = + (integrate(F_i,x)) - \
-            sum(self._effort_from_pointload(PointTorque(*a)) for a in unknowns_m) - \
+        M_i = (integrate(F_i,x)) - \
+            sum(self._effort_from_pointload(PointTorque(v[0],p)) for p,v in unknowns_m.items()) - \
             sum(self._effort_from_pointload(f) for f in self._point_torques())
 
              #with respect to x, + constants but the constants are the M at fixed supports
@@ -414,45 +568,36 @@ class Beam:
 
         
         ##equations , create a lsit fo equations
-        equations = [F_Ry,M_R]
+        equations_ym = [F_Ry,M_R]
 
-        for position in dv_0:
-            equations.append(dv_EI.subs(x,position))
+        ##at location that moment is restaint, the slope is known (to be 0, since dont deal for rotational springs)
+        for position in unknowns_m.keys():
+            equations_ym.append(dv_EI.subs(x,position))
 
-        for position in v_0:
-            equations.append(v_EI.subs(x,position))
+        ##at location that y support is restaint the deflection is known (to be F/k)
+        for position in unknowns_y.keys():
+            equations_ym.append(v_EI.subs(x,position)* 10 **12 /(self._E*self._I) +unknowns_y[position][0]/unknowns_y[position][1])
 
         ##equation for normal forces, only for indeterminate in x
-        equations_x = [F_Rx]
-        unknowns_xx = [a[0] for a in unknowns_x if a[0]!=0]
+        equations_xx = [F_Rx]
 
+        ##the extension of the beam will be equal to the spring displacement on right minus spring displacment on left
         if len(x_0)>1:
+            start = x_0[0]
             for position in x_0[1:]: ##dont consider the starting point? only want to look between supports and not at cantilever sections i think
-                equations_x.append(
-                    integrate(N_i, (x,x_0[0], position)))
-            
-        if unknowns_xx == [] and equations_x ==[0]:
-            solutions_x = []
-
-        elif len(unknowns_xx) > len(equations_x): ##is this even possible
-            print(f"""Unstable in resolving axial forces:
-            equations = {len(equations_x)}
-            unknowns  = {len(unknowns_xx)}""")
-            return 1
-
-        if len(unknowns) > len(equations):
-            print(f"""unstable in resolving forces for y and m:
-            equations = {len(equations)}
-            unknowns  = {len(unknowns)}""")
-            return 2
+                equations_xx.append(
+                    integrate(N_i, (x,x_0[0], position))*10**3 /(self._E*self._A) + \
+                    unknowns_x[start][0]/unknowns_x[start][1] - \
+                    unknowns_x[position][0]/unknowns_x[position][1]   ##represents elongation displacment on right
+                    )
+                    
+        solutions_ym = list(linsolve(equations_ym, unknowns_ym))[0]
+        solutions_xx = list(linsolve(equations_xx, unknowns_xx))[0]
         
-        solutions = list(linsolve(equations, unknowns))
-        solutions_x = list(linsolve(equations_x, unknowns_xx))
+        solutions = [a for a in solutions_ym + solutions_xx]
 
-        solutions = [a for a in solutions[0] + solutions_x[0]]
+        solution_dict = dict(zip(unknowns_ym+unknowns_xx, solutions))
 
-        solution_dict = dict(zip(unknowns+unknowns_xx, solutions))
-        self._solution_dict = solution_dict
         self._reactions = {'x': [], 'y': [], 'm': []}
 
         for var, ans in solution_dict.items():
@@ -482,7 +627,7 @@ class Beam:
         x_coord: list
             The x_coordinates on the beam to be substituted into the equation.
             List returned (if bools all false)
-        sym_func: sympy function?
+        sym_func: sympy function
             The function to be analysed
         return_max: bool
             return max value of function if true
@@ -491,12 +636,19 @@ class Beam:
         return_absmax: bool
             return absolute max value of function if true
 
+        Returns
+        --------
+        int
+            Max, min or absmax value of the sympy function depending on which parameters are set.
+        list of ints
+            If x-coordinate(s) are specfied value of sym_func at x-coordinate(s).
+
         Notes
         -----
-        * Priority of query parameters is return_max, return_min, return_absmax, x_coord.
+        * Priority of query parameters is return_max, return_min, return_absmax, x_coord (if more than 1 of the parameters are specified).
 
         """
-        if type(sym_func) == list:
+        if isinstance(sym_func, list):
             sym_func = sum(sym_func)
         func = lambdify(x, sym_func, "numpy")  
         
@@ -510,7 +662,7 @@ class Beam:
         y_vec = np.array([func(t) for t in x_vec])  
         min_ = float(y_vec.min())
         max_ = float(y_vec.max())
-
+ 
         if return_max:
             return round(max_,3)
         elif return_min:
@@ -520,8 +672,6 @@ class Beam:
 
     def get_bending_moment(self, *x_coord,return_max=False,return_min=False, return_absmax = False):
         """Find the bending moment(s) on the beam object.
-
-         Note: Priority of query parameters is return_max, return_min, return_absmax, x_coord.
 
         Parameters
         ----------
@@ -534,10 +684,17 @@ class Beam:
             return minx value of function if true
         return_absmax: bool
             return absolute max value of function if true
-            
+        
+        Returns
+        --------
+        int
+            Max, min or absmax value of the bending moment function depending on which parameters are set.
+        list of ints
+            If x-coordinate(s) are specfied value of the bending moment function at x-coordinate(s).
+
         Notes
         -----
-        * Priority of query parameters is return_max, return_min, return_absmax, x_coord.
+        * Priority of query parameters is return_max, return_min, return_absmax, x_coord (if more than 1 of the parameters are specified).
 
         """
 
@@ -557,10 +714,17 @@ class Beam:
             return minx value of function if true
         return_absmax: bool
             return absolute max value of function if true
-            
+
+        Returns
+        --------
+        int
+            Max, min or absmax value of the shear force function depending on which parameters are set.
+        list of ints
+            If x-coordinate(s) are specfied value of the shear force function at x-coordinate(s).
+             
         Notes
         -----
-        * Priority of query parameters is return_max, return_min, return_absmax, x_coord.
+        * Priority of query parameters is return_max, return_min, return_absmax, x_coord (if more than 1 of the parameters are specified).
 
         """
 
@@ -580,10 +744,17 @@ class Beam:
             return minx value of function if true
         return_absmax: bool
             return absolute max value of function if true
-            
+         
+        Returns
+        --------
+        int
+            Max, min or absmax value of the normal force function depending on which parameters are set.
+        list of ints
+            If x-coordinate(s) are specfied value of the normal force function at x-coordinate(s).
+                       
         Notes
         -----
-        * Priority of query parameters is return_max, return_min, return_absmax, x_coord.
+        * Priority of query parameters is return_max, return_min, return_absmax, x_coord (if more than 1 of the parameters are specified).
 
         """
         return self._get_query_value(x_coord, sym_func =self._normal_forces, return_max = return_max, return_min = return_min, return_absmax=return_absmax )
@@ -602,10 +773,17 @@ class Beam:
             return minx value of function if true
         return_absmax: bool
             return absolute max value of function if true
+        
+        Returns
+        --------
+        int
+            Max, min or absmax value of the deflection function depending on which parameters are set.
+        list of ints
+            If x-coordinate(s) are specfied value of the deflection function at x-coordinate(s).
             
         Notes
         -----
-        * Priority of query parameters is return_max, return_min, return_absmax, x_coord.
+        * Priority of query parameters is return_max, return_min, return_absmax, x_coord (if more than 1 of the parameters are specified).
 
         """
 
@@ -664,8 +842,8 @@ class Beam:
         Returns
         -------
         figure : `~matplotlib.figure.Figure`
-            Returns a handle to a figure with the 3 subplots: Beam schematic, 
-            shear force diagram, and bending moment diagram.
+            Returns a handle to a figure with the 5 subplots: Beam schematic, normal force diagram,
+            shear force diagram, bending moment diagram, and deflection diagram.
 
         """
         if switch_axes:
@@ -717,6 +895,11 @@ class Beam:
         ----------
         draw_reactions: bool
             True if want to show the reaction forces in the beam schematic
+
+        Returns
+        -------
+        figure : `~matplotlib.figure.Figure`
+            Returns a handle to a figure with the beam schematic.
         """
 
         plot01_params = {'ylabel': "Beam loads", 'yunits': r'kN / m',
@@ -744,6 +927,11 @@ class Beam:
             True if want a horizontal line displaying the maximum and minimum value reached on the y-axis
         maxmin_vline: bool 
             True if want a vertical line displaying the maximum and minimum value reached on the x-axis
+        
+        Returns
+        -------
+        figure : `~matplotlib.figure.Figure`
+            Returns a handle to a figure with the normal force diagram.
         """
         plot02_params = {'ylabel': "Normal force", 'yunits': r'kN',
                          # 'xlabel':"Beam axis", 'xunits':"m",
@@ -773,6 +961,11 @@ class Beam:
             True if want a horizontal line displaying the maximum and minimum value reached on the y-axis
         maxmin_vline: bool 
             True if want a vertical line displaying the maximum and minimum value reached on the x-axis
+
+        Returns
+        -------
+        figure : `~matplotlib.figure.Figure`
+            Returns a handle to a figure with the shear force diagram.
         """
 
         plot03_params = {'ylabel': "Shear force", 'yunits': r'kN',
@@ -803,6 +996,11 @@ class Beam:
             True if want a horizontal line displaying the maximum and minimum value reached on the y-axis
         maxmin_vline: bool 
             True if want a vertical line displaying the maximum and minimum value reached on the x-axis
+
+        Returns
+        -------
+        figure : `~matplotlib.figure.Figure`
+            Returns a handle to a figure with the bending moment diagram.
         """
 
         plot04_params = {'ylabel': "Bending moment", 'yunits': r'kN·m',
@@ -833,6 +1031,11 @@ class Beam:
             True if want a horizontal line displaying the maximum and minimum value reached on the y-axis
         maxmin_vline: bool 
             True if want a vertical line displaying the maximum and minimum value reached on the x-axis
+
+        Returns
+        -------
+        figure : `~matplotlib.figure.Figure`
+            Returns a handle to a figure with the deflection diagram.
         """
 
         plot05_params = {'ylabel': "Deflection", 'yunits': r'mm',
@@ -855,18 +1058,31 @@ class Beam:
         """
         Auxiliary function for plotting a sympy.Piecewise analytical function.
 
-        :param ax: a matplotlib.Axes object where the data is to be plotted.
-        :param x_vec: array-like, support where the provided symbolic function will be plotted
-        :param sym_func: symbolic function using the variable x
-        :param title: title to show above the plot, optional
-        :param maxmin_hline: when set to False, the extreme values of the function are not displayed
-        :param xunits: str, physical unit to be used for the x-axis. Example: "m"
-        :param yunits: str, phfsysical unit to be used for the y-axis. Example: "kN"
-        :param xlabel: str, physical variable displayed on the x-axis. Example: "Length"
-        :param ylabel: str, physical variable displayed on the y-axis. Example: "Shear force"
-        :param color: color to be used for the shaded area of the plot. No shading if not provided
-        :return: a matplotlib.Axes object representing the plotted data.
+        Parameters
+        -----------
+        ax: matplotlib.Axes
+            A matplotlib.Axes object where the data is to be plotted
+        sym_func: sympy function
+            symbolic function using the variable x
+        title: str
+            title to show above the plot, optional
+        maxmin_hline: bool
+            when set to False, the extreme values of the function are not displayed
+        xunits: str
+            physical unit to be used for the x-axis. Example: "m"
+        yunits: str
+            phsysical unit to be used for the y-axis. Example: "kN"
+        xlabel: str
+            physical variable displayed on the x-axis. Example: "Length"
+        ylabel: str
+            physical variable displayed on the y-axis. Example: "Shear force"
+        color: str
+            color to be used for the shaded area of the plot. No shading if not provided
 
+        Returns
+        -------
+        figure : `~matplotlib.figure.Figure`
+            A matplotlib.Axes object representing the plotted data
         """
         x_vec = np.linspace(self._x0, self._x1, int(min(self._x1 * 1000 + 1, 1e4)))  ## numpy array for x positions closely spaced (allow for graphing)
         y_lam = lambdify(x, sym_func, "numpy")                                          ##i think lambdify is needed to let the function work with numpy
@@ -1162,53 +1378,45 @@ class Beam:
             if isinstance(f, PointTorque):
                 yield f
 
+    def __str__(self):
+        return f"""--------------------------------
+        <Beam>
+        length = {self._x0}
+        unknowns = {str(sum([a._DOF for a in self._supports]))}"""
+#loads = {str(len(self._loads))}
+
+    def __repr__(self):
+        return f"<Beam({self._x0})>"
+
 
 if __name__ == "__main__":
-    # # ##intialise a beam object
-    # beam_1 = Beam(5)            ##intialises a 5m long beam (assuming E = 2*10^5, I = )
-    # beam_2 = Beam(5, E=1, I=1)
+    # ##intialise a beam object
+    beam_1 = Beam(5)            ##intialises a 5m long beam (assuming E = 2*10^5, I = )
+    beam_2 = Beam(5, E=1, I=1)
 
-    # ##create support objects
-    # a = Support(0,(1,1,1))      ##defines a fixed support at point 0m point
-    # b = Support(2,(0,1,0))      ##defines a roller support restaint only in the y direction at 2m point
-    # c = Support(5,(1,1,0))      ##defines pinned support at 5m point
+    ##create support objects
+    a = Support(0,(1,1,1))      ##defines a fixed support at point 0m point
+    b = Support(2,(0,1,0))      ##defines a roller support restaint only in the y direction at 2m point
+    c = Support(5,(1,1,0))      ##defines pinned support at 5m point
 
-    # ##add supports to beam object
-    # beam_1.add_supports(a,b,c)        ##create a statically indeterminate beam
-    # beam_2.add_supports(a,b,c)        ##intially create as a statically determinate beam
-    # beam_2.remove_supports(a)         ## remove support a to make beam statically determinate
+    ##add supports to beam object
+    beam_1.add_supports(a,b,c)        ##create a statically indeterminate beam
+    beam_2.add_supports(a,b,c)        ##intially create as a statically determinate beam
+    beam_2.remove_supports(a)         ## remove support a to make beam statically determinate
 
-    # ##create load objects
-    # load_1 = PointLoad(1,3,45)
-    # load_2 = DistributedLoadV(2,(0,1))
-    # load_3 = PointTorque(3,4)
+    ##create load objects
+    load_1 = PointLoad(1,3,45)
+    load_2 = DistributedLoadV(2,(0,1))
+    load_3 = PointTorque(3,4)
 
-    # ##add load objects to beams
-    # beam_1.add_loads(load_1,)
-    # beam_1.add_loads(load_2,load_3)
-    # beam_2.add_loads(load_1, load_2, load_3)
-    # beam_2.remove_loads((load_2,))
+    ##add load objects to beams
+    beam_1.add_loads(load_1,)
+    beam_1.add_loads(load_2,load_3)
+    beam_2.add_loads(load_1, load_2, load_3)
+    beam_2.remove_loads((load_2,))
 
-    # ##compute solutions for beams
-    # print("TIME TO ANALYSE")
-    # beam_1.analyse()
-    # beam_2.analyse()
-    # print("ALL DONE")
-    # beam_1.plot()
-    # beam = Beam(6)
-
-    # a = Support(0,(1,1,0))
-    # c = Support(6,(0,1,0))
-
-    # beam.add_supports(a,c)
-    # beam.add_loads(PointLoadV(-15,3))
-
-    # beam.analyse()
-
-    beam = Beam(5)
-    beam.add_supports(Support(0,(1,1,0)), Support(5,(0,1,0)))
-    beam.add_loads(PointLoad(-15,2.5,90))
-
-    beam.analyse()
-    beam.plot()
-        
+    ##compute solutions for beams
+    print("TIME TO ANALYSE")
+    beam_1.analyse()
+    beam_2.analyse()
+    print("ALL DONE")

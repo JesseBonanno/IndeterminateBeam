@@ -25,6 +25,7 @@
         <script src="_static/underscore.js"></script>
         <script src="_static/doctools.js"></script>
         <script src="_static/language_data.js"></script>
+        <script async="async" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.7/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
     
     <script type="text/javascript" src="_static/js/theme.js"></script>
 
@@ -88,11 +89,13 @@
 <ul class="current">
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Theory</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#sign-convention">Sign Convention</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#calculation-theory">Calculation Theory</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#indeterminate-vs-determinate-structures">Indeterminate vs Determinate structures</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#indeterminate-calculation-theory">Indeterminate Calculation Theory</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#forces-in-the-x-direction">Forces in the x-direction</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#forces-in-the-y-direction-and-m-direction">Forces in the y-direction and m-direction</a></li>
 </ul>
 </li>
+<li class="toctree-l2"><a class="reference internal" href="#spring-supports">Spring Supports</a></li>
 </ul>
 </li>
 </ul>
@@ -212,13 +215,35 @@
 </div></blockquote>
 <a class="reference internal image-reference" href="_images/angle.jpg"><img alt="angle convention" src="_images/angle.jpg" style="width: 400px;" /></a>
 </div>
-<div class="section" id="calculation-theory">
-<h2>Calculation Theory<a class="headerlink" href="#calculation-theory" title="Permalink to this headline">¶</a></h2>
-<p>The calculation is based upon the slope deflection method for beams for unknown moments and forces in the y direction.
-For unknowns in the x direction compatability equations are used.</p>
-<p>The theory can be read up on in chapter 10.3 of this <a class="reference external" href="http://ocw.nthu.edu.tw/ocw/upload/8/259/Chapter_10-98.pdf">textbook extract</a></p>
-<p>In short, it can be said in algebra that to be able to solve for <strong>n</strong> number of unknowns we will also need <strong>n</strong> number of equations (assuming all equations are independent).</p>
-<p>We know that from simple statics to solve a determinate beam we have three equations, that the sum of external forces in all the indepent directions will equal 0.</p>
+<div class="section" id="indeterminate-vs-determinate-structures">
+<h2>Indeterminate vs Determinate structures<a class="headerlink" href="#indeterminate-vs-determinate-structures" title="Permalink to this headline">¶</a></h2>
+<p>The determinancy of a structure refers to its solvability mathametically with regards to equilibrium equations.</p>
+<p>In maths when dealing with simultaneous equations to be able to solve for <strong>n</strong> number of unknowns we will also need <strong>n</strong> number of equations (assuming all equations are independent).</p>
+<p>For a 1D beam in a 2D space we have 3 equilibrium equations:</p>
+<blockquote>
+<div><ol class="arabic simple">
+<li><p><span class="math notranslate nohighlight">\(\sum F_x = 0\)</span></p></li>
+<li><p><span class="math notranslate nohighlight">\(\sum F_y = 0\)</span></p></li>
+<li><p><span class="math notranslate nohighlight">\(\sum M = 0\)</span></p></li>
+</ol>
+</div></blockquote>
+<p>To be able to solve this structure using equilibrium we can only have at most 3 unknowns. A structure which can be solved only by using these equations is refered to as <cite>statically determinate</cite>.</p>
+<p>The determinancy of a structure is a metric defined as the number of unknown reaction forces - the number of equilibrium equations <cite>available</cite>.</p>
+<p>For a statically determinate beam this value is 0.</p>
+<p>There are also two more possible cases:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>The determinancy is &lt; 0 : In this case the beam is statically <cite>unstable</cite></p></li>
+<li><p>The determinancy is &gt; 0 : In this case the beam is statically <cite>indeterminate</cite></p></li>
+</ul>
+</div></blockquote>
+<p>An <cite>unstable</cite> structure is one which is mathematically unsolvable. In this case our object is likely not actually going to be static as it is but will need more supports introduced.</p>
+<p>An <cite>indeterminate</cite> structure is one which mathematically by equilibrium has multiple possible solutions. This is ideal in engineering since if one reaction is removed our structure still has a chance of standing up.</p>
+<p>We can actually solve for the forces in indeterminate structures, we just have to look beyond the concept of equilibrium and look at geometrical constraints of our structure.</p>
+<p>If you would like for a more detailed explanation of statically determinate structures refer to beambending, the python package upon which this is based upon which deals soley with the statically determinate case.</p>
+</div>
+<div class="section" id="indeterminate-calculation-theory">
+<h2>Indeterminate Calculation Theory<a class="headerlink" href="#indeterminate-calculation-theory" title="Permalink to this headline">¶</a></h2>
 <p>Since our moment equations will never help us to resolve axial forces on our 1D beam, let us consider two indepent systems of indeterminancy:</p>
 <blockquote>
 <div><ol class="arabic simple">
@@ -231,15 +256,20 @@ For unknowns in the x direction compatability equations are used.</p>
 <h3>Forces in the x-direction<a class="headerlink" href="#forces-in-the-x-direction" title="Permalink to this headline">¶</a></h3>
 <p>For a single <strong>x</strong> restraint we can resolve our unknown force by equilibrium.
 When we introduce a second restraint we can use our knowledge that both of these restraints will be fixed in space, and hence the axial deformation between them will amount to 0.</p>
-<p>For forces in the x-direction we can get our axial displacement from:</p>
 <blockquote>
 <div><ul class="simple">
-<li><p>e = (N * L) /( E * A ) OR</p></li>
-<li><p>e = ∫ N(x) / (E(x) * A(x)) dx</p></li>
+<li><p>For additional supports in the x-direction we know that the displacement between these supports will be 0.</p></li>
 </ul>
 </div></blockquote>
-<p>Assuming E*A is constant we can simply integrate our normal force diagram between supports and the result will be 0.
-Hence for each additional support in the x direction we can have a new equation, and we can solve for all our unknowns in the x-direction.</p>
+<p>For forces in the x-direction we can get our axial displacement from:</p>
+<blockquote>
+<div><div class="math notranslate nohighlight">
+\[e = \int_{0}^L \frac{N(x)}{E(x)A(x)}dx\]</div>
+</div></blockquote>
+<p>Assuming E*A is constant we can simply integrate our normal force diagram between supports and the result will be 0.</p>
+<div class="math notranslate nohighlight">
+\[ \begin{align}\begin{aligned}0 &amp;= \int_{sup_b}^{sup_a} \frac{N(x)}{E(x)A(x)}dx\\  &amp;= \int_{sup_b}^{sup_a} {N(x)}dx\end{aligned}\end{align} \]</div>
+<p>Hence for each additional support in the x direction we can have a new equation, and we can solve for all our unknowns in the x-direction.</p>
 </div>
 <div class="section" id="forces-in-the-y-direction-and-m-direction">
 <h3>Forces in the y-direction and m-direction<a class="headerlink" href="#forces-in-the-y-direction-and-m-direction" title="Permalink to this headline">¶</a></h3>
@@ -253,16 +283,40 @@ When we introduce an additional unknown we can use the following geometrical inf
 </div></blockquote>
 <p>We can get slope and vertical displacement equations by integrating the moment equation with respect to x.</p>
 <blockquote>
+<div><div class="math notranslate nohighlight">
+\[EIv''(x) = M\]</div>
+<div class="math notranslate nohighlight">
+\[EIv'(x)  = \int M(x)dx + C_1\]</div>
+<div class="math notranslate nohighlight">
+\[EIv(x)   = \iint M(x)dx + C_1*x + C_2\]</div>
+</div></blockquote>
+<p>This introduces two new unknowns, <span class="math notranslate nohighlight">\(C_1\)</span> and <span class="math notranslate nohighlight">\(C_2\)</span>, which are the constants for integration.
+Luckily, we still have our two equilibrium equations so we can solve for the integration constants.</p>
+<p>In order to establish the internal moment equation <span class="math notranslate nohighlight">\(M(x)\)</span> as a single equation piecewise functions are a helpful mathematical tool, and are used frequently in the python package solution.</p>
+</div>
+</div>
+<div class="section" id="spring-supports">
+<h2>Spring Supports<a class="headerlink" href="#spring-supports" title="Permalink to this headline">¶</a></h2>
+<p>Let me now introduce Hooke’s Law, which states that a spring will deform proportionally to a force applied to it based on its stiffness. Mathematically this is expressed as:</p>
+<blockquote>
+<div><div class="math notranslate nohighlight">
+\[F = -k * u\]</div>
+</div></blockquote>
+<p>where k is a constant value that represents the stiffness of the spring.</p>
+<p>Okay so in our solution for indeterminate beams we used the geometrical constraint that the displacment of our supports (u) will be 0.
+No matter what force the displacement will be 0, and so by Hooke’s law we can see that we have idealised that our support has infinite stiffness.</p>
+<p>On the other extreme if we said our sping had 0 stiffness ie. k = 0, then no matter how much the beam deflects at that support it will not resist any force.
+Ie. there is no reaction, and the support does not actually exist, at least, as a support.</p>
+<p>These are two extreme cases but what if we want to simulate a realistic value, one which isnt approaching some extreme case?</p>
+<p>Well then we can reconsider our previous geometric constraints:</p>
+<blockquote>
 <div><ul class="simple">
-<li><p>EIv’’ = M</p></li>
-<li><p>EIv’  = ∫ M dx + C1</p></li>
-<li><p>EIv   = ∫∫ M dx dx + C1*x + C2</p></li>
+<li><p>For additional supports in the y-direction we know that the vertical displacement will be <span class="math notranslate nohighlight">\(F_{y}/k_{y}\)</span></p></li>
+<li><p>For additional supports in the x-direction we know that the displacement between these supports will be <span class="math notranslate nohighlight">\(F_{x2}/k_{x2} - F_{x1}/K_{x1}\)</span></p></li>
 </ul>
 </div></blockquote>
-<p>This introduces two new unknowns, C1 and C2, which are the constants for integration.
-Luckily, we still have our two equilibrium equations so we can solve for the integration constants.</p>
-<p>In order to establish the internal moment equation (M) as a single equation piecewise functions are helpful.</p>
-</div>
+<p>We have not added any more unknowns, we still have the same equations only with a new term within. Hence our indeterminate solution is still perfectly solvable.
+Unlike before however, our bending rigidity EI will now affect our reaction forces in our y-m solution and our axial stiffness EA will now our affect our results for our x-force solution.</p>
 </div>
 </div>
 

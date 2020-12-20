@@ -25,6 +25,7 @@
         <script src="_static/underscore.js"></script>
         <script src="_static/doctools.js"></script>
         <script src="_static/language_data.js"></script>
+        <script async="async" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.7/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
     
     <script type="text/javascript" src="_static/js/theme.js"></script>
 
@@ -188,14 +189,19 @@ PointLoadV, DistributedLoadH, and DistributedLoadV, PointLoad and PointTorque.</
 <h2>Support<a class="headerlink" href="#support" title="Permalink to this headline">¶</a></h2>
 <dl class="py class">
 <dt id="indeterminatebeam.Support">
-<em class="property">class </em><code class="sig-prename descclassname">indeterminatebeam.</code><code class="sig-name descname">Support</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">coord</span><span class="o">=</span><span class="default_value">0</span></em>, <em class="sig-param"><span class="n">DOF</span><span class="o">=</span><span class="default_value">(1, 1, 1)</span></em><span class="sig-paren">)</span><a class="headerlink" href="#indeterminatebeam.Support" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="sig-prename descclassname">indeterminatebeam.</code><code class="sig-name descname">Support</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">coord</span><span class="o">=</span><span class="default_value">0</span></em>, <em class="sig-param"><span class="n">fixed</span><span class="o">=</span><span class="default_value">(1, 1, 1)</span></em>, <em class="sig-param"><span class="n">kx</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">ky</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#indeterminatebeam.Support" title="Permalink to this definition">¶</a></dt>
 <dd><p>A class to represent a support.</p>
 <blockquote>
 <div><dl class="simple">
-<dt>coord: (int)</dt><dd><p>x coordinate of support on a beam (default 0)</p>
+<dt>_position: float</dt><dd><p>x coordinate of support on a beam (default 0)</p>
 </dd>
-<dt>DOF: (tuple of 3 bools)</dt><dd><p>Degrees of freedom on a beam for movement in x, y and bending,
-1 represents fixed and 0 represents free (default (1,1,1))</p>
+<dt>_stiffness: tuple of 3 floats or infinity</dt><dd><p>stiffness K (kN/mm) for movement in x, y and bending, oo represents infinity in sympy
+and means a completely fixed conventional support, and 0 means free to move.</p>
+</dd>
+<dt>_DOF<span class="classifier">tuple of 3 booleans</span></dt><dd><p>Degrees of freedom that are fixed on a beam for movement in x, y and bending, 1
+represents that a reaction force exists and 0 represents free (default (1,1,1))</p>
+</dd>
+<dt>_id<span class="classifier">positive number</span></dt><dd><p>id assigned when support associated with Beam object, to help remove supports.</p>
 </dd>
 </dl>
 </div></blockquote>
@@ -203,8 +209,27 @@ PointLoadV, DistributedLoadH, and DistributedLoadV, PointLoad and PointTorque.</
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">Support</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">))</span>  <span class="c1">##creates a fixed suppot at location 0</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">Support</span><span class="p">(</span><span class="mi">5</span><span class="p">,</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">0</span><span class="p">))</span>  <span class="c1">##creatse a pinned support at location 5</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">Support</span><span class="p">(</span><span class="mf">5.54</span><span class="p">,</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">0</span><span class="p">))</span>  <span class="c1">##creates a roller support at location 5.54</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">Support</span><span class="p">(</span><span class="mf">7.5</span><span class="p">,</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">0</span><span class="p">),</span> <span class="n">ky</span> <span class="o">=</span> <span class="mi">5</span><span class="p">)</span>  <span class="c1">##creates a y direction spring support at location 7.5</span>
 </pre></div>
 </div>
+</dd></dl>
+
+<dl class="py function">
+<dt id="indeterminatebeam.Support.__init__">
+<code class="sig-prename descclassname">indeterminatebeam.Support.</code><code class="sig-name descname">__init__</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">self</span></em>, <em class="sig-param"><span class="n">coord</span><span class="o">=</span><span class="default_value">0</span></em>, <em class="sig-param"><span class="n">fixed</span><span class="o">=</span><span class="default_value">(1, 1, 1)</span></em>, <em class="sig-param"><span class="n">kx</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">ky</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#indeterminatebeam.Support.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Constructs all the necessary attributes for the Support object</p>
+<dl class="simple">
+<dt>coord: float</dt><dd><p>x coordinate of support on a beam (default 0)
+(default not 0.0 due to a float precision error that previously occured)</p>
+</dd>
+<dt>fixed: tuple of 3 booleans</dt><dd><p>Degrees of freedom that are fixed on a beam for movement in x, y and
+bending, 1 represents fixed and 0 represents free (default (1,1,1))</p>
+</dd>
+<dt>kx :</dt><dd><p>stiffness of x support (kN/mm), if set will overide the value placed in the fixed tuple. (default = None)</p>
+</dd>
+<dt>ky<span class="classifier">(positive number)</span></dt><dd><p>stiffness of y support (kN/mm), if set will overide the value placed in the fixed tuple. (default = None)</p>
+</dd>
+</dl>
 </dd></dl>
 
 </div>
@@ -212,25 +237,192 @@ PointLoadV, DistributedLoadH, and DistributedLoadV, PointLoad and PointTorque.</
 <h2>Beam<a class="headerlink" href="#beam" title="Permalink to this headline">¶</a></h2>
 <dl class="py class">
 <dt id="indeterminatebeam.Beam">
-<em class="property">class </em><code class="sig-prename descclassname">indeterminatebeam.</code><code class="sig-name descname">Beam</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">span</span><span class="p">:</span> <span class="n">float</span> <span class="o">=</span> <span class="default_value">10</span></em>, <em class="sig-param"><span class="n">E</span><span class="o">=</span><span class="default_value">200000</span></em>, <em class="sig-param"><span class="n">I</span><span class="o">=</span><span class="default_value">9050000.0</span></em><span class="sig-paren">)</span><a class="headerlink" href="#indeterminatebeam.Beam" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="sig-prename descclassname">indeterminatebeam.</code><code class="sig-name descname">Beam</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">span</span><span class="p">:</span> <span class="n">float</span> <span class="o">=</span> <span class="default_value">10</span></em>, <em class="sig-param"><span class="n">E</span><span class="o">=</span><span class="default_value">200000</span></em>, <em class="sig-param"><span class="n">I</span><span class="o">=</span><span class="default_value">9050000.0</span></em>, <em class="sig-param"><span class="n">A</span><span class="o">=</span><span class="default_value">2300</span></em><span class="sig-paren">)</span><a class="headerlink" href="#indeterminatebeam.Beam" title="Permalink to this definition">¶</a></dt>
 <dd><p>Represents a one-dimensional beam that can take axial and tangential loads.</p>
+<dl class="py attribute">
+<dt id="indeterminatebeam.Beam._x0">
+<code class="sig-name descname">_x0</code><a class="headerlink" href="#indeterminatebeam.Beam._x0" title="Permalink to this definition">¶</a></dt>
+<dd><p>Left end coordinate of beam. This module always takes this value as 0.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>span</strong> (<em>float</em><em> or </em><em>int</em>) – Length of the beam span. Must be positive, and the pinned and rolling
-supports can only be placed within this span. The default value is 10.</p></li>
-<li><p><strong>E</strong> (<em>float</em><em> or </em><em>int</em>) – Youngs modulus for the beam. The default value is 200 000 MPa, which
-is the youngs modulus for steel.</p></li>
-<li><p><strong>I</strong> (<em>float</em><em> or </em><em>int</em>) – Second moment of area for the beam about the z axis. The default value
-is 60 000 000 mm4.</p></li>
-</ul>
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>float</p>
 </dd>
 </dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="indeterminatebeam.Beam._x1">
+<code class="sig-name descname">_x1</code><a class="headerlink" href="#indeterminatebeam.Beam._x1" title="Permalink to this definition">¶</a></dt>
+<dd><p>Right end coordinate of beam. This module always takes this to be the same as the beam span.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>float</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="indeterminatebeam.Beam._loads">
+<code class="sig-name descname">_loads</code><a class="headerlink" href="#indeterminatebeam.Beam._loads" title="Permalink to this definition">¶</a></dt>
+<dd><p>list of load objects associated with the beam</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>list</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="indeterminatebeam.Beam._distributed_forces_x">
+<code class="sig-name descname">_distributed_forces_x</code><a class="headerlink" href="#indeterminatebeam.Beam._distributed_forces_x" title="Permalink to this definition">¶</a></dt>
+<dd><p>list of distributed forces implemented as piecewise functions</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>list</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="indeterminatebeam.Beam._distributed_forces_y">
+<code class="sig-name descname">_distributed_forces_y</code><a class="headerlink" href="#indeterminatebeam.Beam._distributed_forces_y" title="Permalink to this definition">¶</a></dt>
+<dd><p>list of distributed forces implemented as piecewise functions</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="indeterminatebeam.Beam._normal_forces">
+<code class="sig-name descname">_normal_forces</code><a class="headerlink" href="#indeterminatebeam.Beam._normal_forces" title="Permalink to this definition">¶</a></dt>
+<dd><p>A sympy function representing the internal axial force as a function of x.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>sympy piecewise function</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="indeterminatebeam.Beam._shear_forces">
+<code class="sig-name descname">_shear_forces</code><a class="headerlink" href="#indeterminatebeam.Beam._shear_forces" title="Permalink to this definition">¶</a></dt>
+<dd><p>A sympy function representing the internal shear force as a function of x.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>sympy piecewise function</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="indeterminatebeam.Beam._bending_moments">
+<code class="sig-name descname">_bending_moments</code><a class="headerlink" href="#indeterminatebeam.Beam._bending_moments" title="Permalink to this definition">¶</a></dt>
+<dd><p>A sympy function representing the internal bending moments as a function of x.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>sympy piecewise function</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="indeterminatebeam.Beam._query">
+<code class="sig-name descname">_query</code><a class="headerlink" href="#indeterminatebeam.Beam._query" title="Permalink to this definition">¶</a></dt>
+<dd><p>A list containing x coordinates that are to have values explicitly written on graphs.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>list</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="indeterminatebeam.Beam._supports">
+<code class="sig-name descname">_supports</code><a class="headerlink" href="#indeterminatebeam.Beam._supports" title="Permalink to this definition">¶</a></dt>
+<dd><p>A list of support objects associated with the beam.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>list</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="indeterminatebeam.Beam._reactions">
+<code class="sig-name descname">_reactions</code><a class="headerlink" href="#indeterminatebeam.Beam._reactions" title="Permalink to this definition">¶</a></dt>
+<dd><p>A dictionary where the first key is either ‘x’, ‘y’ or ‘m’. Each value associated with
+these keys is a list of tuples where the tuples are (force, position) and can be thought
+of as PointLoadV (for ‘y’), PointLoadH (for ‘x’) or PointTorque (for ‘m’) objects
+although it isnt explicitly defined.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>dictionary of lists</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="indeterminatebeam.Beam._E">
+<code class="sig-name descname">_E</code><a class="headerlink" href="#indeterminatebeam.Beam._E" title="Permalink to this definition">¶</a></dt>
+<dd><p>Young’s Modulus of the beam (N/mm2 or MPa)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>float</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="indeterminatebeam.Beam._I">
+<code class="sig-name descname">_I</code><a class="headerlink" href="#indeterminatebeam.Beam._I" title="Permalink to this definition">¶</a></dt>
+<dd><p>Second Moment of Area of the beam (mm4)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>float</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="indeterminatebeam.Beam._A">
+<code class="sig-name descname">_A</code><a class="headerlink" href="#indeterminatebeam.Beam._A" title="Permalink to this definition">¶</a></dt>
+<dd><p>Cross-sectional area of the beam (mm2)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>float</p>
+</dd>
+</dl>
+</dd></dl>
+
 <p class="rubric">Notes</p>
 <ul class="simple">
 <li><p>The default units package units for length, force and bending moment
 (torque) are respectively (m, kN, kN·m)</p></li>
+<li><dl class="simple">
+<dt>The default units package for beam properties (E, I, A) are in N and mm</dt><dd><p>(N/mm2, mm4, mm2)</p>
+</dd>
+</dl>
+</li>
+<li><p>The default units for spring supports is KN/mm</p></li>
+<li><p>Default properties are for a 150UB18.0 steel beam.</p></li>
 </ul>
+</dd></dl>
+
+<dl class="py function">
+<dt id="indeterminatebeam.Beam.__init__">
+<code class="sig-prename descclassname">indeterminatebeam.Beam.</code><code class="sig-name descname">__init__</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">self</span></em>, <em class="sig-param"><span class="n">span</span><span class="p">:</span> <span class="n">float</span> <span class="o">=</span> <span class="default_value">10</span></em>, <em class="sig-param"><span class="n">E</span><span class="o">=</span><span class="default_value">200000</span></em>, <em class="sig-param"><span class="n">I</span><span class="o">=</span><span class="default_value">9050000.0</span></em>, <em class="sig-param"><span class="n">A</span><span class="o">=</span><span class="default_value">2300</span></em><span class="sig-paren">)</span><a class="headerlink" href="#indeterminatebeam.Beam.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Initializes a Beam object of a given length.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>span</strong> (<em>float</em>) – Length of the beam span. Must be positive, and the pinned and rolling
+supports can only be placed within this span. The default value is 10.</p></li>
+<li><p><strong>E</strong> (<em>float</em>) – Youngs modulus for the beam. The default value is 200 000 MPa, which
+is the youngs modulus for steel.</p></li>
+<li><p><strong>I</strong> (<em>float</em>) – Second moment of area for the beam about the z axis. The default value
+is 905 000 000 mm4.</p></li>
+<li><p><strong>A</strong> (<em>float</em>) – Cross-sectional area for the beam about the z axis. The default value
+is 2300 mm4.</p></li>
+</ul>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py function">
@@ -292,7 +484,17 @@ be removed from the Beam object. If support not on beam then does nothing.</p>
 <dl class="py function">
 <dt id="indeterminatebeam.Beam.check_determinancy">
 <code class="sig-prename descclassname">indeterminatebeam.Beam.</code><code class="sig-name descname">check_determinancy</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">self</span></em><span class="sig-paren">)</span><a class="headerlink" href="#indeterminatebeam.Beam.check_determinancy" title="Permalink to this definition">¶</a></dt>
-<dd><p>Check the determinancy of the beam. If 0 then beam is determinate.</p>
+<dd><p>Check the determinancy of the beam.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>&lt; 0 if the beam is unstable
+0 if the beam is statically determinate
+&gt; 0 if the beam is statically indeterminate</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>int</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py function">
@@ -305,9 +507,6 @@ be removed from the Beam object. If support not on beam then does nothing.</p>
 <dt id="indeterminatebeam.Beam.get_bending_moment">
 <code class="sig-prename descclassname">indeterminatebeam.Beam.</code><code class="sig-name descname">get_bending_moment</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">self</span></em>, <em class="sig-param"><span class="o">*</span><span class="n">x_coord</span></em>, <em class="sig-param"><span class="n">return_max</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">return_min</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">return_absmax</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="headerlink" href="#indeterminatebeam.Beam.get_bending_moment" title="Permalink to this definition">¶</a></dt>
 <dd><p>Find the bending moment(s) on the beam object.</p>
-<blockquote>
-<div><p>Note: Priority of query parameters is return_max, return_min, return_absmax, x_coord.</p>
-</div></blockquote>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
@@ -318,10 +517,17 @@ List returned (if bools all false)</p></li>
 <li><p><strong>return_absmax</strong> (<em>bool</em>) – return absolute max value of function if true</p></li>
 </ul>
 </dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><ul class="simple">
+<li><p><em>int</em> – Max, min or absmax value of the bending moment function depending on which parameters are set.</p></li>
+<li><p><em>list of ints</em> – If x-coordinate(s) are specfied value of the bending moment function at x-coordinate(s).</p></li>
+</ul>
+</p>
+</dd>
 </dl>
 <p class="rubric">Notes</p>
 <ul class="simple">
-<li><p>Priority of query parameters is return_max, return_min, return_absmax, x_coord.</p></li>
+<li><p>Priority of query parameters is return_max, return_min, return_absmax, x_coord (if more than 1 of the parameters are specified).</p></li>
 </ul>
 </dd></dl>
 
@@ -339,10 +545,17 @@ List returned (if bools all false)</p></li>
 <li><p><strong>return_absmax</strong> (<em>bool</em>) – return absolute max value of function if true</p></li>
 </ul>
 </dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><ul class="simple">
+<li><p><em>int</em> – Max, min or absmax value of the shear force function depending on which parameters are set.</p></li>
+<li><p><em>list of ints</em> – If x-coordinate(s) are specfied value of the shear force function at x-coordinate(s).</p></li>
+</ul>
+</p>
+</dd>
 </dl>
 <p class="rubric">Notes</p>
 <ul class="simple">
-<li><p>Priority of query parameters is return_max, return_min, return_absmax, x_coord.</p></li>
+<li><p>Priority of query parameters is return_max, return_min, return_absmax, x_coord (if more than 1 of the parameters are specified).</p></li>
 </ul>
 </dd></dl>
 
@@ -360,10 +573,17 @@ List returned (if bools all false)</p></li>
 <li><p><strong>return_absmax</strong> (<em>bool</em>) – return absolute max value of function if true</p></li>
 </ul>
 </dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><ul class="simple">
+<li><p><em>int</em> – Max, min or absmax value of the normal force function depending on which parameters are set.</p></li>
+<li><p><em>list of ints</em> – If x-coordinate(s) are specfied value of the normal force function at x-coordinate(s).</p></li>
+</ul>
+</p>
+</dd>
 </dl>
 <p class="rubric">Notes</p>
 <ul class="simple">
-<li><p>Priority of query parameters is return_max, return_min, return_absmax, x_coord.</p></li>
+<li><p>Priority of query parameters is return_max, return_min, return_absmax, x_coord (if more than 1 of the parameters are specified).</p></li>
 </ul>
 </dd></dl>
 
@@ -381,10 +601,17 @@ List returned (if bools all false)</p></li>
 <li><p><strong>return_absmax</strong> (<em>bool</em>) – return absolute max value of function if true</p></li>
 </ul>
 </dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><ul class="simple">
+<li><p><em>int</em> – Max, min or absmax value of the deflection function depending on which parameters are set.</p></li>
+<li><p><em>list of ints</em> – If x-coordinate(s) are specfied value of the deflection function at x-coordinate(s).</p></li>
+</ul>
+</p>
+</dd>
 </dl>
 <p class="rubric">Notes</p>
 <ul class="simple">
-<li><p>Priority of query parameters is return_max, return_min, return_absmax, x_coord.</p></li>
+<li><p>Priority of query parameters is return_max, return_min, return_absmax, x_coord (if more than 1 of the parameters are specified).</p></li>
 </ul>
 </dd></dl>
 
@@ -430,8 +657,8 @@ List returned (if bools all false)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
-<dd class="field-even"><p><strong>figure</strong> – Returns a handle to a figure with the 3 subplots: Beam schematic,
-shear force diagram, and bending moment diagram.</p>
+<dd class="field-even"><p><strong>figure</strong> – Returns a handle to a figure with the 5 subplots: Beam schematic, normal force diagram,
+shear force diagram, bending moment diagram, and deflection diagram.</p>
 </dd>
 <dt class="field-odd">Return type</dt>
 <dd class="field-odd"><p><cite>~matplotlib.figure.Figure</cite></p>
@@ -446,6 +673,12 @@ shear force diagram, and bending moment diagram.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><p><strong>draw_reactions</strong> (<em>bool</em>) – True if want to show the reaction forces in the beam schematic</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><strong>figure</strong> – Returns a handle to a figure with the beam schematic.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><cite>~matplotlib.figure.Figure</cite></p>
 </dd>
 </dl>
 </dd></dl>
@@ -463,6 +696,12 @@ shear force diagram, and bending moment diagram.</p>
 <li><p><strong>maxmin_vline</strong> (<em>bool</em>) – True if want a vertical line displaying the maximum and minimum value reached on the x-axis</p></li>
 </ul>
 </dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><strong>figure</strong> – Returns a handle to a figure with the normal force diagram.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><cite>~matplotlib.figure.Figure</cite></p>
+</dd>
 </dl>
 </dd></dl>
 
@@ -479,12 +718,18 @@ shear force diagram, and bending moment diagram.</p>
 <li><p><strong>maxmin_vline</strong> (<em>bool</em>) – True if want a vertical line displaying the maximum and minimum value reached on the x-axis</p></li>
 </ul>
 </dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><strong>figure</strong> – Returns a handle to a figure with the shear force diagram.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><cite>~matplotlib.figure.Figure</cite></p>
+</dd>
 </dl>
 </dd></dl>
 
 <dl class="py function">
 <dt id="indeterminatebeam.Beam.plot_bending_moment">
-<code class="sig-prename descclassname">indeterminatebeam.Beam.</code><code class="sig-name descname">plot_bending_moment</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">self</span></em>, <em class="sig-param"><span class="n">ax</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">switch_axes</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">inverted</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">maxmin_hline</span><span class="p">:</span> <span class="n">bool</span> <span class="o">=</span> <span class="default_value">True</span></em>, <em class="sig-param"><span class="n">maxmin_vline</span><span class="p">:</span> <span class="n">bool</span> <span class="o">=</span> <span class="default_value">False</span></em><span class="sig-paren">)</span><a class="headerlink" href="#indeterminatebeam.Beam.plot_bending_moment" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">indeterminatebeam.Beam.</code><code class="sig-name descname">plot_bending_moment</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">self</span></em>, <em class="sig-param"><span class="n">ax</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">switch_axes</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">inverted</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">maxmin_hline</span><span class="p">:</span> <span class="n">bool</span> <span class="o">=</span> <span class="default_value">True</span></em>, <em class="sig-param"><span class="n">maxmin_vline</span><span class="p">:</span> <span class="n">bool</span> <span class="o">=</span> <span class="default_value">False</span></em><span class="sig-paren">)</span><a class="headerlink" href="#indeterminatebeam.Beam.plot_bending_moment" title="Permalink to this definition">¶</a></dt>
 <dd><p>Returns a plot of the bending moment as a function of the x-coordinate.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -494,6 +739,12 @@ shear force diagram, and bending moment diagram.</p>
 <li><p><strong>maxmin_hline</strong> (<em>bool</em>) – True if want a horizontal line displaying the maximum and minimum value reached on the y-axis</p></li>
 <li><p><strong>maxmin_vline</strong> (<em>bool</em>) – True if want a vertical line displaying the maximum and minimum value reached on the x-axis</p></li>
 </ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><strong>figure</strong> – Returns a handle to a figure with the bending moment diagram.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><cite>~matplotlib.figure.Figure</cite></p>
 </dd>
 </dl>
 </dd></dl>
@@ -511,6 +762,12 @@ shear force diagram, and bending moment diagram.</p>
 <li><p><strong>maxmin_vline</strong> (<em>bool</em>) – True if want a vertical line displaying the maximum and minimum value reached on the x-axis</p></li>
 </ul>
 </dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><strong>figure</strong> – Returns a handle to a figure with the deflection diagram.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><cite>~matplotlib.figure.Figure</cite></p>
+</dd>
 </dl>
 </dd></dl>
 
@@ -521,6 +778,12 @@ shear force diagram, and bending moment diagram.</p>
 <dt id="indeterminatebeam.PointTorque">
 <em class="property">class </em><code class="sig-prename descclassname">indeterminatebeam.</code><code class="sig-name descname">PointTorque</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">torque</span></em>, <em class="sig-param"><span class="n">coord</span></em><span class="sig-paren">)</span><a class="headerlink" href="#indeterminatebeam.PointTorque" title="Permalink to this definition">¶</a></dt>
 <dd><p>Point clockwise torque, described by a tuple of floats: (torque, coord).</p>
+<dl class="simple">
+<dt>torque: float</dt><dd><p>Torque in kN.m</p>
+</dd>
+<dt>coord: float</dt><dd><p>x coordinate of torque on beam</p>
+</dd>
+</dl>
 <p class="rubric">Examples</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">motor_torque</span> <span class="o">=</span> <span class="n">PointTorque</span><span class="p">(</span><span class="mi">30</span><span class="p">,</span> <span class="mi">4</span><span class="p">)</span>  <span class="c1"># 30 kN·m (clockwise) torque at x=4 m</span>
 </pre></div>
@@ -534,16 +797,17 @@ shear force diagram, and bending moment diagram.</p>
 <dt id="indeterminatebeam.PointLoad">
 <em class="property">class </em><code class="sig-prename descclassname">indeterminatebeam.</code><code class="sig-name descname">PointLoad</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">force</span></em>, <em class="sig-param"><span class="n">coord</span></em>, <em class="sig-param"><span class="n">angle</span></em><span class="sig-paren">)</span><a class="headerlink" href="#indeterminatebeam.PointLoad" title="Permalink to this definition">¶</a></dt>
 <dd><p>Point load described by a tuple of floats: (force, coord, angle).</p>
-<p>Force: force in kN
-coord: x coordinate of load on beam
-angle: angle of point load in range 0 to 180 where:</p>
-<blockquote>
-<div><ul class="simple">
-<li><p>0 degrees is purely horizontal +ve</p></li>
-<li><p>90 degrees is purely vertical +ve</p></li>
-<li><p>180 degrees is purely horizontal -ve of force sign specified.</p></li>
-</ul>
-</div></blockquote>
+<dl class="simple">
+<dt>Force: float</dt><dd><p>Force in kN</p>
+</dd>
+<dt>coord: float</dt><dd><p>x coordinate of load on beam</p>
+</dd>
+<dt>angle: float (between 0 and 180)</dt><dd><p>angle of point load in range 0 to 180 where:
+- 0 degrees is purely horizontal +ve
+- 90 degrees is purely vertical +ve
+- 180 degrees is purely horizontal -ve of force sign specified.</p>
+</dd>
+</dl>
 <p class="rubric">Examples</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">external_force</span> <span class="o">=</span> <span class="n">PointLoad</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">9</span><span class="p">,</span> <span class="mi">90</span><span class="p">)</span>  <span class="c1"># 10 kN towards the right at x=9 m</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">external_force</span> <span class="o">=</span> <span class="n">PointLoad</span><span class="p">(</span><span class="o">-</span><span class="mi">30</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>  <span class="c1"># 30 kN downwards at x=3 m</span>
@@ -557,8 +821,12 @@ angle: angle of point load in range 0 to 180 where:</p>
 <dt id="indeterminatebeam.PointLoadH">
 <em class="property">class </em><code class="sig-prename descclassname">indeterminatebeam.</code><code class="sig-name descname">PointLoadH</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">force</span></em>, <em class="sig-param"><span class="n">coord</span></em><span class="sig-paren">)</span><a class="headerlink" href="#indeterminatebeam.PointLoadH" title="Permalink to this definition">¶</a></dt>
 <dd><p>Horizontal point load described by a tuple of floats: (force, coord).</p>
-<p>Force: force in kN
-coord: x coordinate of load on beam</p>
+<dl class="simple">
+<dt>Force: float</dt><dd><p>Force in kN</p>
+</dd>
+<dt>coord: float</dt><dd><p>x coordinate of load on beam</p>
+</dd>
+</dl>
 <p class="rubric">Examples</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">external_force</span> <span class="o">=</span> <span class="n">PointLoadH</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">9</span><span class="p">)</span>  <span class="c1"># 10 kN towards the right at x=9 m</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">external_force</span>
@@ -571,8 +839,12 @@ coord: x coordinate of load on beam</p>
 <dt id="indeterminatebeam.PointLoadV">
 <em class="property">class </em><code class="sig-prename descclassname">indeterminatebeam.</code><code class="sig-name descname">PointLoadV</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">force</span></em>, <em class="sig-param"><span class="n">coord</span></em><span class="sig-paren">)</span><a class="headerlink" href="#indeterminatebeam.PointLoadV" title="Permalink to this definition">¶</a></dt>
 <dd><p>Vertical point load described by a tuple of floats: (force, coord).</p>
-<p>Force: force in kN
-coord: x coordinate of load on beam</p>
+<dl class="simple">
+<dt>Force: float</dt><dd><p>Force in kN</p>
+</dd>
+<dt>coord: float</dt><dd><p>x coordinate of load on beam</p>
+</dd>
+</dl>
 <p class="rubric">Examples</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">external_force</span> <span class="o">=</span> <span class="n">PointLoadV</span><span class="p">(</span><span class="o">-</span><span class="mi">30</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>  <span class="c1"># 30 kN downwards at x=3 m</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">external_force</span>
@@ -588,10 +860,53 @@ coord: x coordinate of load on beam</p>
 <dt id="indeterminatebeam.DistributedLoadV">
 <em class="property">class </em><code class="sig-prename descclassname">indeterminatebeam.</code><code class="sig-name descname">DistributedLoadV</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">expr</span></em>, <em class="sig-param"><span class="n">span</span></em><span class="sig-paren">)</span><a class="headerlink" href="#indeterminatebeam.DistributedLoadV" title="Permalink to this definition">¶</a></dt>
 <dd><p>Distributed vertical load, described by its functional form and application interval.</p>
+<dl class="simple">
+<dt>expr: sympy expression</dt><dd><p>Sympy expression of the distributed load function expressed using variable x
+which represents the beam x-coordinate. Requires quotation marks around expression.</p>
+</dd>
+<dt>span: tuple of floats</dt><dd><p>A tuple containing the starting and ending coordinate that the function is applied to.</p>
+</dd>
+</dl>
 <p class="rubric">Examples</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">snow_load</span> <span class="o">=</span> <span class="n">DistributedLoadV</span><span class="p">(</span><span class="s2">&quot;10*x+5&quot;</span><span class="p">,</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="p">))</span>  <span class="c1"># Linearly growing load for 0&lt;x&lt;2 m</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">trapezoidal_load</span> <span class="o">=</span> <span class="n">DistributedLoadV</span><span class="p">(</span><span class="s2">&quot;-5 + 10 * x), (1,2)) # Linearly growing load starting at 5kN/m ending at 15kn/m</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">trapezoidal_load</span> <span class="o">=</span> <span class="n">DistributedLoadV</span><span class="p">(</span><span class="s2">&quot;-5 + 10 * x&quot;</span><span class="p">,</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">))</span> <span class="c1"># Linearly growing load starting at 5kN/m ending at 15kn/m</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">UDL</span> <span class="o">=</span> <span class="n">DistributedLoadV</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="mi">3</span><span class="p">))</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py class">
+<dt id="indeterminatebeam.DistributedLoadH">
+<em class="property">class </em><code class="sig-prename descclassname">indeterminatebeam.</code><code class="sig-name descname">DistributedLoadH</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">expr</span></em>, <em class="sig-param"><span class="n">span</span></em><span class="sig-paren">)</span><a class="headerlink" href="#indeterminatebeam.DistributedLoadH" title="Permalink to this definition">¶</a></dt>
+<dd><p>Distributed horizontal load, described by its functional form and application interval.</p>
+<dl>
+<dt>expr: sympy expression</dt><dd><p>Sympy expression of the distributed load function expressed using variable x
+which represents the beam x-coordinate. Requires quotation marks around expression.</p>
+</dd>
+<dt>span: tuple of floats</dt><dd><p>A tuple containing the starting and ending coordinate that the function is applied to.</p>
+<p>Examples</p>
+</dd>
+</dl>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">weight</span> <span class="o">=</span> <span class="n">DistributedLoadH</span><span class="p">(</span><span class="s2">&quot;10*x+5&quot;</span><span class="p">,</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="p">))</span>  <span class="c1"># Linearly growing load for 0&lt;x&lt;2 m</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py function">
+<dt id="indeterminatebeam.TrapezoidalLoad">
+<code class="sig-prename descclassname">indeterminatebeam.</code><code class="sig-name descname">TrapezoidalLoad</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">force</span><span class="o">=</span><span class="default_value">(0, 0)</span></em>, <em class="sig-param"><span class="n">span</span><span class="o">=</span><span class="default_value">(0, 0)</span></em><span class="sig-paren">)</span><a class="headerlink" href="#indeterminatebeam.TrapezoidalLoad" title="Permalink to this definition">¶</a></dt>
+<dd><p>Wrapper for the DistributedLoadV class, used to express a trapezoidal load distribution.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>force</strong> (<em>tuple of two floats</em>) – Describes the starting force value and ending force value (kN/m)</p></li>
+<li><p><strong>span</strong> (<em>tuple of two floats</em>) – Describes the starting coordinate value and ending coordinate value (m)</p></li>
+</ul>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">trapezoidal_load</span> <span class="o">=</span> <span class="n">TrapezoidalLoad</span><span class="p">((</span><span class="mi">5</span><span class="p">,</span><span class="mi">15</span><span class="p">),</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">))</span> <span class="c1"># Linearly growing load starting at 5kN/m ending at 15kn/m</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">trapezoidal_load</span> <span class="o">=</span> <span class="n">DistributedLoadV</span><span class="p">(</span><span class="s2">&quot;-5 + 10 * x&quot;</span><span class="p">,</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">))</span> <span class="c1">#Equivalent expression created using DistributedLoadV</span>
 </pre></div>
 </div>
 </dd></dl>

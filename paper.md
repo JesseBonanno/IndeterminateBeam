@@ -1,16 +1,41 @@
-# Indeterminate Beam
+title: 'IndeterminateBeam: A Python package for solving 1D indeterminate beams'
+tags:
+- bending moment diagram
+- shear force diagram
+- normal force diagram
+- deflection
+- statics
+- structural engineering
+- civil engineering
+- indeterminate
+- Python
+authors:
+  - name: Jesse Bonanno
+    orcid: 0000-0002-4996-6813
+date: 15 December 2020
+bibliography: paper.bib
 
 
-[![Version](https://img.shields.io/badge/version-v0.6.0-blue.svg)](https://github.com/JesseBonanno/IndeterminateBeam/releases/tag/v0.6.0) [![License](https://img.shields.io/badge/license-MIT-lightgreen.svg)](https://github.com/JesseBonanno/IndeterminateBeam/blob/main/LICENSE.txt) [![Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/JesseBonanno/IndeterminateBeam/blob/main/IndeterminateBeam/simple_demo.ipynb)
+# Summary
 
-IndeterminateBeam is a Python Package aiming to serve as a foundation for civil and structural engineering projects in Python. The module can also serve as a standalone program and is useful for determining:
+IndeterminateBeam is a Python Package aiming to serve as a foundation for civil and structural engineering projects in Python. The module is based on engineering concepts of statics __references__. The module can also serve as a standalone program and is useful for determining:
 
   - reaction forces for indeterminate beams
   - Internal forces for indeterminate beams (shear, bending, axial)
   - deflection of the beam due to resulting forces
   - axial force, shear force, and bending moment diagrams
 
-The package documentation can be accessed [here](https://indeterminatebeam.readthedocs.io/en/main/).
+The package documentation can be accessed [here](https://indeterminatebeam.readthedocs.io/en/main/), where a brief overview of the theory behind the module is provided.
+
+As the package represents a foundational element of civil, structural and mechanical engineering (often taught in first year university) the package can be used by:
+
+* teachers generating problems to solve
+* students experimenting on how differnt changes affect the system
+* engineers trying to solve for real world problems on 1D beams
+* engineers trying to implement higher order python solutions that rely on the use of 1D beams
+
+
+The `indeterminatebeam` package is ready for installation using `pip` or can be tested online using the provided [Jupyter notebook](https://colab.research.google.com/github/JesseBonanno/IndeterminateBeam/blob/main/docs/examples/readme_example.ipynb).
 
 
 ## Statement of Need
@@ -19,10 +44,17 @@ In the civil and structural engineering industry in-house software generally con
 
 Python can be utilised to combat this problem, allowing for the adoption of previous work as a python module. This will allow for in-house engineering software to be more uniform, readable, manageable, and reliable.
 
-Although there are many websites that allow for solving indeterminate beams, there are no well documented python packages.
+The demand for such a calculation module can be observed with the existence of many websites that perform such a calculation. Although there are many websites that allow for solving indeterminate beams, there are no well documented python packages. The websites often require payment for full access to software, and do not allow for the creation of higher order software.
 
 This python package was heavily inspired by [simplebendingpractice](https://github.com/alfredocarella/simplebendingpractice), a module created by [Alfredo Carella](https://github.com/alfredocarella) of the Oslo Metropolitan University
-for educational purposes. The beambending module, although well documented, can only solve for simply supported beams. The full documentation for this project can be found [here](https://alfredocarella.github.io/simplebendingpractice/index.html).
+for educational purposes. The beambending module, although well documented, can only solve for simply supported beams consisting of a pin and roller support. The full documentation for this project can be found [here](https://alfredocarella.github.io/simplebendingpractice/index.html).
+
+The following has been taken from @alfredo, and has been modified slightly to add aditional information.
+
+PUT FIGURE.
+
+Add column for - can solve indeterminate beam, can add any type of support. (any is a  loose word should try to word better).
+
 
 ## Functionality and Usage
 
@@ -91,34 +123,5 @@ The `plot` method is actually a wrapper that combines these five methods: `plot_
 The script above produces the following figure:
 ![example_1](https://github.com/JesseBonanno/IndeterminateBeam/blob/main/docs/examples/readme_example.png)
 
-## Installing the package
 
-If you want to install the `indeterminatebeam` package, you run this one-liner:
 
-```shell
-pip install indeterminatebeam
-```
-
-> **NOTE**: You need Python 3 to install this package (you may need to write `pip3` instead of `pip`).
-
-The library dependencies are listed in the file `requirements.txt`, but you only need to look at them if you clone the repository.
-If you install the package via `pip`, the listed dependencies should be installed automatically.
-
-## Future Work
-
-The following are areas that can be implemented in future:
-- allow for segmental beam properties (E,I,A)
-- calculate axial deflections
-- allow for spring supports
-- better graphing (a more readable or interactive graph)
-- indication of support type in graph (currently all supports look like a pin support) 
-- GUI user interface
-- Latex or PDF output of calculations
-- More user input validation checks
-- More indeterminate beams in testing
-
-## License
-
-[![License](https://img.shields.io/badge/license-MIT-lightgreen.svg)](https://github.com/JesseBonanno/IndeterminateBeam/blob/main/LICENSE.txt)
-
-Copyright (c) 2020, Jesse Bonanno

@@ -8,10 +8,12 @@ IndeterminateBeam Reference
 Support
 ---------
 .. autoclass:: indeterminatebeam.Support
+.. autofunction:: indeterminatebeam.Support.__init__
 
 Beam
 ----
 .. autoclass:: indeterminatebeam.Beam
+.. autofunction:: indeterminatebeam.Beam.__init__
 .. autofunction:: indeterminatebeam.Beam.add_loads
 .. autofunction:: indeterminatebeam.Beam.remove_loads
 .. autofunction:: indeterminatebeam.Beam.add_supports
@@ -45,3 +47,5 @@ PointLoad
 DistributedLoad
 ---------------
 .. autoclass:: indeterminatebeam.DistributedLoadV
+.. autoclass:: indeterminatebeam.DistributedLoadH
+.. autofunction:: indeterminatebeam.TrapezoidalLoad

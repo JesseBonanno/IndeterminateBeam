@@ -1,4 +1,6 @@
-*__pycache__
+__pycache__
+
+indeterminatebeam/__pycache__
 
 ipynb_renumber.py
 docs/build
@@ -6,3 +8,5 @@ docs/build
 dist/
 
 MANIFEST
+
+*.pdf
