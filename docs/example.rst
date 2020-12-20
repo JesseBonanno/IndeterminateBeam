@@ -3,8 +3,7 @@
 Beam with two point loads and two distributed loads
 ===================================================
 
-This example demonstrates some functionality of the ``indeterminatebeam`` package. It has been taken from example 4.17 of this 
-`Document <https://engineering.purdue.edu/~ce474/Docs/Beam_Examples02.pdf>`_
+This example demonstrates some functionality of the ``indeterminatebeam`` package. It has been taken from example 12.21 of the Hibbeler textbook (see :ref:`references`).
 
 Try it in online: |colab|
 
@@ -14,7 +13,9 @@ Try it in online: |colab|
 Specifications
 --------------
 
-A propped cantilever ABC is fixed at A, support on a roller at C and carries a mid span point load of 15kN.
+A 3m long propped cantilever AB is fixed at A (x = 0 m), and supported on a roller at B (x = 3 m).
+
+The beam is subject to a load of 8kN acting downwards at the midspan, and a UDL of 6kN/m across the length of the support.
 
 E and I are constant.
 
@@ -23,9 +24,10 @@ Results
 
 The following values can be directly extracted:
 
-   #. The degree of determinancy --> 1
-   #. The maximum shear force 	 --> 8.906 kN
-   #. The maximum bending moment --> 16.875 kN
+   #. The degree of determinancy	  --> 1
+   #. The absolute maximum shear force 	  --> 16.75 kN
+   #. The absolute maximum bending moment --> 11.25 kN
+   #. The reaction at B         	  --> 9.25 kN
 
 A plot of the axial force, shear force, and bending moments is shown below. A deflection graph is also presented however this depends on the beam properties E and I which werent included in this question.
 As a default the values E and I are taken as the values for a 150UB18.0 steel beam. 

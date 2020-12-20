@@ -200,7 +200,7 @@ class DistributedLoadH(namedtuple("DistributedLoadH", "expr, span")):
     --------
     >>> weight = DistributedLoadH("10*x+5", (0, 2))  # Linearly growing load for 0<x<2 m
     """
-
+    
 class PointTorque(namedtuple("PointTorque", "torque, coord")):
     """Point clockwise torque, described by a tuple of floats: (torque, coord).
 
@@ -214,7 +214,6 @@ class PointTorque(namedtuple("PointTorque", "torque, coord")):
     Examples
     --------
     >>> motor_torque = PointTorque(30, 4)  # 30 kN·m (clockwise) torque at x=4 m
-    
     """
 
 def TrapezoidalLoad(force = (0, 0), span = (0, 0)):
@@ -283,7 +282,7 @@ class Beam:
         these keys is a list of tuples where the tuples are (force, position) and can be thought
         of as PointLoadV (for 'y'), PointLoadH (for 'x') or PointTorque (for 'm') objects 
         although it isnt explicitly defined.
-    reactions: dictionary of lists
+    _reactions: dictionary of lists
         A dictionary with keys for support positions. Each key is associated with a list of forces
         of the form ['x','y','m']
 
@@ -343,7 +342,7 @@ class Beam:
         self._query = []
         self._supports = []
         self._reactions_plot_tuple = {'x':[], 'y':[], 'm':[]}
-        self.reactions = {}
+        self._reactions = {}
         
         self._E = E
         self._I = I
@@ -632,12 +631,12 @@ class Beam:
                 position = [a._position for a in self._supports if a._id == int(num)][0]
                 self._reactions_plot_tuple[vec].append((float(ans), position))
 
-        ##create self.reactions, to allow for user to get reactions at a point      
-        self.reactions = {a._position : [0,0,0] for a in self._supports}
+        ##create self._reactions, to allow for user to get reactions at a point      
+        self._reactions = {a._position : [0,0,0] for a in self._supports}
         for i, a in enumerate(['x','y','m']):
             if self._reactions_plot_tuple[a]:
                 for f,p in self._reactions_plot_tuple[a]:
-                    self.reactions[p][i] = round(f,5)
+                    self._reactions[p][i] = round(f,5)
 
         ##moment unit is kn.m, dv_EI kn.m2, v_EI Kn.m3 --> *10^3, *10^9 to get base units 
         ## EI unit is N/mm2 , mm4 --> N.mm2
@@ -647,6 +646,47 @@ class Beam:
         self._normal_forces = N_i
 
     ##SECTION - QUERY VALUE
+    def get_reaction(self, x_coord, direction = None):
+        """Find the reactions of a support at position x.
+
+        Parameters
+        ----------
+        x_coord: float
+            The x_coordinates on the beam to be substituted into the equation.
+            List returned (if bools all false)
+        direction: str ('x','y' or 'm')
+            The direction of the reaction force to be returned. If not specified all are returned in a list.
+
+        Returns
+        --------
+        int
+            If direction is 'x', 'y', or 'm' will return an integer representing the reaction force of the support in that direction at location x_coord.
+        list of ints
+            If direction = None, will return a list of 3 integers, representing the reaction forces of the support ['x','y','m'] at location x_coord.
+        None
+            If there is no support at the x coordinate specified.
+        """
+        
+        if not self._reactions:
+            print("You must analyse the structure before calling this function")
+        
+        assert_positive_number(x_coord, 'x coordinate')
+
+        if x_coord not in self._reactions.keys():
+            return None
+
+        directions = ['x','y','m']
+
+        if direction:
+            if direction not in directions:
+                raise ValueError("direction should be the value 'x', 'y' or 'm'")
+            else:
+                return self._reactions[x_coord][directions.index(direction)]
+        else:
+            return self._reactions[x_coord]
+
+
+
     def _get_query_value(self, x_coord, sym_func, return_max=False, return_min=False, return_absmax=False):  ##check if sym_func is the sum of the functions already in plot_analytical
         """Find the value of a function at position x_coord.
 

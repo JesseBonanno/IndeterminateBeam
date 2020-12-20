@@ -21,6 +21,7 @@ Beam
 .. autofunction:: indeterminatebeam.Beam.get_support_details
 .. autofunction:: indeterminatebeam.Beam.check_determinancy
 .. autofunction:: indeterminatebeam.Beam.analyse
+.. autofunction:: indeterminatebeam.Beam.get_reactions
 .. autofunction:: indeterminatebeam.Beam.get_bending_moment
 .. autofunction:: indeterminatebeam.Beam.get_shear_force
 .. autofunction:: indeterminatebeam.Beam.get_normal_force
