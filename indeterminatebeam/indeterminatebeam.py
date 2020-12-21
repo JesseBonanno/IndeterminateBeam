@@ -21,7 +21,7 @@ import os
 from sympy import integrate, lambdify, Piecewise, sympify, symbols, linsolve, sin, cos,oo
 from sympy.abc import x
 from math import radians 
-from data_validation import assert_number, assert_positive_number
+from indeterminatebeam.data_validation import assert_number, assert_positive_number
 
 class Support:
     """
