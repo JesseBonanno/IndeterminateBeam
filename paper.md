@@ -133,8 +133,8 @@ beam.plot()
 
 The `plot` method is actually a wrapper that combines these five methods: `plot_beam_diagram`, `plot_normal_force`, `plot_shear_force`, `plot_bending_moment` and `plot_deflection` into a single A4-sized printer-friendly plot.
 
-The script above produces the following figure:
+The script above produces Figure 1 below.
 
-![example_1](docs/examples/readme_example_.png)
+![example beam plot](docs/examples/readme_example_.png)
 
 # References
