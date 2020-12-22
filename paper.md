@@ -15,12 +15,12 @@ authors:
 date: 15 December 2020
 bibliography: paper.bib
 nocite: | 
-  @beamguru, @structuralbeam, @skyciv, @mechanicalc, @webstructural, @beamcalculatoronline, @steelbeamcalculator
+  [@beamguru], [@structuralbeam], [@skyciv], [@mechanicalc], [@webstructural], [@beamcalculatoronline], [@steelbeamcalculator]
 ---
 
 # Summary
 
-IndeterminateBeam is a Python Package aiming to serve as a foundation for civil and structural engineering projects in Python. The module is based mainly on engineering concepts of statics as described in @HibbelerRussell2013MoM, and python packages sympy @sympy2017 and matplotlib @Hunter2007 . The module can also serve as a standalone program and is useful for determining:
+IndeterminateBeam is a Python Package aiming to serve as a foundation for civil and structural engineering projects in Python. The module is based mainly on engineering concepts of statics as described in [@HibbelerRussell2013MoM], and python packages sympy [@sympy2017] and matplotlib [@Hunter2007] . The module can also serve as a standalone program and is useful for determining:
 
   - reaction forces for indeterminate beams
   - Internal forces for indeterminate beams (shear, bending, axial)
@@ -40,11 +40,11 @@ Python can be utilised to combat this problem, allowing for the adoption of prev
 
 The demand for such a calculation module can be observed with the existence of many websites that perform such a calculation. Examples include Beam Guru (2020), Structural Beam Deflection and Stress Calculators (2020), SkyCiv Beam (2020), MechaniCalc (2020), WebStructural (2020), Beam Calculator Online (2020), Steel Beam Calculator (2020), and Clear Calcs Free Beam Calculator (2020). Most of these expose only a graphical user interface to the user and often require payment for full access to the software. Although there are many websites that allow for solving indeterminate beams, there are no well documented python packages, preventing the creation of higher order engineering python projects.
 
-This python package was heavily inspired by [beambending](https://github.com/alfredocarella/simplebendingpractice) @Carella2019, a module created by Alfredo Carella of the Oslo Metropolitan University for educational purposes. The beambending module, although well documented, can only solve for simply supported beams consisting of a pin and roller support. The [package documentation](https://simplebendingpractice.readthedocs.io/en/latest/?badge=latest) for this project includes a more rigorous overvew of the theory behind the basics behind solving for determinate structures.
+This python package was heavily inspired by [beambending](https://github.com/alfredocarella/simplebendingpractice) [@Carella2019], a module created by Alfredo Carella of the Oslo Metropolitan University for educational purposes. The beambending module, although well documented, can only solve for simply supported beams consisting of a pin and roller support. The [package documentation](https://simplebendingpractice.readthedocs.io/en/latest/?badge=latest) for this project includes a more rigorous overvew of the theory behind the basics behind solving for determinate structures.
 
 A feature comparison in Table 1 below has been taken from @Carella2019 and modified to include more packages and features.
 
-![](https://github.com/JesseBonanno/IndeterminateBeam/blob/main/tool_comparison_table.png)
+![](https://raw.githubusercontent.com/JesseBonanno/IndeterminateBeam/main/tool_comparison_table.png)
 
 There are five main differences between the ```indeterminatebeam``` package and the rest of the reviewed tools:
 
@@ -120,7 +120,7 @@ beam.plot()
 The `plot` method is actually a wrapper that combines these five methods: `plot_beam_diagram`, `plot_normal_force`, `plot_shear_force`, `plot_bending_moment` and `plot_deflection` into a single A4-sized printer-friendly plot.
 
 The script above produces the following figure:
-![example_1](https://github.com/JesseBonanno/IndeterminateBeam/blob/main/docs/examples/readme_example.png)
+![example_1](https://github.com/JesseBonanno/IndeterminateBeam/raw/main/docs/examples/readme_example.png)
 
 
 
