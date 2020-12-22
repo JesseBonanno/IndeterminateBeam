@@ -135,6 +135,6 @@ The `plot` method is actually a wrapper that combines these five methods: `plot_
 
 The script above produces Figure 1 below.
 
-![example beam plot](docs/examples/readme_example_70.png){height =250px}
+![example beam plot](docs/examples/readme_example_70.png){ height=100px }
 
 # References
