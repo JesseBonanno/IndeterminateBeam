@@ -45,7 +45,7 @@ This python package was heavily inspired by [beambending](https://github.com/alf
 
 A feature comparison in Table 1 below has been taken from @Carella2019 and modified to include more packages and features.
 
-![](https://raw.githubusercontent.com/JesseBonanno/IndeterminateBeam/main/tool_comparison_table.png)
+![](https://github.com/JesseBonanno/IndeterminateBeam/raw/main/tool_comparison_table.png)
 
 There are five main differences between the ```indeterminatebeam``` package and the rest of the reviewed tools:
 
