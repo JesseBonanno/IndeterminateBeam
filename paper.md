@@ -66,7 +66,7 @@ A typical use case of the `indeterminatebeam` package involves the following ste
 4. Solve for forces on `Beam` object
 5. Plot results
 
-Units and load direction conventions are described in the [package documentation](https://indeterminatebeam.readthedocs.io/en/main/).
+Units and load direction conventions are described in the [package documentation](https://indeterminatebeam.readthedocs.io/en/main/theory.html).
 
 You can follow along with the example below in this [web based notebook](https://colab.research.google.com/github/JesseBonanno/IndeterminateBeam/blob/main/docs/examples/readme_example.ipynb)
 
@@ -76,10 +76,8 @@ The creation of a beam instance involves the input of the beam length (m) and op
 
 ```python
 from indeterminatebeam import Beam
- # Initialize a Beam object of length 7 m with E and I as defaults
-beam = Beam(7)                       
-# Initialize a Beam object of length 9 m with E, I, and A assigned by user
-beam_2 = Beam(9,E=2000, I =10**6, A = 3000)      
+beam = Beam(7)                                   # Create 7 m beam with E, I, A as defaults
+beam_2 = Beam(9,E=2000, I =10**6, A = 3000)      # Create 9 m beam with E, I, and A assigned by user
 ```
 
 ##### Defining Supports
@@ -90,31 +88,21 @@ Degrees of freedom are represented by a tuple of 3 booleans, representing the x 
 Optionally stiffness can be specified in either of the translational directions, which overrides the boolean specified.
 
 ```python
-#import Support
 from indeterminatebeam import Support
-# Defines a pin support at location x = 5m  
-a = Support(5,(1,1,0))      
-# Defines a roller support at location x = 0m
-b = Support(0,(0,1,0))      
-# Defines a fixed support at location x = 7m
-c = Support(7,(1,1,1))      
-# Assign the support objects to a beam object created earlier
-beam.add_supports(a,b,c)    
+a = Support(5,(1,1,0))      # Defines a pin support at location x = 5m  
+b = Support(0,(0,1,0))      # Defines a roller support at location x = 0m
+c = Support(7,(1,1,1))      # Defines a fixed support at location x = 7m
+beam.add_supports(a,b,c)    # Assign the support objects to a beam object created earlier
 ```
 ##### Defining loads
 Load objects are created separately from the beam object, and are generally defined by a force value and then a coordinate value, however this varies slightly for different types of loading classes.
 
 ```python
-#import load objects
 from indeterminatebeam import PointLoadV, PointTorque, DistributedLoadV
-# Defines a point load of 1kn acting up, at location x = 2m
-load_1 = PointLoadV(1,2)                
-# Defines a 2kN UDL from location x = 1m to x = 4m 
-load_2 = DistributedLoadV(2,(1,4))     
- # Defines a 2kN.m point torque at location x = 3.5m
-load_3 = PointTorque(2, 3.5)           
-# Assign the support objects to a beam object created earlier
-beam.add_loads(load_1,load_2,load_3)    
+load_1 = PointLoadV(1,2)                # Create 1kN point load at x = 2m
+load_2 = DistributedLoadV(2,(1,4))      # Create a 2kN UDL from x = 1m to x = 4m 
+load_3 = PointTorque(2, 3.5)            # Defines a 2kN.m point torque at x = 3.5m
+beam.add_loads(load_1,load_2,load_3)    # Assign the load objects to the beam object
 ```
 
 ##### Solving for Forces
