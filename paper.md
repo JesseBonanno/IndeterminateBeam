@@ -30,7 +30,7 @@ IndeterminateBeam is a Python Package aiming to serve as a foundation for civil 
 
 The [package documentation](https://indeterminatebeam.readthedocs.io/en/main/) provides a brief overview of the theory behind the solutions used to calculate the forces on the determinate beam.
 
-The `indeterminatebeam` package is ready for installation using `pip` or can be tested online using the provided [Jupyter notebook](https://colab.research.google.com/github/JesseBonanno/IndeterminateBeam/blob/main/docs/examples/readme_example.ipynb).
+The **indeterminatebeam** package is ready for installation using **pip** or can be tested online using the provided [Jupyter notebook](https://colab.research.google.com/github/JesseBonanno/IndeterminateBeam/blob/main/docs/examples/readme_example.ipynb).
 
 
 # Statement of Need
@@ -41,7 +41,7 @@ Python can be utilised to combat this problem, allowing for the adoption of prev
 
 The demand for such a calculation module can be observed with the existence of many websites that perform such a calculation. Examples include Beam Guru (2020), Structural Beam Deflection and Stress Calculators (2020), SkyCiv Beam (2020), MechaniCalc (2020), WebStructural (2020), Beam Calculator Online (2020), Steel Beam Calculator (2020), and Clear Calcs Free Beam Calculator (2020). Most of these expose only a graphical user interface to the user and often require payment for full access to the software. Although there are many websites that allow for solving indeterminate beams, there are no well documented python packages, preventing the creation of higher order engineering python projects.
 
-This python package was heavily inspired by [beambending](https://github.com/alfredocarella/simplebendingpractice) [@Carella2019], a module created by Alfredo Carella of the Oslo Metropolitan University for educational purposes. The beambending module, although well documented, can only solve for simply supported beams consisting of a pin and roller support. The [package documentation](https://simplebendingpractice.readthedocs.io/en/latest/?badge=latest) for this project includes a more rigorous overvew of the theory behind the basics behind solving for determinate structures.
+This python package was heavily inspired by [beambending](https://github.com/alfredocarella/simplebendingpractice) @Carella2019, a module created by Alfredo Carella of the Oslo Metropolitan University for educational purposes. The beambending module, although well documented, can only solve for simply supported beams consisting of a pin and roller support. The [package documentation](https://simplebendingpractice.readthedocs.io/en/latest/?badge=latest) for this project includes a more rigorous overvew of the theory behind the basics behind solving for determinate structures.
 
 A feature comparison in Table 1 below has been taken from @Carella2019 and modified to include more packages and features.
 
@@ -58,12 +58,12 @@ There are five main differences between the ```indeterminatebeam``` package and 
 
 # Functionality and Usage
 
-A typical use case of the `indeterminatebeam` package involves the following steps:
+A typical use case of the **indeterminatebeam** package involves the following steps:
 
-1. Create a `Beam` object
-2. Create `Support` objects and assign to `Beam`
-3. Create `load` objects and assign to `Beam`
-4. Solve for forces on `Beam` object
+1. Create a **Beam** object
+2. Create **Support** objects and assign to **Beam**
+3. Create **load** objects and assign to **Beam**
+4. Solve for forces on **Beam** object
 5. Plot results
 
 Units and load direction conventions are described in the [package documentation](https://indeterminatebeam.readthedocs.io/en/main/).
@@ -83,7 +83,7 @@ beam_2 = Beam(9,E=2000, I =10**6, A = 3000)      # Initialize a Beam object of l
 ##### Defining Supports
 Support objects are created separately from the beam object, and are defined by an x-coordinate (m) and the beams translational and rotational degrees of freedom.
 
-Degrees of freedom are represented by a tuple of 3 booleans, representing the x , y , and m directions respectively. A `1` indicates the support is fixed in a direction and a `0` indicates it is free.
+Degrees of freedom are represented by a tuple of 3 booleans, representing the x , y , and m directions respectively. A **1** indicates the support is fixed in a direction and a **0** indicates it is free.
 
 Optionally stiffness can be specified in either of the translational directions, which overrides the boolean specified.
 
@@ -118,7 +118,7 @@ After the beam has been analysed we can plot the results.
 beam.plot()                            
 ```
 
-The `plot` method is actually a wrapper that combines these five methods: `plot_beam_diagram`, `plot_normal_force`, `plot_shear_force`, `plot_bending_moment` and `plot_deflection` into a single A4-sized printer-friendly plot.
+The **plot** method is actually a wrapper that combines these five methods: **plot_beam_diagram**, **plot_normal_force**, **plot_shear_force**, **plot_bending_moment** and **plot_deflection** into a single A4-sized printer-friendly plot.
 
 The script above produces the following figure:
 
