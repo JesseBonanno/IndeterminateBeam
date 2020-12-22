@@ -21,27 +21,27 @@ nocite: |
 
 # Summary
 
-IndeterminateBeam is a Python Package aiming to serve as a foundation for civil and structural engineering projects in Python. The module is based mainly on engineering concepts of statics as described in [@HibbelerRussell2013MoM], and python packages sympy [@sympy2017] and matplotlib [@Hunter2007] . The module can also serve as a standalone program and is useful for determining:
+IndeterminateBeam is a Python Package aiming to serve as a foundation for civil and structural engineering projects in Python. The module can also serve as a standalone program and is useful for determining:
 
   - reaction forces for indeterminate beams
   - Internal forces for indeterminate beams (shear, bending, axial)
   - deflection of the beam due to resulting forces
   - axial force, shear force, and bending moment diagrams
 
-The [package documentation](https://indeterminatebeam.readthedocs.io/en/main/) provides a brief overview of the theory behind the solutions used to calculate the forces on the determinate beam.
+The module is based mainly on engineering concepts of statics as described in [@HibbelerRussell2013MoM], and python packages Sympy [@sympy2017] and Matplotlib [@Hunter2007]. The [package documentation](https://indeterminatebeam.readthedocs.io/en/main/) provides a brief overview of the theory behind the solutions used to calculate the forces on the indeterminate beam.
 
 The `indeterminatebeam` package is ready for installation using `pip` or can be tested online using the provided [Jupyter notebook](https://colab.research.google.com/github/JesseBonanno/IndeterminateBeam/blob/main/docs/examples/readme_example.ipynb).
 
 
 # Statement of Need
 
-In the civil and structural engineering industry in-house software generally consists of numerous standalone excel files. Although the excel files can often be greatly valueable once created, they are often created from scratch with difficulty in making use of previous excel projects.
+In the civil and structural engineering industry in-house software generally consists of numerous standalone excel files. Although the excel files can often be greatly valuable once created, they are often created from scratch with difficulty in making use of previous excel projects.
 
 Python can be utilised to combat this problem, allowing for the adoption of previous work as a python module. This will allow for in-house engineering software to be more uniform, readable, manageable, and reliable.
 
-The demand for such a calculation module can be observed with the existence of many websites that perform such a calculation. Examples include Beam Guru (2020), Structural Beam Deflection and Stress Calculators (2020), SkyCiv Beam (2020), MechaniCalc (2020), WebStructural (2020), Beam Calculator Online (2020), Steel Beam Calculator (2020), and Clear Calcs Free Beam Calculator (2020). Most of these expose only a graphical user interface to the user and often require payment for full access to the software. Although there are many websites that allow for solving indeterminate beams, there are no well documented python packages, preventing the creation of higher order engineering python projects.
+The demand for such a calculation module in the engineering industry can be observed with the existence of many websites that perform such a calculation. Examples of such websites are included in Table 1. Most of these require payment for full access to the software and expose only a graphical user interface to the user, preventing the creation of higher order engineering python projects.
 
-This python package was heavily inspired by [beambending](https://github.com/alfredocarella/simplebendingpractice) [@Carella2019], a module created by Alfredo Carella of the Oslo Metropolitan University for educational purposes. The beambending module, although well documented, can only solve for simply supported beams consisting of a pin and roller support. The [package documentation](https://simplebendingpractice.readthedocs.io/en/latest/?badge=latest) for this project includes a more rigorous overvew of the theory behind the basics behind solving for determinate structures.
+This python package was heavily inspired by [beambending](https://github.com/alfredocarella/simplebendingpractice) [@Carella2019], a module created by Alfredo Carella of the Oslo Metropolitan University for educational purposes. The beambending module, although well documented, can only solve for simply supported beams consisting of a pin and roller support. The [package documentation](https://simplebendingpractice.readthedocs.io/en/latest/?badge=latest) for this project includes a more rigorous overview of the theory behind the basics behind solving for determinate structures.
 
 A feature comparison in Table 1 below has been taken from @Carella2019 and modified to include more packages and features.
 
@@ -72,12 +72,14 @@ You can follow along with the example below in this [web based notebook](https:/
 
 ##### Creating Beam
 
-The creation of a beam instance involves the input of the beam length (m) and optinally the input of the young's modulus (E), second moment of area (I), and cross-sectional area (A). E, I and A are optional and by default are the properties of a steel 150UB18.0. For a beam with constant properties, these parameters will only affect the deflections calculated and not the distribution of forces, unless spring supports are specified.
+The creation of a beam instance involves the input of the beam length (m) and optionally the input of the young's modulus (E), second moment of area (I), and cross-sectional area (A). E, I and A are optional and by default are the properties of a steel 150UB18.0. For a beam with constant properties, these parameters will only affect the deflections calculated and not the distribution of forces, unless spring supports are specified.
 
 ```python
 from indeterminatebeam import Beam
-beam = Beam(7)                          # Initialize a Beam object of length 5m with E and I as defaults
-beam_2 = Beam(9,E=2000, I =10**6, A = 3000)      # Initialize a Beam object of length 9m with E, I, and A assigned by user
+ # Initialize a Beam object of length 7 m with E and I as defaults
+beam = Beam(7)                       
+# Initialize a Beam object of length 9 m with E, I, and A assigned by user
+beam_2 = Beam(9,E=2000, I =10**6, A = 3000)      
 ```
 
 ##### Defining Supports
@@ -88,32 +90,43 @@ Degrees of freedom are represented by a tuple of 3 booleans, representing the x 
 Optionally stiffness can be specified in either of the translational directions, which overrides the boolean specified.
 
 ```python
+#import Support
 from indeterminatebeam import Support
-a = Support(5,(1,1,0))                  # Defines a pin support at location x = 5m  
-b = Support(0,(0,1,0))                  # Defines a roller support at location x = 0m
-c = Support(7,(1,1,1))                  # Defines a fixed support at location x = 7m
-beam.add_supports(a,b,c)                # Assign the support objects to a beam object created earlier
+# Defines a pin support at location x = 5m  
+a = Support(5,(1,1,0))      
+# Defines a roller support at location x = 0m
+b = Support(0,(0,1,0))      
+# Defines a fixed support at location x = 7m
+c = Support(7,(1,1,1))      
+# Assign the support objects to a beam object created earlier
+beam.add_supports(a,b,c)    
 ```
 ##### Defining loads
 Load objects are created separately from the beam object, and are generally defined by a force value and then a coordinate value, however this varies slightly for different types of loading classes.
 
 ```python
+#import load objects
 from indeterminatebeam import PointLoadV, PointTorque, DistributedLoadV
-load_1 = PointLoadV(1,2)                # Defines a point load of 1kn acting up, at location x = 2m
-load_2 = DistributedLoadV(2,(1,4))      # Defines a 2kN UDL from location x = 1m to x = 4m 
-load_3 = PointTorque(2, 3.5)            # Defines a 2kN.m point torque at location x = 3.5m
-beam.add_loads(load_1,load_2,load_3)    # Assign the support objects to a beam object created earlier
+# Defines a point load of 1kn acting up, at location x = 2m
+load_1 = PointLoadV(1,2)                
+# Defines a 2kN UDL from location x = 1m to x = 4m 
+load_2 = DistributedLoadV(2,(1,4))     
+ # Defines a 2kN.m point torque at location x = 3.5m
+load_3 = PointTorque(2, 3.5)           
+# Assign the support objects to a beam object created earlier
+beam.add_loads(load_1,load_2,load_3)    
 ```
 
 ##### Solving for Forces
 Once the beam object has been assigned with loads and supports it can be solved. To solve for reactions and internal forces we simply call the analyse function.
 
 ```python
-beam.analyse()                          #solves beam for unknowns
+beam.analyse()  
 ```
 
 ##### Plot results
 After the beam has been analysed we can plot the results.
+
 ```python
 beam.plot()                            
 ```
