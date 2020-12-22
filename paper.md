@@ -14,26 +14,20 @@ authors:
     orcid: 0000-0002-4996-6813
 date: 15 December 2020
 bibliography: paper.bib
-
+nocite: | 
+  @beamguru, @structuralbeam, @skyciv, @mechanicalc, @webstructural, @beamcalculatoronline, @steelbeamcalculator
+---
 
 # Summary
 
-IndeterminateBeam is a Python Package aiming to serve as a foundation for civil and structural engineering projects in Python. The module is based on engineering concepts of statics __references__. The module can also serve as a standalone program and is useful for determining:
+IndeterminateBeam is a Python Package aiming to serve as a foundation for civil and structural engineering projects in Python. The module is based mainly on engineering concepts of statics as described in @HibbelerRussell2013MoM, and python packages sympy @sympy2017 and matplotlib @Hunter2007 . The module can also serve as a standalone program and is useful for determining:
 
   - reaction forces for indeterminate beams
   - Internal forces for indeterminate beams (shear, bending, axial)
   - deflection of the beam due to resulting forces
   - axial force, shear force, and bending moment diagrams
 
-The package documentation can be accessed [here](https://indeterminatebeam.readthedocs.io/en/main/), where a brief overview of the theory behind the module is provided.
-
-As the package represents a foundational element of civil, structural and mechanical engineering (often taught in first year university) the package can be used by:
-
-* teachers generating problems to solve
-* students experimenting on how differnt changes affect the system
-* engineers trying to solve for real world problems on 1D beams
-* engineers trying to implement higher order python solutions that rely on the use of 1D beams
-
+The [package documentation](https://indeterminatebeam.readthedocs.io/en/main/) provides a brief overview of the theory behind the solutions used to calculate the forces on the determinate beam.
 
 The `indeterminatebeam` package is ready for installation using `pip` or can be tested online using the provided [Jupyter notebook](https://colab.research.google.com/github/JesseBonanno/IndeterminateBeam/blob/main/docs/examples/readme_example.ipynb).
 
@@ -44,16 +38,21 @@ In the civil and structural engineering industry in-house software generally con
 
 Python can be utilised to combat this problem, allowing for the adoption of previous work as a python module. This will allow for in-house engineering software to be more uniform, readable, manageable, and reliable.
 
-The demand for such a calculation module can be observed with the existence of many websites that perform such a calculation. Although there are many websites that allow for solving indeterminate beams, there are no well documented python packages. The websites often require payment for full access to software, and do not allow for the creation of higher order software.
+The demand for such a calculation module can be observed with the existence of many websites that perform such a calculation. Examples include Beam Guru (2020), Structural Beam Deflection and Stress Calculators (2020), SkyCiv Beam (2020), MechaniCalc (2020), WebStructural (2020), Beam Calculator Online (2020), Steel Beam Calculator (2020), and Clear Calcs Free Beam Calculator (2020). Most of these expose only a graphical user interface to the user and often require payment for full access to the software. Although there are many websites that allow for solving indeterminate beams, there are no well documented python packages, preventing the creation of higher order engineering python projects.
 
-This python package was heavily inspired by [simplebendingpractice](https://github.com/alfredocarella/simplebendingpractice), a module created by [Alfredo Carella](https://github.com/alfredocarella) of the Oslo Metropolitan University
-for educational purposes. The beambending module, although well documented, can only solve for simply supported beams consisting of a pin and roller support. The full documentation for this project can be found [here](https://alfredocarella.github.io/simplebendingpractice/index.html).
+This python package was heavily inspired by [beambending](https://github.com/alfredocarella/simplebendingpractice) @Carella2019, a module created by Alfredo Carella of the Oslo Metropolitan University for educational purposes. The beambending module, although well documented, can only solve for simply supported beams consisting of a pin and roller support. The [package documentation](https://simplebendingpractice.readthedocs.io/en/latest/?badge=latest) for this project includes a more rigorous overvew of the theory behind the basics behind solving for determinate structures.
 
-The following has been taken from @alfredo, and has been modified slightly to add aditional information.
+A feature comparison in Table 1 below has been taken from @Carella2019 and modified to include more packages and features.
 
-PUT FIGURE.
+![](https://github.com/JesseBonanno/IndeterminateBeam/blob/main/tool_comparison_table.png)
 
-Add column for - can solve indeterminate beam, can add any type of support. (any is a  loose word should try to word better).
+There are five main differences between the ```indeterminatebeam``` package and the rest of the reviewed tools:
+
+* Arbitrary distributed load functions are accepted (as long as sympy can parse them), i.e. they are not restricted to constants or linear functions.
+* The package can be called from regular Python code, which makes it easy to implement higher order engineering solutions.
+* It is not only free but also completely open-source.
+* Spring supports can be modelled
+* Any degree of freedom combination can be constructed for supports 
 
 
 ## Functionality and Usage
@@ -66,26 +65,26 @@ A typical use case of the `indeterminatebeam` package involves the following ste
 4. Solve for forces on `Beam` object
 5. Plot results
 
-Default units are kN, m, and kN.m   _(except for E (MPa), and I (mm4))_
-
-Load convention is described in the [package documentation](https://indeterminatebeam.readthedocs.io/en/main/).
+Units and load direction conventions are described in the [package documentation](https://indeterminatebeam.readthedocs.io/en/main/).
 
 You can follow along with the example below in this web based notebook: [![Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/JesseBonanno/IndeterminateBeam/blob/main/docs/examples/readme_example.ipynb)
 
 ##### Creating Beam
 
-The creation of a beam instance involves the input of the beam length (m) and optinally the input of the young's modulus (E), and second moment of area (I). E and I are optional and by default are the properties of a steel 150UB18.0. For a beam with constant EI (bending rigidity) these parameters will only affect the deflections calculated and not the distribution of forces.
+The creation of a beam instance involves the input of the beam length (m) and optinally the input of the young's modulus (E), second moment of area (I), and cross-sectional area (A). E, I and A are optional and by default are the properties of a steel 150UB18.0. For a beam with constant properties, these parameters will only affect the deflections calculated and not the distribution of forces, unless spring supports are specified.
 
 ```python
 from indeterminatebeam import Beam
 beam = Beam(7)                          # Initialize a Beam object of length 5m with E and I as defaults
-beam_2 = Beam(9,E=2000, I =100000)      # Initialize a Beam object of length 9m with E and I assigned by user
+beam_2 = Beam(9,E=2000, I =10**6, A = 3000)      # Initialize a Beam object of length 9m with E, I, and A assigned by user
 ```
 
 ##### Defining Supports
 Support objects are created separately from the beam object, and are defined by an x-coordinate (m) and the beams translational and rotational degrees of freedom.
 
 Degrees of freedom are represented by a tuple of 3 booleans, representing the x , y , and m directions respectively. A `1` indicates the support is fixed in a direction and a `0` indicates it is free.
+
+Optionally stiffness can be specified in either of the translational directions, which overrides the boolean specified.
 
 ```python
 from indeterminatebeam import Support
