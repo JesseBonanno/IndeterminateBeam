@@ -15,7 +15,7 @@ authors:
 date: 15 December 2020
 bibliography: paper.bib
 nocite: | 
-  [@beamguru], [@structuralbeam], [@skyciv], [@mechanicalc], [@webstructural], [@beamcalculatoronline], [@steelbeamcalculator]
+  @beamguru, @structuralbeam, @skyciv, @mechanicalc, @webstructural, @beamcalculatoronline, @steelbeamcalculator
 ---
 
 # Summary
@@ -32,7 +32,7 @@ The [package documentation](https://indeterminatebeam.readthedocs.io/en/main/) p
 The `indeterminatebeam` package is ready for installation using `pip` or can be tested online using the provided [Jupyter notebook](https://colab.research.google.com/github/JesseBonanno/IndeterminateBeam/blob/main/docs/examples/readme_example.ipynb).
 
 
-## Statement of Need
+# Statement of Need
 
 In the civil and structural engineering industry in-house software generally consists of numerous standalone excel files. Although the excel files can often be greatly valueable once created, they are often created from scratch with difficulty in making use of previous excel projects.
 
@@ -55,7 +55,7 @@ There are five main differences between the ```indeterminatebeam``` package and 
 * Any degree of freedom combination can be constructed for supports 
 
 
-## Functionality and Usage
+# Functionality and Usage
 
 A typical use case of the `indeterminatebeam` package involves the following steps:
 
