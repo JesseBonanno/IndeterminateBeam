@@ -45,7 +45,7 @@ This python package was heavily inspired by [beambending](https://github.com/alf
 
 A feature comparison in Table 1 below has been taken from @Carella2019 and modified to include more packages and features.
 
-![](tool_comparison_table.jpg)
+![](tool_comparison_table.png)
 
 There are five main differences between the ```indeterminatebeam``` package and the rest of the reviewed tools:
 
@@ -122,6 +122,6 @@ The `plot` method is actually a wrapper that combines these five methods: `plot_
 
 The script above produces the following figure:
 
-![example_1](docs/examples/readme_example.jpg)
+![example_1](docs/examples/readme_example.png)
 
 # References
