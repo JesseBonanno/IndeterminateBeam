@@ -1,3 +1,4 @@
+---
 title: 'IndeterminateBeam: A Python package for solving 1D indeterminate beams'
 tags:
 - bending moment diagram
