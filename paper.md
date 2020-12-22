@@ -122,5 +122,4 @@ The `plot` method is actually a wrapper that combines these five methods: `plot_
 The script above produces the following figure:
 ![example_1](https://github.com/JesseBonanno/IndeterminateBeam/raw/main/docs/examples/readme_example.png)
 
-
-
+# References
