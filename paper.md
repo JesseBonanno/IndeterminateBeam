@@ -121,6 +121,7 @@ beam.plot()
 The `plot` method is actually a wrapper that combines these five methods: `plot_beam_diagram`, `plot_normal_force`, `plot_shear_force`, `plot_bending_moment` and `plot_deflection` into a single A4-sized printer-friendly plot.
 
 The script above produces the following figure:
+
 ![example_1](https://github.com/JesseBonanno/IndeterminateBeam/raw/main/docs/examples/readme_example.png)
 
 # References
