@@ -120,6 +120,10 @@ The following are areas that can be implemented in future:
 - More user input validation checks
 - More indeterminate beams in testing
 
+## Contributing
+
+The guidelines for contributing are specified [here](https://github.com/JesseBonanno/IndeterminateBeam/blob/main/CONTRIBUTING.md).
+
 ## License
 
 [![License](https://img.shields.io/badge/license-MIT-lightgreen.svg)](https://github.com/JesseBonanno/IndeterminateBeam/blob/main/LICENSE.txt)
