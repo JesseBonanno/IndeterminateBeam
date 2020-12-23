@@ -1,6 +1,6 @@
 import sys, os
 sys.path.insert(0, os.path.abspath('../'))
-from indeterminatebeam.indeterminatebeam import Support, Beam, PointLoad, PointTorque, DistributedLoadV, PointLoadH, PointLoadV
+from indeterminatebeam.indeterminatebeam import Support, Beam, PointLoad, PointTorque, DistributedLoadV, PointLoadH, PointLoadV,oo
 import unittest
 
 
@@ -15,6 +15,7 @@ class SupportTestCase(unittest.TestCase):
         a = Support()
         b = Support(0,(1,1,1))
         c = Support(1, (1,0,1))
+        d = Support(2, (1,1,1), ky =50, kx = 40)
         c._id = 1
 
         ##check default set up
@@ -29,8 +30,8 @@ class SupportTestCase(unittest.TestCase):
         self.assertEqual(c._id, 1)
 
         ##check translation
-        self.assertEqual(c._DOF, (1,0,1))
-        self.assertEqual(c._translation, ["Fixed", "Free", "Fixed"])
+        self.assertEqual(c._DOF, [1,0,1])
+        self.assertEqual(d._stiffness, [40,50,oo])
 
     
 
@@ -58,12 +59,15 @@ class BeamTestCase(unittest.TestCase):
         ##check the determinancy is 1
         self.assertEqual(beam.check_determinancy(),1)
 
-        ##check the reaction forces, appears as a tuple where order of supports added matters
+        ##Use get reactions function to assert correct reactions
+        ##get reactions returns reaction force rounded to 5 dp
         #{'x': [(0.0, 0)], 'y': [(4.6875, 6), (10.3125, 0)], 'm': [(16.875, 0)]} if add_supports(c,a)
-        self.assertEqual(round(beam._reactions['x'][0][0],1), 0)
-        self.assertEqual(round(beam._reactions['y'][0][0],1), 10.3)
-        self.assertEqual(round(beam._reactions['y'][1][0],1), 4.7)
-        self.assertEqual(round(beam._reactions['m'][0][0],1), 16.9)
+        self.assertEqual(beam.get_reaction(0,'x'),0)
+        self.assertEqual(beam.get_reaction(0,'y'),10.31250)
+        self.assertEqual(beam.get_reaction(0,'m'),16.87500)
+        self.assertEqual(beam.get_reaction(6,'x'),0)
+        self.assertEqual(beam.get_reaction(6,'y'),4.6875)
+        self.assertEqual(beam.get_reaction(6,'m'),0)
 
         ##check the forces on the beam, round to 1 dp to reduce error chance
             ##normal forces
