@@ -1,9 +1,9 @@
 .. _example:
 
-Beam with two point loads and two distributed loads
-===================================================
+Indeterminate Beam with Point Load and Distributed Load
+========================================================
 
-This example demonstrates some functionality of the ``indeterminatebeam`` package. It has been taken from example 12.21 of the Hibbeler textbook (see :ref:`references`).
+This example demonstrates some functionality of the ``indeterminatebeam`` package. It has been taken from example 12.21 of the Hibbeler textbook :cite:`HibbelerRussell2013MoM`.
 
 Try it in online: |colab|
 
@@ -26,7 +26,7 @@ The following values can be directly extracted:
 
    #. The degree of determinancy	  --> 1
    #. The absolute maximum shear force 	  --> 16.75 kN
-   #. The absolute maximum bending moment --> 11.25 kN
+   #. The absolute maximum bending moment --> 11.25 kN.m
    #. The reaction at B         	  --> 9.25 kN
 
 A plot of the axial force, shear force, and bending moments is shown below. A deflection graph is also presented however this depends on the beam properties E and I which werent included in this question.

@@ -31,8 +31,9 @@ release = '0.1'
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
-extensions = ['sphinx.ext.autodoc', 'sphinx.ext.coverage', 'sphinx.ext.napoleon', 'sphinx.ext.mathjax']
-
+extensions = ['sphinx.ext.autodoc', 'sphinx.ext.coverage', 'sphinx.ext.napoleon', 'sphinx.ext.mathjax', 'sphinxcontrib.bibtex']
+bibtex_bibfiles = ['../paper.bib']
+bibtex_default_style = 'plain'
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
 

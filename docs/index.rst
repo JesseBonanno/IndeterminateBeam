@@ -12,7 +12,7 @@ Okay so why does this project exist?
 * Allow for the creation of higher order engineering calculations that inherit from this project. 
 
 This project is based on the `beambending project 
-<https://github.com/alfredocarella/simplebendingpractice>`_ by Alfredo Carella which can be used to solve for determinate simply supported structures.
+<https://github.com/alfredocarella/simplebendingpractice>`_ by Alfredo Carella which can be used to solve for determinate simply supported structures :cite:`Carella2019`.
 
 .. toctree::
    :maxdepth: 2

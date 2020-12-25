@@ -3,7 +3,10 @@
 Theory
 ===================================================
 
-A brief overview of the engineering theory and conventions used in this program are illustrated below.
+A brief overview of the engineering theory and conventions used in this program are illustrated below. Theory is adapted from the Hibbeler textbook :cite:`HibbelerRussell2013MoM`.
+A more rigorous overview of the basic theory behind statically determinate structures is presented in the `beambending <https://github.com/alfredocarella/simplebendingpractice>`_ package documentation `here <https://simplebendingpractice.readthedocs.io/en/latest/background.html>`_ :cite:`Carella2019`.
+
+`beambending <https://github.com/alfredocarella/simplebendingpractice>`_
 
 Indeterminate vs Determinate structures
 ----------------------------------------
@@ -159,7 +162,7 @@ For angled point loads (assuming a positive force is used):
    * An angle between 90 and 180 degrees indicates a force acting left (negative direction) and a positive force acting up 
    * An angle of 180 indicates a negative horizontal force
 
-.. image:: /sign_convention/angle.jpg
+.. image:: /sign_convention/angle.png
   :width: 400
   :alt: angle convention
 
