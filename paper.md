@@ -13,6 +13,7 @@ tags:
 authors:
   - name: Jesse Bonanno
     orcid: 0000-0002-4996-6813
+affiliations:
 date: 15 December 2020
 bibliography: paper.bib
 nocite: | 
