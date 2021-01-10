@@ -13,15 +13,19 @@ Example
 """
 
 from collections import namedtuple
-import matplotlib.pyplot as plt
-from matplotlib.patches import Arc, Polygon, Rectangle, RegularPolygon, Wedge, Circle
-from matplotlib.collections import PatchCollection
 import numpy as np
 import os
 from sympy import integrate, lambdify, Piecewise, sympify, symbols, linsolve, sin, cos,oo
 from sympy.abc import x
 from math import radians 
 from indeterminatebeam.data_validation import assert_number, assert_positive_number
+from indeterminatebeam.plotly_drawing_aid import draw_line, draw_arrowhead, draw_arrow, draw_support_triangle, draw_support_rectangle, \
+                               draw_moment, draw_force, draw_load_hoverlabel, draw_reaction_hoverlabel, \
+                               draw_support_hoverlabel, draw_support_rollers, draw_support_spring, draw_support
+from plotly.subplots import make_subplots
+import plotly.graph_objects as go
+import plotly.express as px
+import time
 
 class Support:
     """
@@ -35,8 +39,11 @@ class Support:
             stiffness K (kN/mm) for movement in x, y and bending, oo represents infinity in sympy
             and means a completely fixed conventional support, and 0 means free to move.
         _DOF : tuple of 3 booleans
-            Degrees of freedom that are fixed on a beam for movement in x, y and bending, 1 
+            Degrees of freedom that are restraint on a beam for movement in x, y and bending, 1 
             represents that a reaction force exists and 0 represents free (default (1,1,1))
+        _fixed: tuple of 3 booleans
+            Degrees of freedom that are completely fixed on a beam for movement in x, y and 
+            bending, 1 represents fixed and 0 represents free or spring  (default (1,1,1))
         _id : positive number
             id assigned when support associated with Beam object, to help remove supports.
 
@@ -88,6 +95,7 @@ class Support:
             self._stiffness[1] = ky
 
         self._DOF = [int(bool(e)) for e in self._stiffness]
+        self._fixed = [int(bool(e)) if e==oo else 0 for e in self._stiffness]
         self._position = coord
         self._id = None
 
@@ -103,9 +111,6 @@ class Support:
         if self._id:
             return f"<support, id = {self._id}>"
         return "<Support>"
-
-
-##Section 1 - Loading Class definitions 
 
 class PointLoad(namedtuple("PointLoad", "force, coord, angle")):
     """Point load described by a tuple of floats: (force, coord, angle).
@@ -240,13 +245,24 @@ def TrapezoidalLoad(force = (0, 0), span = (0, 0)):
 
     assert_number(start_load, "force[0] (The starting force)")
     assert_number(end_load, "force[1] (The ending force)")
+
     assert_number(start_coordinate, "span[0] (The starting coordinate) ")
     assert_number(end_coordinate, "span[1] (The ending coordinate)")
 
-    a = (end_load - start_load) / (end_coordinate - start_coordinate)
-    b = start_load - start_coordinate  *a
+    if start_coordinate >= end_coordinate:
+        raise ValueError("start coordinate should be less than end coordinate")
 
-    return DistributedLoadV(f"{a}*x+{b}", (start_coordinate, end_coordinate))
+    if start_coordinate == end_coordinate:
+        return DistributedLoadV(0, (start_coordinate, end_coordinate))
+
+    elif end_load == start_load:
+        return DistributedLoadV(start_load, (start_coordinate, end_coordinate))
+
+    else:
+        a = (end_load - start_load) / (end_coordinate - start_coordinate)
+        b = start_load - start_coordinate  *a
+
+        return DistributedLoadV(f"{a}*x+{b}", (start_coordinate, end_coordinate))
 
 class Beam:
     """
@@ -277,11 +293,6 @@ class Beam:
         A list containing x coordinates that are to have values explicitly written on graphs.
     _supports: list
         A list of support objects associated with the beam.
-    _reactions_plot_tuples: dictionary of lists
-        A dictionary where the first key is either 'x', 'y' or 'm'. Each value associated with
-        these keys is a list of tuples where the tuples are (force, position) and can be thought
-        of as PointLoadV (for 'y'), PointLoadH (for 'x') or PointTorque (for 'm') objects 
-        although it isnt explicitly defined.
     _reactions: dictionary of lists
         A dictionary with keys for support positions. Each key is associated with a list of forces
         of the form ['x','y','m']
@@ -341,7 +352,6 @@ class Beam:
 
         self._query = []
         self._supports = []
-        self._reactions_plot_tuple = {'x':[], 'y':[], 'm':[]}
         self._reactions = {}
         
         self._E = E
@@ -359,33 +369,32 @@ class Beam:
             (or segment) must be within the Beam span.
 
         """
-        for load in loads:          
-            if isinstance(load[1],tuple):
-                left = min(load[1])
-                right = max(load[1])
-            else:
-                left = right = load[1]    
-            if self._x0 > left or right > self._x1:
-                raise ValueError(f"{load[1]} is not a point on beam")
+        for load in loads:
+            ##note have currently ignored distributed load h in this version of the program
+            if isinstance(load,(PointLoad,PointLoadH,PointLoadV,PointTorque,DistributedLoadV)):
+                if isinstance(load,DistributedLoadV):
+                    left = min(load[1])
+                    right = max(load[1])
+                    assert_positive_number(left, "span left")
+                    assert_positive_number(right, "span right")
 
-            supported_load_types = (DistributedLoadH, DistributedLoadV, PointLoadH, PointLoadV, PointTorque)
+                    if self._x0 > left or right > self._x1:
+                        raise ValueError(f"{load[1]} is not a point on beam")
 
-            if isinstance(load, supported_load_types):
-                self._loads.append(load)
+                    if len(load[1]) != 2:
+                        raise ValueError(f"span should only have two numbers entered")
 
-            elif isinstance(load,PointLoad):
-                force, position, angle = load
-                assert_number(angle, 'angle')
-                if angle > 180 or angle <0:
-                    raise ValueError('Angle should be between 0 and 180 degrees')
-                load_y = PointLoadV(sympify(force*sin(radians(angle))).evalf(10), position)     ###when angle = 90 then force is 1
-                load_x = PointLoadH(sympify(force*cos(radians(angle))).evalf(10), position)     ##when angle = 0 then force is 1
-                if abs(round(load_x.force,3)) >0:
-                    self._loads.append(load_x)
-                if abs(round(load_y.force,3)) >0:
-                    self._loads.append(load_y)
-            else:
-                raise TypeError("The provided loads must be one of the supported types: {0}".format(supported_load_types))
+                    self._loads.append(load)
+
+                elif isinstance(load,(PointTorque,PointLoadV,PointLoadH,PointLoad)):
+                    assert_number(load[0],'force')
+                    assert_number(load[1],'x coordinate')
+
+                    if isinstance(load,PointLoad):
+                        assert_number(load[2],'angle')
+
+                    if abs(round(load[0],10)) > 0:
+                        self._loads.append(load)
 
         self._update_loads()
 
@@ -407,16 +416,9 @@ class Beam:
             return None
 
         for load in loads:
-            if isinstance(load,PointLoad):
-                force, position, angle = load
-                load_x = PointLoadH(sympify(force*sin(radians(angle))).evalf(10), position)     ###when angle = 90 then force is 1
-                load_y = PointLoadV(sympify(force*cos(radians(angle))).evalf(10), position)     ##when angle = 0 then force is 1
-                if load_x in self._loads:
-                    self._loads.remove(load_x)
-                if load_y in self._loads:
-                    self._loads.remove(load_y)
-            elif load in self._loads:
+            if load in self._loads:
                 self._loads.remove(load)
+
         self._update_loads()
     
     def add_supports(self, *supports):
@@ -434,8 +436,8 @@ class Beam:
             if not isinstance(support, Support):
                 raise TypeError("support must be of type class Support")
             
-            if self._x0 > support._position or support._position > self._x1:
-                return ValueError("Not a point on beam")
+            if (self._x0 > support._position) or (support._position > self._x1):
+                raise ValueError("Not a point on beam")
 
             elif self._supports == []:
                 support._id = 1
@@ -535,55 +537,69 @@ class Beam:
 
         if len(unknowns_ym) <2 :
             raise ValueError('You need at least two y or m restraints, even if there are no y or m forces')
-
+        
         ##locations where x reaction is and order, for indeterminate axial determaintion
         x_0 = [a for a in unknowns_x.keys()]
         x_0.sort()
 
         ##external reaction equations
-        F_Rx = sum(integrate(load, (x, x0, x1)) for load in self._distributed_forces_x) + \
-            sum(f.force for f in self._point_loads_x()) + \
-            sum([a[0] for a in unknowns_x.values()])   
+        F_Rx = sum(integrate(load, (x, x0, x1)) for load in self._distributed_forces_x) \
+               + sum(f.force for f in self._point_loads_x()) \
+               + sum([a[0] for a in unknowns_x.values()])   
 
-        F_Ry = sum(integrate(load, (x, x0, x1)) for load in self._distributed_forces_y) + \
-               sum(f.force for f in self._point_loads_y()) + \
-               sum([a[0] for a in unknowns_y.values()])
+        F_Ry = sum(integrate(load, (x, x0, x1)) for load in self._distributed_forces_y) \
+               + sum(f.force for f in self._point_loads_y()) \
+               + sum([a[0] for a in unknowns_y.values()])
+
 
         ##moments taken at the left of the beam, anti-clockwise is positive
-        M_R = sum(integrate(load * x, (x, x0, x1)) for load in self._distributed_forces_y) + \
-            sum(f.force * f.coord for f in self._point_loads_y()) + \
-            sum([p*v[0] for p,v in unknowns_y.items()]) + \
-            sum(f.torque for f in self._point_torques()) + \
-            sum([a[0] for a in unknowns_m.values()])
+        M_R = sum(integrate(load * x, (x, x0, x1)) for load in self._distributed_forces_y) \
+              + sum(f.force * f.coord for f in self._point_loads_y()) \
+              + sum([p*v[0] for p,v in unknowns_y.items()]) \
+              + sum(f.torque for f in self._point_torques()) \
+              + sum([a[0] for a in unknowns_m.values()])
 
         ##internal beam equations
         C1, C2 = symbols('C1'), symbols('C2')
         unknowns_ym = unknowns_ym + [C1] +[C2]
 
         ##normal forces is same concept as shear forces only no distributed for now.
-        N_i = sum(self._effort_from_pointload(f) for f in self._point_loads_x()) + \
-               sum(self._effort_from_pointload(PointLoadH(v[0],p)) for p,v in unknowns_x.items()) 
+        N_i = sum(self._effort_from_pointload(f) for f in self._point_loads_x()) \
+              + sum(self._effort_from_pointload(PointLoadH(v[0],p)) for p,v in unknowns_x.items()) 
 
         ## shear forces, an internal force acting down would be considered positive by adopted convention
         ##hence if the sum of forces on the beam are all positive, our internal force would also be positive due to difference in convention
-        F_i = sum(integrate(load, x) for load in self._distributed_forces_y) + \
-               sum(self._effort_from_pointload(f) for f in self._point_loads_y()) + \
-               sum(self._effort_from_pointload(PointLoadV(v[0],p)) for p,v in unknowns_y.items())  
+        F_i = sum(integrate(load, x) for load in self._distributed_forces_y) \
+              + sum(self._effort_from_pointload(f) for f in self._point_loads_y()) \
+              + sum(self._effort_from_pointload(PointLoadV(v[0],p)) for p,v in unknowns_y.items())  
 
         ##bending moments at internal point means we are now looking left along the beam when we take our moments (vs when we did external external reactions and we looked right)
         ##An anti-clockwise moment is adopted as positive internally. 
         ## Hence we need to consider a postive for our shear forces and negative for our moments by our sign convention
-        M_i = (integrate(F_i,x)) - \
-            sum(self._effort_from_pointload(PointTorque(v[0],p)) for p,v in unknowns_m.items()) - \
-            sum(self._effort_from_pointload(f) for f in self._point_torques())
+        M_i = sum(integrate(load, x, x) for load in self._distributed_forces_y) \
+              + sum(integrate(self._effort_from_pointload(f), x)  for f in self._point_loads_y()) \
+              + sum(integrate(self._effort_from_pointload(PointLoadV(v[0],p)), x) for p,v in unknowns_y.items()) \
+              - sum(self._effort_from_pointload(PointTorque(v[0],p)) for p,v in unknowns_m.items()) \
+              - sum(self._effort_from_pointload(f) for f in self._point_torques())
+
 
              #with respect to x, + constants but the constants are the M at fixed supports
 
-        dv_EI = integrate(M_i, x) + C1
+        dv_EI = sum(integrate(load, x, x ,x) for load in self._distributed_forces_y) \
+                + sum(integrate(self._effort_from_pointload(f), x, x)  for f in self._point_loads_y()) \
+                + sum(integrate(self._effort_from_pointload(PointLoadV(v[0],p)), x, x) for p,v in unknowns_y.items()) \
+                - sum(integrate(self._effort_from_pointload(PointTorque(v[0],p)), x) for p,v in unknowns_m.items()) \
+                - sum(integrate(self._effort_from_pointload(f), x) for f in self._point_torques()) \
+                + C1
 
-        v_EI = integrate(dv_EI,x) + C2
+        v_EI = sum(integrate(load, x, x ,x, x) for load in self._distributed_forces_y) \
+               + sum(integrate(self._effort_from_pointload(f), x, x, x)  for f in self._point_loads_y()) \
+               + sum(integrate(self._effort_from_pointload(PointLoadV(v[0],p)), x, x, x) for p,v in unknowns_y.items()) \
+               - sum(integrate(self._effort_from_pointload(PointTorque(v[0],p)), x, x) for p,v in unknowns_m.items()) \
+               - sum(integrate(self._effort_from_pointload(f), x, x) for f in self._point_torques()) \
+               + C1*x \
+               + C2
 
-        
         ##equations , create a lsit fo equations
         equations_ym = [F_Ry,M_R]
 
@@ -603,20 +619,25 @@ class Beam:
             start = x_0[0]
             for position in x_0[1:]: ##dont consider the starting point? only want to look between supports and not at cantilever sections i think
                 equations_xx.append(
-                    integrate(N_i, (x,x_0[0], position))*10**3 /(self._E*self._A) + \
-                    unknowns_x[start][0]/unknowns_x[start][1] - \
-                    unknowns_x[position][0]/unknowns_x[position][1]   ##represents elongation displacment on right
+                    (
+                    sum(integrate(self._effort_from_pointload(f), (x,x_0[0], position)) for f in self._point_loads_x())
+                    + sum(integrate(self._effort_from_pointload(PointLoadH(v[0],p)), (x,x_0[0], position)) for p,v in unknowns_x.items())
                     )
-        
+                    *10**3 /(self._E*self._A)
+                    + unknowns_x[start][0]/unknowns_x[start][1]
+                    - unknowns_x[position][0]/unknowns_x[position][1]   ##represents elongation displacment on right
+                    )
+
+
         ##compute analysis with linsolve
         solutions_ym = list(linsolve(equations_ym, unknowns_ym))[0]
         solutions_xx = list(linsolve(equations_xx, unknowns_xx))[0]
-        
+
         solutions = [a for a in solutions_ym + solutions_xx]
 
         solution_dict = dict(zip(unknowns_ym+unknowns_xx, solutions))
 
-        self._reactions_plot_tuple = {'x': [], 'y': [], 'm': []}
+        self._reactions = {a._position : [0,0,0] for a in self._supports}
 
         ##substitue in value instead of variable in functions
         for var, ans in solution_dict.items():
@@ -625,18 +646,17 @@ class Beam:
             F_i  = F_i.subs(var,ans)  ##complete shear force equation
             N_i = N_i.subs(var,ans)   ##complete normal force equation
 
-            ##create self._reactions_plot_tuple to allow for plotting of reaction forces if wanted.
+            ##create self._reactions to allow for plotting of reaction forces if wanted and for use with get_reaction method.
             if var not in [C1,C2]:
                 vec, num = str(var).split('_')
                 position = [a._position for a in self._supports if a._id == int(num)][0]
-                self._reactions_plot_tuple[vec].append((float(ans), position))
-
-        ##create self._reactions, to allow for user to get reactions at a point      
-        self._reactions = {a._position : [0,0,0] for a in self._supports}
-        for i, a in enumerate(['x','y','m']):
-            if self._reactions_plot_tuple[a]:
-                for f,p in self._reactions_plot_tuple[a]:
-                    self._reactions[p][i] = round(f,5)
+                if vec == 'x':
+                    i = 0
+                elif vec == 'y':
+                    i = 1
+                else:
+                    i = 2
+                self._reactions[position][i] = round(ans,5)
 
         ##moment unit is kn.m, dv_EI kn.m2, v_EI Kn.m3 --> *10^3, *10^9 to get base units 
         ## EI unit is N/mm2 , mm4 --> N.mm2
@@ -726,7 +746,7 @@ class Beam:
             else:
                 return round(float(func(x_coord)),3)
 
-        x_vec = np.linspace(self._x0, self._x1, int(min(self._x1 * 1000 + 1, 1e4)))  ## numpy array for x positions closely spaced (allow for graphing)                                      ##i think lambdify is needed to let the function work with numpy
+        x_vec = np.linspace(self._x0, self._x1, int(1000))  ## numpy array for x positions closely spaced (allow for graphing)                                      ##i think lambdify is needed to let the function work with numpy
         y_vec = np.array([func(t) for t in x_vec])  
         min_ = float(y_vec.min())
         max_ = float(y_vec.max())
@@ -895,10 +915,41 @@ class Beam:
             else:
                 return ValueError("Not an existing query point on beam")
 
-    def plot(self, switch_axes=False, inverted=False,draw_reactions=False):
-        """A wrapper of several plotting functions that generates a single figure with 5 plots corresponding respectively to:
+    def plot_beam_external(self):
+        """A wrapper of several plotting functions that generates a single figure with 2 plots corresponding respectively to:
 
         - a schematic of the loaded beam
+        - reaction force diagram
+
+        Returns
+        -------
+        figure : `plotly.graph_objs._figure.Figure`
+            Returns a handle to a figure with the 2 subplots.
+
+        """
+        fig = make_subplots(
+            rows=2, cols=1,
+            shared_xaxes=True,
+            vertical_spacing=0.1,
+            subplot_titles=("Beam schematic", "Reaction Forces")
+        )
+
+        fig = self.plot_beam_diagram(fig=fig, row=1, col=1)
+        fig = self.plot_reaction_force(fig=fig, row=2, col=1)
+
+        fig.update_xaxes(title_text='Beam Length (m)',row=2,col=1)
+
+        fig.update_layout(
+                        height=550, 
+                        title={'text': "Beam External Conditions",'x':0.5},
+                        showlegend=False,
+                        hovermode='x')
+
+        return fig
+
+    def plot_beam_internal(self, reverse_x=False, reverse_y=False, switch_axes=False):
+        """A wrapper of several plotting functions that generates a single figure with 4 plots corresponding respectively to:
+
         - normal force diagram,
         - shear force diagram, 
         - bending moment diagram, and
@@ -915,481 +966,353 @@ class Beam:
 
         Returns
         -------
-        figure : `~matplotlib.figure.Figure`
-            Returns a handle to a figure with the 5 subplots: Beam schematic, normal force diagram,
-            shear force diagram, bending moment diagram, and deflection diagram.
+        figure : `plotly.graph_objs._figure.Figure`
+            Returns a handle to a figure with the 4 subplots.
 
         """
-        if switch_axes:
-            fig = plt.figure(figsize=(14, 6))
-            fig.subplots_adjust(wspace=0.8)
+        fig = make_subplots(rows=4, cols=1,
+                    shared_xaxes=True,
+                    vertical_spacing=0.05,
+                    subplot_titles=("Normal Force Diagram","Shear Force Diagram", "Bending Moment Diagram", "Deflection Diagram"))
 
-            # ax1 = fig.add_subplot(1, 5, 1)
-            # self.plot_beam_diagram(ax1, switch_axes = switch_axes)
+        fig = self.plot_normal_force(reverse_x=reverse_x, reverse_y=reverse_y, fig=fig, row=1, col=1)
+        fig = self.plot_shear_force(reverse_x=reverse_x, reverse_y=reverse_y, fig=fig, row=2, col=1)
+        fig = self.plot_bending_moment(reverse_x=reverse_x, reverse_y=reverse_y, fig=fig, row=3, col=1)
+        fig = self.plot_deflection(reverse_x=reverse_x, reverse_y=reverse_y, fig=fig, row=4, col=1)
 
-            ax2 = fig.add_subplot(1, 5, 2)
-            self.plot_normal_force(ax2,switch_axes = True, inverted=inverted,maxmin_hline= False, maxmin_vline=True)
+        fig.update_xaxes(title_text='Beam Length (m)',row=4,col=1)
 
-            ax3 = fig.add_subplot(1, 5, 3)
-            self.plot_shear_force(ax3, switch_axes = True, inverted=inverted,maxmin_hline= False, maxmin_vline=True)
-
-            ax4 = fig.add_subplot(1, 5, 4)
-            self.plot_bending_moment(ax4, switch_axes = True, inverted=inverted,maxmin_hline= False, maxmin_vline=True)
-
-            ax5 = fig.add_subplot(1, 5, 5)
-            self.plot_deflection(ax5, switch_axes = True, inverted=inverted,maxmin_hline= False, maxmin_vline=True)
-
-            return fig
-            
-
-        fig = plt.figure(figsize=(6, 14))
-        fig.subplots_adjust(hspace=0.8)
-
-        ax1 = fig.add_subplot(5, 1, 1)
-        self.plot_beam_diagram(ax1, draw_reactions=draw_reactions) ##inverted hasnt been completed for beam diagram
-
-        ax2 = fig.add_subplot(5, 1, 2)
-        self.plot_normal_force(ax2, inverted=inverted)
-
-        ax3 = fig.add_subplot(5, 1, 3)
-        self.plot_shear_force(ax3, inverted=inverted)
-
-        ax4 = fig.add_subplot(5, 1, 4)
-        self.plot_bending_moment(ax4, inverted=inverted)
-
-        ax5 = fig.add_subplot(5, 1, 5)
-        self.plot_deflection(ax5, inverted=inverted)
+        fig.update_layout(
+                        height=1000, 
+                        title={'text': "Analysis Results",'x':0.5},
+                        showlegend=False,
+                        )
 
         return fig
 
-    def plot_beam_diagram(self, ax=None, draw_reactions=False):
-        """Returns a schematic of the beam and all the loads applied on it.
+    def plot_beam_diagram(self,fig=None,row=None,col=None):
+        """Returns a schematic of the beam and all the loads applied on it
 
         Parameters
         ----------
-        draw_reactions: bool
-            True if want to show the reaction forces in the beam schematic
+        fig : bool, optional
+            Figure to append subplot diagram too. If creating standalone figure then None, by default None
+        row : int, optional
+            row number if subplot, by default None
+        col : int, optional
+            column number if subplot, by default None
 
         Returns
         -------
-        figure : `~matplotlib.figure.Figure`
+        figure : `plotly.graph_objs._figure.Figure`
             Returns a handle to a figure with the beam schematic.
         """
+        ##can do point loads as arrows, not sure about directional point loads though, hmm
+            ##can have a set length for the arrow , say 50, and use trigonometry to find the x and y offset to achieve.
+        ##for torques idk
+        ##for 
 
-        plot01_params = {'ylabel': "Beam loads", 'yunits': r'kN / m',
-                         # 'xlabel':"Beam axis", 'xunits':"m",
-                         'color': "g",
-                         'inverted': True,
-                         'query': False}
-        if ax is None:
-            ax = plt.figure(figsize=(6, 2.5)).add_subplot(1,1,1)
-        ax.set_title("Loaded beam diagram")
-        self._plot_analytical(ax, sum(self._distributed_forces_y), **plot01_params)
-        self._draw_beam_schematic(ax, draw_reactions=draw_reactions)
-        return ax.get_figure()
+        ##hoverinfo is skip to not show any default values, hover template is used to show only the x value and to not worry about the y value 
+        data = go.Scatter(x=[self._x0,self._x1], y=[0,0],mode='lines',name="Beam",line=dict(color='purple', width=2),hovertemplate="%{x} m",hoverinfo='skip')
 
-    def plot_normal_force(self, ax=None, switch_axes=False, inverted=False,maxmin_hline: bool = True, maxmin_vline:bool=False):
-        """Returns a plot of the normal force as a function of the x-coordinate.
+        if fig and row and col:
+            fig.add_trace(data,row=row,col=col)
+        else:
+            fig = go.Figure(data=data)
+            ##Hovermode x makes two hover labels appear if they are at the same point (default setting means only see the last updated point)
+            fig.update_layout(title_text="Beam Schematic", title_font_size=30,showlegend=False,hovermode='x')
+            ##visible false means y axis doesnt show, fixing range means wont zoom in y direction
+        
+        fig.update_yaxes(visible=False, range =[-3,3], fixedrange=True)
+
+        #for each support append to figure to have the shapes/traces needed for the drawing
+        if row and col:
+            for support in self._supports:
+                    fig = draw_support(fig,support,row=row,col=col)
+
+            for load in self._loads:
+                fig = draw_force(fig,load,row=row,col=col)
+                fig = draw_load_hoverlabel(fig,load,row=row,col=col)
+        else:
+            for support in self._supports:
+                fig = draw_support(fig,support)
+
+            for load in self._loads:
+                fig = draw_force(fig,load)
+                fig = draw_load_hoverlabel(fig,load)
+
+        return fig
+
+    def plot_reaction_force(self,fig=None,row=None,col=None):
+        """Returns a plot of the beam with reaction forces.        
         
         Parameters
         ----------
-        switch_axes: bool
-            True if want the beam to be plotted along the y axis and beam equations to be plotted along the x axis.
-        inverted: bool
-            True if want to flip a function about the x axis.
-        maxmin_hline: bool
-            True if want a horizontal line displaying the maximum and minimum value reached on the y-axis
-        maxmin_vline: bool 
-            True if want a vertical line displaying the maximum and minimum value reached on the x-axis
-        
+        fig : bool, optional
+            Figure to append subplot diagram too. If creating standalone figure then None, by default None
+        row : int, optional
+            row number if subplot, by default None
+        col : int, optional
+            column number if subplot, by default None
+
         Returns
         -------
-        figure : `~matplotlib.figure.Figure`
+        figure : `plotly.graph_objs._figure.Figure`
+            Returns a handle to a figure with reaction forces.
+        """
+        ##if a figure is passed it is for the subplot
+        ##append everything to it rather than creating a new plot.
+        data = go.Scatter(x=[self._x0,self._x1], y=[0,0],mode='lines',name="Beam",line=dict(color='purple', width=2),hovertemplate="%{x} m",hoverinfo='skip')
+        
+        
+        if fig and row and col:
+            fig.add_trace(data,row=row,col=col)
+        else:
+            fig = go.Figure(data=data)
+
+            ##Hovermode x makes two hover labels appear if they are at the same point (default setting means only see the last updated point)
+            fig.update_layout(title_text="Reaction Forces", title_font_size=30,showlegend=False,hovermode='x')
+
+        ##visible false means y axis doesnt show, fixing range means wont zoom in y direction
+        fig.update_yaxes(visible=False, range =[-3,3], fixedrange=True)
+
+        for position, values in self._reactions.items():
+            x_ = round(values[0],3)
+            y_ = round(values[1],3)
+            m_ = round(values[2],3)
+
+            if x_ or y_ or m_ > 0:
+                if row and col:
+                    fig = draw_reaction_hoverlabel(fig, reactions = [x_,y_,m_], x_sup=position,row=row,col=col)
+
+                    if abs(x_) > 0:
+                        fig = draw_force(fig,PointLoadH(x_,position),row=row,col=col)
+                    if abs(y_) > 0:
+                        fig = draw_force(fig,PointLoadV(y_,position),row=row,col=col)
+                    if abs(m_) > 0:
+                        fig = draw_force(fig,PointTorque(m_,position),row=row,col=col)
+                else:
+                    fig = draw_reaction_hoverlabel(fig, reactions = [x_,y_,m_], x_sup=position)
+
+                    if abs(x_) > 0:
+                        fig = draw_force(fig,PointLoadH(x_,position))
+                    if abs(y_) > 0:
+                        fig = draw_force(fig,PointLoadV(y_,position))
+                    if abs(m_) > 0:
+                        fig = draw_force(fig,PointTorque(m_,position))
+
+        return fig
+
+    def plot_normal_force(self, reverse_x=False, reverse_y=False, fig=None,row=None,col=None):
+        """Returns a plot of the normal force as a function of the x-coordinate.
+
+        Parameters
+        ----------
+        reverse_x : bool, optional
+            reverse the x axes, by default False
+        reverse_y : bool, optional
+            reverse the y axes, by default False
+        fig : bool, optional
+            Figure to append subplot diagram too. If creating standalone figure then None, by default None
+        row : int, optional
+            row number if subplot, by default None
+        col : int, optional
+            column number if subplot, by default None
+
+        Returns
+        -------
+        figure : `plotly.graph_objs._figure.Figure`
             Returns a handle to a figure with the normal force diagram.
         """
-        plot02_params = {'ylabel': "Normal force", 'yunits': r'kN',
-                         # 'xlabel':"Beam axis", 'xunits':"m",
-                         'color': "b",
-                         'switch_axes': switch_axes,
-                         'inverted': inverted,
-                         'maxmin_hline':maxmin_hline,
-                         'maxmin_vline':maxmin_vline}
-        if ax is None:
-            if switch_axes:
-                ax = plt.figure(figsize=(2.5, 6)).add_subplot(1,1,1)
-            else:
-                ax = plt.figure(figsize=(6, 2.5)).add_subplot(1,1,1)
-        self._plot_analytical(ax, self._normal_forces, **plot02_params)
-        return ax.get_figure()
 
-    def plot_shear_force(self, ax=None, switch_axes=False, inverted=False,maxmin_hline: bool = True, maxmin_vline:bool=False):
+        xlabel = 'Beam Length'
+        ylabel = 'Normal Force'
+        xunits = 'm'
+        yunits = 'kN'
+        title = "Normal Force Plot"
+        color = "red"
+
+        fig = self._plot_analytical(self._normal_forces,color,title,xlabel,ylabel,xunits,yunits,reverse_x,reverse_y, fig=fig, row=row, col=col)
+        return fig
+
+    def plot_shear_force(self, reverse_x=False, reverse_y=False, fig=None,row=None,col=None):
         """Returns a plot of the shear force as a function of the x-coordinate.
 
         Parameters
         ----------
-        switch_axes: bool
-            True if want the beam to be plotted along the y axis and beam equations to be plotted along the x axis.
-        inverted: bool
-            True if want to flip a function about the x axis.
-        maxmin_hline: bool
-            True if want a horizontal line displaying the maximum and minimum value reached on the y-axis
-        maxmin_vline: bool 
-            True if want a vertical line displaying the maximum and minimum value reached on the x-axis
+        reverse_x : bool, optional
+            reverse the x axes, by default False
+        reverse_y : bool, optional
+            reverse the y axes, by default False
+        fig : bool, optional
+            Figure to append subplot diagram too. If creating standalone figure then None, by default None
+        row : int, optional
+            row number if subplot, by default None
+        col : int, optional
+            column number if subplot, by default None
 
         Returns
         -------
-        figure : `~matplotlib.figure.Figure`
+        figure : `plotly.graph_objs._figure.Figure`
             Returns a handle to a figure with the shear force diagram.
         """
 
-        plot03_params = {'ylabel': "Shear force", 'yunits': r'kN',
-                          'xlabel':"Beam axis", 'xunits':"m",
-                         'color': "r",
-                         'switch_axes': switch_axes,
-                         'inverted': inverted,
-                         'maxmin_hline':maxmin_hline,
-                         'maxmin_vline':maxmin_vline}
-        if ax is None:
-            if switch_axes:
-                ax = plt.figure(figsize=(2.5, 6)).add_subplot(1,1,1)
-            else:
-                ax = plt.figure(figsize=(6, 2.5)).add_subplot(1,1,1)
-        self._plot_analytical(ax, self._shear_forces, **plot03_params)
-        return ax.get_figure()
+        xlabel = 'Beam Length'
+        ylabel = 'Shear Force'
+        xunits = 'm'
+        yunits = 'kN'
+        title = "Shear Force Plot"
+        color = "aqua"
 
-    def plot_bending_moment(self, ax=None, switch_axes=False, inverted=False,maxmin_hline: bool = True, maxmin_vline:bool=False):
+        fig = self._plot_analytical(self._shear_forces,color,title,xlabel,ylabel,xunits,yunits,reverse_x,reverse_y, fig=fig, row=row, col=col)
+
+        return fig
+
+    def plot_bending_moment(self, reverse_x=False, reverse_y=False, switch_axes=False,fig=None,row=None,col=None):
         """Returns a plot of the bending moment as a function of the x-coordinate.
 
         Parameters
         ----------
-        switch_axes: bool
-            True if want the beam to be plotted along the y axis and beam equations to be plotted along the x axis.
-        inverted: bool
-            True if want to flip a function about the x axis.
-        maxmin_hline: bool
-            True if want a horizontal line displaying the maximum and minimum value reached on the y-axis
-        maxmin_vline: bool 
-            True if want a vertical line displaying the maximum and minimum value reached on the x-axis
+        reverse_x : bool, optional
+            reverse the x axes, by default False
+        reverse_y : bool, optional
+            reverse the y axes, by default False
+        fig : bool, optional
+            Figure to append subplot diagram too. If creating standalone figure then None, by default None
+        row : int, optional
+            row number if subplot, by default None
+        col : int, optional
+            column number if subplot, by default None
 
         Returns
         -------
-        figure : `~matplotlib.figure.Figure`
+        figure : `plotly.graph_objs._figure.Figure`
             Returns a handle to a figure with the bending moment diagram.
         """
 
-        plot04_params = {'ylabel': "Bending moment", 'yunits': r'kN·m',
-                         'xlabel': "Beam axis", 'xunits': "m",
-                         'color': "y",
-                         'switch_axes': switch_axes,
-                         'inverted': inverted,
-                         'maxmin_hline':maxmin_hline,
-                         'maxmin_vline':maxmin_vline}
-        if ax is None:
-            if switch_axes:
-                ax = plt.figure(figsize=(2.5, 6)).add_subplot(1,1,1)
-            else:
-                ax = plt.figure(figsize=(6, 2.5)).add_subplot(1,1,1)
-        self._plot_analytical(ax, self._bending_moments, **plot04_params)
-        return ax.get_figure()
+        xlabel = 'Beam Length'
+        ylabel = 'Bending Moment'
+        xunits = 'm'
+        yunits = 'kN.m'
+        title = "Bending Moment Plot"
+        color = "lightgreen"
+        fig = self._plot_analytical(self._bending_moments,color,title,xlabel,ylabel,xunits,yunits,reverse_x,reverse_y,fig=fig, row=row, col=col)
 
-    def plot_deflection(self, ax= None, switch_axes=False, inverted=False,maxmin_hline: bool = True, maxmin_vline:bool=False):
+        return fig
+
+    def plot_deflection(self, reverse_x=False, reverse_y=False, fig=None,row=None,col=None):
         """Returns a plot of the beam deflection as a function of the x-coordinate.
 
         Parameters
         ----------
-        switch_axes: bool
-            True if want the beam to be plotted along the y axis and beam equations to be plotted along the x axis.
-        inverted: bool
-            True if want to flip a function about the x axis.
-        maxmin_hline: bool
-            True if want a horizontal line displaying the maximum and minimum value reached on the y-axis
-        maxmin_vline: bool 
-            True if want a vertical line displaying the maximum and minimum value reached on the x-axis
+        reverse_x : bool, optional
+            reverse the x axes, by default False
+        reverse_y : bool, optional
+            reverse the y axes, by default False
+        fig : bool, optional
+            Figure to append subplot diagram too. If creating standalone figure then None, by default None
+        row : int, optional
+            row number if subplot, by default None
+        col : int, optional
+            column number if subplot, by default None
 
         Returns
         -------
-        figure : `~matplotlib.figure.Figure`
+        figure : `plotly.graph_objs._figure.Figure`
             Returns a handle to a figure with the deflection diagram.
         """
 
-        plot05_params = {'ylabel': "Deflection", 'yunits': r'mm',
-                         'xlabel': "Beam axis", 'xunits': "m",
-                         'color': "c",
-                         'switch_axes': switch_axes,
-                         'inverted': inverted,
-                         'maxmin_hline':maxmin_hline,
-                         'maxmin_vline':maxmin_vline}
-        if ax is None:
-            if switch_axes:
-                ax = plt.figure(figsize=(2.5, 6)).add_subplot(1,1,1)
-            else:
-                ax = plt.figure(figsize=(6, 2.5)).add_subplot(1,1,1)
-        self._plot_analytical(ax, self._deflection_equation, **plot05_params)
-        return ax.get_figure()
+        xlabel = 'Beam Length'
+        ylabel = 'Deflection'
+        xunits = 'm'
+        yunits = 'mm'
+        title = "Deflection Plot"
+        color = "blue"
+        fig = self._plot_analytical(self._deflection_equation,color,title,xlabel,ylabel,xunits,yunits,reverse_x,reverse_y, fig=fig, row=row, col=col)
 
-    def _plot_analytical(self, ax: plt.axes, sym_func, title: str = "", maxmin_hline: bool = True, maxmin_vline:bool=False, xunits: str = "",
-                        yunits: str = "", xlabel: str = "", ylabel: str = "", color=None, inverted=False, query = True, switch_axes=False):
+        return fig
+
+    def _plot_analytical(self, sym_func,color="blue",title="",xlabel="",ylabel="",xunits="",yunits="",reverse_x=False,reverse_y=False,fig=None,row=None,col=None):
         """
         Auxiliary function for plotting a sympy.Piecewise analytical function.
 
         Parameters
         -----------
-        ax: matplotlib.Axes
-            A matplotlib.Axes object where the data is to be plotted
         sym_func: sympy function
             symbolic function using the variable x
+        color: str
+            color to be used for plot, default blue.
         title: str
             title to show above the plot, optional
-        maxmin_hline: bool
-            when set to False, the extreme values of the function are not displayed
-        xunits: str
-            physical unit to be used for the x-axis. Example: "m"
-        yunits: str
-            phsysical unit to be used for the y-axis. Example: "kN"
         xlabel: str
             physical variable displayed on the x-axis. Example: "Length"
         ylabel: str
             physical variable displayed on the y-axis. Example: "Shear force"
-        color: str
-            color to be used for the shaded area of the plot. No shading if not provided
+        xunits: str
+            physical unit to be used for the x-axis. Example: "m"
+        yunits: str
+            phsysical unit to be used for the y-axis. Example: "kN"
+        reverse_x : bool, optional
+            reverse the x axes, by default False
+        reverse_y : bool, optional
+            reverse the y axes, by default False
+        fig : bool, optional
+            Figure to append subplot diagram too. If creating standalone figure then None, by default None
+        row : int, optional
+            row number if subplot, by default None
+        col : int, optional
+            column number if subplot, by default None
+ 
 
         Returns
         -------
-        figure : `~matplotlib.figure.Figure`
-            A matplotlib.Axes object representing the plotted data
+        figure : `plotly.graph_objs._figure.Figure`
+            Returns a handle to a figure with the deflection diagram.
         """
-        x_vec = np.linspace(self._x0, self._x1, int(min(self._x1 * 1000 + 1, 1e4)))  ## numpy array for x positions closely spaced (allow for graphing)
-        y_lam = lambdify(x, sym_func, "numpy")                                          ##i think lambdify is needed to let the function work with numpy
+        x_vec = np.linspace(self._x0, self._x1, int(1000))  ## numpy array for x positions closely spaced (allow for graphing)
+        y_lam = lambdify(x, sym_func, "numpy")                                          ##transform sympy expressions to lambda functions which can be used to calculate numerical values very fast (with numpy)
         y_vec = np.array([y_lam(t) for t in x_vec])   
                                           ##np.array for y values created 
-        original_yunits = yunits
-
-        if switch_axes:
-            _label = xlabel
-            _units = xunits
-            _vec = x_vec[:]
-
-            xlabel = ylabel
-            xunits = yunits
-            x_vec = y_vec[:]
-
-            ylabel = _label
-            yunits = _units
-            y_vec = _vec[:]
-
-        if inverted:
-            y_vec *= -1                                                                 ##would flip the graph about y
-
-
-        if color:
-            if switch_axes:
-                a, b = y_vec[0], y_vec[-1]
-                verts = [(0,a)] + list(zip(x_vec, y_vec)) + [(0,b)]
-            else:
-                a, b = x_vec[0], x_vec[-1]
-                verts = [(a, 0)] + list(zip(x_vec, y_vec)) + [(b, 0)]                           ##verts is a list of tuples makign up the graph (starting and ending to help close it)
-            poly = Polygon(verts, facecolor=color, edgecolor='0.5', alpha=0.4)
-            ax.add_patch(poly)
-
-        if maxmin_vline:
-            tol = 1e-3
-            
-            if abs(max(x_vec)) > tol:
-                ax.axvline(x=max(x_vec), linestyle='--', color="g", alpha=0.5)
-                max_idy = x_vec.argmax()
-                plt.annotate('${:0.1f}'.format((x_vec[max_idy])).rstrip('0').rstrip('.') + " $ {}".format(original_yunits),
-                            xy=(x_vec[max_idy], y_vec[max_idy]), xytext=(8, 0), xycoords=('data', 'data'),
-                            textcoords='offset points', size=12)
-
-            if abs(min(x_vec)) > tol:
-                ax.axvline(x=min(x_vec), linestyle='--', color="g", alpha=0.5)
-                min_idy = x_vec.argmin()
-                plt.annotate('${:0.1f}'.format((x_vec[min_idy])).rstrip('0').rstrip('.') + " $ {}".format(original_yunits),
-                            xy=(x_vec[min_idy], y_vec[min_idy]), xytext=(8, 0), xycoords=('data', 'data'),
-                            textcoords='offset points', size=12)
-
-        if maxmin_hline:
-            tol = 1e-3
-
-            if abs(max(y_vec)) > tol:
-                ax.axhline(y=max(y_vec), linestyle='--', color="g", alpha=0.5)
-                max_idx = y_vec.argmax()
-                plt.annotate('${:0.1f}'.format(y_vec[max_idx]).rstrip('0').rstrip('.') + " $ {}".format(original_yunits),
-                            xy=(x_vec[max_idx], y_vec[max_idx]), xytext=(8, 0), xycoords=('data', 'data'),
-                            textcoords='offset points', size=12)
-
-            if abs(min(y_vec)) > tol:
-                ax.axhline(y=min(y_vec), linestyle='--', color="g", alpha=0.5)
-                min_idx = y_vec.argmin()
-                plt.annotate('${:0.1f}'.format(y_vec[min_idx]).rstrip('0').rstrip('.') + " $ {}".format(original_yunits),
-                            xy=(x_vec[min_idx], y_vec[min_idx]), xytext=(8, 0), xycoords=('data', 'data'),
-                            textcoords='offset points', size=12)
-
-        if query:
-            for q_val in self._query:
-                if switch_axes:
-                    ax.axhline(y=q_val, linestyle='--', color="g", alpha=0.5)
-                else:
-                    ax.axvline(x=q_val, linestyle='--', color="g", alpha=0.5)
-                ##need to get values by a differnt method -- cant use id
-                q_res = self._get_query_value(q_val, sym_func)
-                if switch_axes:
-                    plt.annotate('${:0.1f}'.format(q_res).rstrip('0').rstrip('.') + " $ {}".format(original_yunits),
-                                xy=(q_res, q_val*(1-2*inverted)), xytext=(0, 0), xycoords=('data', 'data'),
-                                textcoords='offset points', size=8)
-                else:
-                    plt.annotate('${:0.1f}'.format(q_res*(1-2*inverted)).rstrip('0').rstrip('.') + " $ {}".format(original_yunits),
-                                xy=(q_val, q_res*(1-2*inverted)), xytext=(0, 0), xycoords=('data', 'data'),
-                                textcoords='offset points', size=8)
-
-
-        if switch_axes:
-            yspan = y_vec.max() - y_vec.min()
-            ax.set_ylim([y_vec.min() - 0.01 * yspan, y_vec.max() + 0.01 * yspan])
+        data = go.Scatter(x=x_vec, y=y_vec,mode='lines',line=dict(color=color, width=1),fill='tozeroy',name=ylabel,hovertemplate="%{x:.3f} <br>%{y:.3f} ")
+        if row and col and fig:
+            fig = fig.add_trace(data,row=row,col=col)
         else:
-            xspan = x_vec.max() - x_vec.min()
-            ax.set_xlim([x_vec.min() - 0.01 * xspan, x_vec.max() + 0.01 * xspan])
-            
+            fig = go.Figure(data=data)
+            fig.update_layout(title_text=title, title_font_size=30)
+            fig.update_xaxes(title_text=str(xlabel+" ("+str(xunits)+")"))
 
-        ax.spines['right'].set_visible(False)
-        ax.spines['top'].set_visible(False)
-        ax.spines['left'].set_visible(False)
+        if row and col:
+            fig.update_yaxes(title_text=str(ylabel+" ("+str(yunits)+")"),row=row,col=col)
+            fig.update_yaxes(autorange="reversed",row=row,col=col) if reverse_y else None
+            fig.update_xaxes(autorange="reversed",row=row,col=col) if reverse_x else None
+        else:
+            fig.update_yaxes(title_text=str(ylabel+" ("+str(yunits)+")"))
+            fig.update_yaxes(autorange="reversed") if reverse_y else None
+            fig.update_xaxes(autorange="reversed") if reverse_x else None
 
-        if title:
-            ax.set_title(title)
-
-        if xlabel or xunits:
-            ax.set_xlabel('{} [{}]'.format(xlabel, xunits))
-
-        if ylabel or yunits:
-            ax.set_ylabel("{} [{}]".format(ylabel, yunits))
-
-        return ax
-
-    def _draw_beam_schematic(self, ax, draw_reactions=False):
-        """Auxiliary function for plotting the beam object and its applied loads.
-        
-        Parameters
-        ----------
-        draw_reactions: bool
-            True if want to show the reaction forces in the beam schematic
-        """
-
-        # Adjust y-axis
-        ymin, ymax = -5, 5
-        ylim = (min(ax.get_ylim()[0], ymin), max(ax.get_ylim()[1], ymax))
-        ax.set_ylim(ylim)
-        xspan = ax.get_xlim()[1] - ax.get_xlim()[0]
-        yspan = ylim[1] - ylim[0]
-
-        # Draw beam body
-        beam_left, beam_right = self._x0, self._x1
-        beam_length = beam_right - beam_left
-        beam_height = yspan * 0.06
-        beam_bottom = -(0.75) * beam_height
-        beam_top = beam_bottom + beam_height
-        beam_body = Rectangle(
-            (beam_left, beam_bottom), beam_length, beam_height, fill=True,
-            facecolor="brown", clip_on=False, alpha=0.7
-        )
-        ax.add_patch(beam_body)
-
-        # Markers at beam supports
-        supports = []
-        for support in self._supports:
-            supports.append(Polygon(np.array([support._position + 0.01*xspan*np.array((-1, -1, 0, 1, 1)), 
-                                            beam_bottom + 0.05*np.array((-1.5, -1,0,-1, -1.5))*yspan]).T))
-            # rolling_support = [Polygon(np.array([self.rolling_support + 0.01*xspan*np.array((-1, 0, 1)), 
-            #                                     beam_bottom + 0.05*np.array((-1,0,-1))*yspan]).T),
-            #                    Polygon(np.array([self.rolling_support + 0.01*xspan*np.array((-1, -1, 1, 1)), 
-            #                                     beam_bottom + 0.05*np.array((-1.5,-1.25, -1.25, -1.5))*yspan]).T)]
-        support_patch = PatchCollection(supports, facecolor="black")
-        ax.add_collection(support_patch)
-
-        # Draw arrows at point loads
-        arrowprops = dict(arrowstyle="simple", color="darkgreen", shrinkA=0.1, mutation_scale=18)
-        ply = [a for a in self._point_loads_y()]
-        plx = [a for a in self._point_loads_x()]
-        plm = [a for a in self._point_torques()]
-        
-        if draw_reactions:
-            ply += self._reactions_plot_tuple['y']
-            plx += self._reactions_plot_tuple['x']
-            plm += self._reactions_plot_tuple['m']
-
-        for load in ply:
-            x0 = x1 = load[1]
-            if load[0] < 0:
-                y0, y1,y2 = beam_top, beam_top + 0.17 * yspan, beam_top + 0.17 * yspan + 0.6
+        for q_val in self._query:
+            q_res = self._get_query_value(q_val, sym_func)
+            if q_res <0:
+                    ay = 40
             else:
-                y0, y1,y2 = beam_bottom, beam_bottom - 0.17 * yspan,  beam_bottom - 0.17 * yspan - 0.6
-            ax.annotate("",
-                        xy=(x0, y0), xycoords='data',
-                        xytext=(x1, y1), textcoords='data',
-                        arrowprops=arrowprops
-                        )
-            ax.annotate("",
-                        xy=(x0, y0), xycoords='data',
-                        xytext=(x1, y1), textcoords='data',
-                        arrowprops=arrowprops
-                        )
-            plt.annotate('${:0.1f}'.format(load[0]).rstrip('0').rstrip('.') + " $ {}".format('kN'),
-                                xy=(x1, y2), xytext=(0, 0), xycoords=('data', 'data'),
-                                textcoords='offset points', size=8)
-        
+                ay = -40
 
-        for load in plx:
-            x0 = load[1]
-            y0 = y1 = (beam_top + beam_bottom) / 2.0
-            if load[0] < 0:
-                x1 = x0 + xspan * 0.05
-                x2 = x1 + 0.05
+            annotation = dict(
+                x=q_val, y=q_res,
+                text=f"{str(q_val)}<br>{str(q_res)}",
+                showarrow=True,
+                arrowhead=1,
+                xref='x',
+                yref='y',
+                ax=0,
+                ay=ay
+            )
+            if row and col:
+                fig.add_annotation(annotation,row=row,col=col)
             else:
-                x1 = x0 - xspan * 0.05
-                x2 = x1 - 0.4
-            ax.annotate("",
-                        xy=(x0, y0), xycoords='data',
-                        xytext=(x1, y1), textcoords='data',
-                        arrowprops=arrowprops
-                        )
-            plt.annotate('${:0.1f}'.format(load[0]).rstrip('0').rstrip('.') + " $ {}".format('kN'),
-                    xy=(x2, y1), xytext=(0, 0), xycoords=('data', 'data'),
-                    textcoords='offset points', size=8)
-        
-        # Draw a round arrow at point torques
+                fig.add_annotation(annotation)
 
-        for load in plm:
-            xc = load[1]
-            yc = (beam_top + beam_bottom) / 2.0
-            width = yspan * 0.17
-            height = xspan * 0.05
-            arc_len= 180
-
-            if load[0] > 0:
-                start_angle = 90
-                endX = xc + (height/2)*np.cos(np.radians(arc_len + start_angle))
-                endY = yc + (width/2)*np.sin(np.radians(arc_len + start_angle))
-            else:
-                start_angle = 270
-                endX = xc + (height/2)*np.cos(np.radians(start_angle))
-                endY = yc + (width/2)*np.sin(np.radians(start_angle))
-
-            orientation = start_angle + arc_len
-            arc = Arc([xc, yc], width, height, angle=start_angle, theta2=arc_len, capstyle='round', linestyle='-', lw=2.5, color="blue")
-            arrow_head = RegularPolygon((endX, endY), 3, height * 0.5, np.radians(orientation), color="blue")
-            centre_point = Circle((xc,yc), yc/8, color="blue")
-            ax.add_patch(arc)
-            ax.add_patch(arrow_head)
-            ax.add_patch(centre_point)
-            plt.annotate('${:0.1f}'.format(load[0]).rstrip('0').rstrip('.') + " $ {}".format('kN.m'),
-                    xy=(xc, beam_top+height), xytext=(0, 0), xycoords=('data', 'data'),
-                    textcoords='offset points', size=8)
-
-        ax.axes.get_yaxis().set_visible(False)
-        ax.spines['right'].set_visible(False)
-        ax.spines['top'].set_visible(False)
-        ax.spines['left'].set_visible(False)
-        # ax.tick_params(left="off")
+        return fig
 
     def _update_loads(self):
         self._distributed_forces_x = [self._create_distributed_force(f) for f in self._distributed_loads_x()]
@@ -1431,11 +1354,23 @@ class Beam:
         for f in self._loads:
             if isinstance(f, PointLoadH):
                 yield f
+            elif isinstance(f,PointLoad):
+                force, position, angle = f
+                force_x =  sympify(force*cos(radians(angle))).evalf(10)     ##when angle = 0 then force is 1
+                
+                if abs(round(force_x,3)) > 0:
+                    yield PointLoadH(force_x,position)
 
     def _point_loads_y(self):
         for f in self._loads:
             if isinstance(f, PointLoadV):
                 yield f
+            elif isinstance(f,PointLoad):
+                force, position, angle = f
+                force_y =  sympify(force*sin(radians(angle))).evalf(10)     ###when angle = 90 then force is 1
+                
+                if abs(round(force_y,3)) > 0:
+                    yield PointLoadV(force_y,position)
 
     def _distributed_loads_x(self):
         for f in self._loads:
@@ -1456,44 +1391,23 @@ class Beam:
         return f"""--------------------------------
         <Beam>
         length = {self._x0}
-        unknowns = {str(sum([a._DOF for a in self._supports]))}"""
-#loads = {str(len(self._loads))}
+        loads = {str(len(self._loads))}"""
 
     def __repr__(self):
         return f"<Beam({self._x0})>"
 
 
 if __name__ == "__main__":
-    # ##intialise a beam object
-    beam_1 = Beam(5)            ##intialises a 5m long beam (assuming E = 2*10^5, I = )
-    beam_1.add_query_points(1,3,5)
-    beam_1.remove_query_points(3)
+    beam = Beam(5)
+
+    a = Support(0,(1,1,1))
+    b = Support(5,(0,1,0))
+    beam.add_supports(a,b)
+
+    load_1 = PointLoad(5,1,90)
+    beam.add_loads(load_1)
+
+    beam.analyse()
     
-    beam_2 = Beam(5, E=1, I=1)
+    beam.add_query_points(1,2,3)
 
-    ##create support objects
-    a = Support(0,(1,1,1))      ##defines a fixed support at point 0m point
-    b = Support(2,(0,1,0))      ##defines a roller support restaint only in the y direction at 2m point
-    c = Support(5,(1,1,0))      ##defines pinned support at 5m point
-
-    ##add supports to beam object
-    beam_1.add_supports(a,b,c)        ##create a statically indeterminate beam
-    beam_2.add_supports(a,b,c)        ##intially create as a statically determinate beam
-    beam_2.remove_supports(a)         ## remove support a to make beam statically determinate
-
-    ##create load objects
-    load_1 = PointLoad(1,3,45)
-    load_2 = DistributedLoadV(2,(0,1))
-    load_3 = PointTorque(3,4)
-
-    ##add load objects to beams
-    beam_1.add_loads(load_1,)
-    beam_1.add_loads(load_2,load_3)
-    beam_2.add_loads(load_1, load_2, load_3)
-    beam_2.remove_loads((load_2,))
-
-    ##compute solutions for beams
-    print("TIME TO ANALYSE")
-    beam_1.analyse()
-    beam_2.analyse()
-    print("ALL DONE")

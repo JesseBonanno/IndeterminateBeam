@@ -1,6 +1,6 @@
 import sys, os
 sys.path.insert(0, os.path.abspath('../'))
-from indeterminatebeam.indeterminatebeam import Support, Beam, PointLoad, PointTorque, DistributedLoadV, PointLoadH, PointLoadV,oo
+from indeterminatebeam.indeterminatebeam import Support, Beam, PointLoad, PointTorque, DistributedLoadV, PointLoadH, PointLoadV, TrapezoidalLoad,oo
 import unittest
 
 
@@ -122,6 +122,7 @@ class BeamTestCase(unittest.TestCase):
         c = PointLoadH(-15,1)
         d = PointTorque(-15,1)
         e = DistributedLoadV(5,(0,1))
+        f = TrapezoidalLoad((0,1),(0,1))
 
         load_beam.add_loads(a,b,c,d,e)
         load_beam.remove_loads(a)   
@@ -136,8 +137,16 @@ class BeamTestCase(unittest.TestCase):
     def test_plot(self):
         beam = self.beam
 
-        fig = beam.plot()
-        self.assertEqual(str(type(fig)), "<class 'matplotlib.figure.Figure'>")
+        fig = beam.plot_beam_external()
+        fig = beam.plot_beam_internal()
+
+        fig = beam.plot_beam_diagram()
+        fig = beam.plot_reaction_force()
+
+        fig = beam.plot_normal_force()
+        fig = beam.plot_shear_force()
+        fig = beam.plot_bending_moment()
+        fig = beam.plot_deflection()
         
 if __name__ == '__main__':
     unittest.main(verbosity=2)

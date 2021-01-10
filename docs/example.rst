@@ -22,7 +22,7 @@ E and I are constant.
 Results
 --------
 
-The following values can be directly extracted:
+The following values can be directly extracted using the `check_determinancy`, `get_shear_force`, `get_bending_moment` and `get_reaction` methods:
 
    #. The degree of determinancy	  --> 1
    #. The absolute maximum shear force 	  --> 16.75 kN
@@ -33,7 +33,7 @@ A plot of the axial force, shear force, and bending moments is shown below. A de
 As a default the values E and I are taken as the values for a 150UB18.0 steel beam. 
 
 .. figure:: examples/example_1.png
-  :width: 400
+  :width: 700
   :alt: example_1
 
 Code
