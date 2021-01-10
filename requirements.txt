@@ -5,3 +5,4 @@ sphinx_rtd_theme>=0.4.3  # docs theme
 sympy>=1.4  # for analytical integration
 sphinxcontrib-bibtex ##for sphinx bib importing
 plotly>=4.14.1
+kaleido

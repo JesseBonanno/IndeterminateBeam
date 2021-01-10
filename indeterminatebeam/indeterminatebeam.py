@@ -25,7 +25,6 @@ from indeterminatebeam.plotly_drawing_aid import draw_line, draw_arrowhead, draw
 from plotly.subplots import make_subplots
 import plotly.graph_objects as go
 import plotly.express as px
-import time
 
 class Support:
     """
