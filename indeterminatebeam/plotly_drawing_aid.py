@@ -245,53 +245,20 @@ def draw_moment(fig, x_sup, direction='clockwise',color = 'red',row=None,col=Non
     
     if direction in ['clockwise','anti-clockwise']:
         if direction =='clockwise':
-            d = -1
+            d = "⭮"
         else:
-            d = 1
-        length = 5
-        radius = 6
-
-        shape = dict(type="circle",
-        xref="x", yref="y",
-        x0=-radius, y0=-radius, x1=radius, y1=radius,
-        line_color=color,
-        line_width=2,
-        xsizemode='pixel',
-        ysizemode='pixel',
-        fillcolor=None,
-        xanchor=x_sup,
-        yanchor=0)
-        #draw circle
-        if row and col:
-            fig.add_shape(shape,row=row,col=col)
-        else:
-            fig.add_shape(shape)
-
-        ##draw arrow 
-        fig = draw_line(fig,angle=45,x_sup=x_sup,length=length*d,xoffset=((-1)*length*d*0.71/2),yoffset=radius,color=color,line_width=2,row=row,col=col)
-        fig = draw_line(fig,angle=-45,x_sup=x_sup,length=length*d,xoffset=((-1)*length*d*0.71/2),yoffset=radius,color=color,line_width=2,row=row,col=col)
-        
-        # fig.add_shape(type="line",
-        # xref="x", yref="y",
-        # x0=line_x0, y0=radius, x1=line_x0+line_x, y1=radius+line_y,
-        # line_color=color,
-        # line_width=2,
-        # xsizemode='pixel',
-        # ysizemode='pixel',
-        # xanchor=x_sup,
-        # yanchor=0
-        # )
-
-        # fig.add_shape(type="line",
-        # xref="x", yref="y",
-        # x0=line_x0, y0=radius, x1=line_x0+line_x, y1=radius-line_y,
-        # line_color=color,
-        # line_width=2,
-        # xsizemode='pixel',
-        # ysizemode='pixel',
-        # xanchor=x_sup,
-        # yanchor=0
-        # )
+            d = "⭯"
+    annotation = dict(x=x_sup, y=0,
+            text=d,
+            showarrow=False,
+            yshift=0,
+            font_size=26,
+            font_color='red',
+            )
+    if row and col:
+        fig.add_annotation(annotation, row=row,col=col)
+    else:
+        fig.add_annotation(annotation)
 
     return fig
 

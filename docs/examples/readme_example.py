@@ -1,11 +1,11 @@
 ##arbritrary example defined in README.md
 from indeterminatebeam import Beam, Support, PointLoadV, PointTorque, DistributedLoadV
 beam = Beam(7)                          # Initialize a Beam object of length 9m with E and I as defaults
-beam_2 = Beam(9,E=2000, I =100000) 
+beam_2 = Beam(9,E=2000, I =100000)      # Initializa a Beam specifying some beam parameters
 
 a = Support(5,(1,1,0))                  # Defines a pin support at location x = 5m  
 b = Support(0,(0,1,0))                  # Defines a roller support at location x = 0m
-c = Support(7,(1,1,1))
+c = Support(7,(1,1,1))                  # Defines a fixed support at location x = 7m
 beam.add_supports(a,b,c)    
 
 load_1 = PointLoadV(1,2)                # Defines a point load of 1kn acting up, at location x = 2m
@@ -16,4 +16,5 @@ beam.add_loads(load_1,load_2,load_3)           # Assign the support objects to a
 beam.analyse()
 
 fig = beam.plot_beam_internal()
+fig.show()
 #fig.write_image("./readme_example.png")

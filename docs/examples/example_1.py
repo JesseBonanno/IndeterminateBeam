@@ -22,5 +22,4 @@ print(f"The beam has an absolute maximum shear force of: {beam.get_shear_force(r
 print(f"The beam has an absolute maximum bending moment of: {beam.get_bending_moment(return_absmax=True)} kN.m")
 print(f"The beam has a vertical reaction at B of: {beam.get_reaction(3,'y')} kN")
 
-fig = beam.plot_beam_internal()
-fig.write_image("./example_1.png")
+beam.plot_beam_internal()

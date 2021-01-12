@@ -1,5 +1,6 @@
 import sys, os
 sys.path.insert(0, os.path.abspath('../'))
+
 from indeterminatebeam.indeterminatebeam import Support, Beam, PointLoad, PointTorque, DistributedLoadV, PointLoadH, PointLoadV, TrapezoidalLoad,oo
 import unittest
 
@@ -80,7 +81,7 @@ class BeamTestCase(unittest.TestCase):
         self.assertEqual(round(beam.get_shear_force(return_min=True),1), -4.7)
             ##bending moments
         self.assertEqual(round(beam.get_bending_moment(0)[0],1), -16.9)   
-        self.assertEqual(round(beam.get_bending_moment(return_max=True),1), 14.1)
+        self.assertEqual(round(beam.get_bending_moment(return_max=True),2), 14.05)
         self.assertEqual(round(beam.get_bending_moment(return_min=True),1), -16.9)
             ##deflection
         self.assertEqual(round(beam.get_deflection(3)[0],1), -16.3)

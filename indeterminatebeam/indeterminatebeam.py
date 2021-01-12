@@ -735,6 +735,7 @@ class Beam:
         * Priority of query parameters is return_max, return_min, return_absmax, x_coord (if more than 1 of the parameters are specified).
 
         """
+
         if isinstance(sym_func, list):
             sym_func = sum(sym_func)
         func = lambdify(x, sym_func, "numpy")  
@@ -1012,7 +1013,7 @@ class Beam:
         ##for 
 
         ##hoverinfo is skip to not show any default values, hover template is used to show only the x value and to not worry about the y value 
-        data = go.Scatter(x=[self._x0,self._x1], y=[0,0],mode='lines',name="Beam",line=dict(color='purple', width=2),hovertemplate="%{x} m",hoverinfo='skip')
+        data = go.Scatter(x=[self._x0,self._x1], y=[0,0],mode='lines',name="Beam_",line=dict(color='purple', width=2),hovertemplate="%{x} m",hoverinfo='skip')
 
         if fig and row and col:
             fig.add_trace(data,row=row,col=col)
@@ -1027,7 +1028,7 @@ class Beam:
         #for each support append to figure to have the shapes/traces needed for the drawing
         if row and col:
             for support in self._supports:
-                    fig = draw_support(fig,support,row=row,col=col)
+                fig = draw_support(fig,support,row=row,col=col)
 
             for load in self._loads:
                 fig = draw_force(fig,load,row=row,col=col)
@@ -1404,9 +1405,11 @@ if __name__ == "__main__":
     beam.add_supports(a,b)
 
     load_1 = PointLoad(5,1,90)
-    beam.add_loads(load_1)
+    load_2 = PointTorque(2,2)
+    beam.add_loads(load_2)
 
     beam.analyse()
+    beam.plot_beam_external()
     
     beam.add_query_points(1,2,3)
 
