@@ -146,7 +146,7 @@ The script above produces Figure 1 and Figure 2 below.
 
 ![Example beam diagram plot](docs/examples/readme_example_diagram.png)
 
-![Example beam internal forces plot](docs/examples/readme_example_internal.png){height=1000px}
+![Example beam internal forces plot](docs/examples/readme_example_internal.png)
 
 
 # References
