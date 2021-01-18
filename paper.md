@@ -144,8 +144,8 @@ The `plot_beam_internal` method is actually a wrapper that combines these four m
 
 The script above produces Figure 1 and Figure 2 below.
 
-![Example beam diagram plot](docs/examples/readme_example_diagram.png){ height=750px }
+![Example beam diagram plot](docs/examples/readme_example_diagram.png)
 
-![Example beam internal forces plot](docs/examples/readme_example_internal.png){ height=750px }
+![Example beam internal forces plot](docs/examples/readme_example_internal.png)
 
 # References
