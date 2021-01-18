@@ -48,7 +48,7 @@ The `indeterminatebeam` package is ready for installation using `pip` or can be 
 # Statement of Need
 Statics is fundamental to many fields of engineering such as civil, structural and mechanical engineering. This package aims to help student understanding in two ways:
 
-1. Explain the background theory used to solve the indeterminate beam briefly in the package documentation
+1. Explain the background theory used to solve the indeterminate beam briefly in the [package documentation](https://indeterminatebeam.readthedocs.io/en/main/theory.html) 
 2. Provide a software solution that allows students to recieve immediate visual feedback on changes a beam system can have on internal and external forces
 
 This Python package was heavily inspired by [beambending](https://github.com/alfredocarella/simplebendingpractice) [@Carella2019], an educational module created by Alfredo Carella of the Oslo Metropolitan University. The beambending module, although well documented, can only solve for simply supported beams consisting of a pin and roller support. The [package documentation](https://simplebendingpractice.readthedocs.io/en/latest/?badge=latest) for this project includes a more rigorous overview of the theory behind the basics for solving determinate structures.

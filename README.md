@@ -22,7 +22,7 @@ In the civil and structural engineering industry in-house software generally con
 
 Python can be utilised to address this problem, allowing for the adoption of previous work as a Python module. This will allow for in-house engineering software to be more uniform, readable, manageable, and reliable.
 
-The demand for such a calculation module in the engineering industry can be observed with the existence of many websites that perform such a calculation. Examples of such websites are included in Table 1. Most of these websites require payment for full access to the software and only displays a graphical user interface, preventing the creation of higher order engineering programming projects.
+The demand for such a calculation module in the engineering industry can be observed with the existence of many websites that perform such a calculation. Most of these websites require payment for full access to the software and only displays a graphical user interface, preventing the creation of higher order engineering programming projects.
 
 This python package was heavily inspired by [simplebendingpractice](https://github.com/alfredocarella/simplebendingpractice), a module created by [Alfredo Carella](https://github.com/alfredocarella) of the Oslo Metropolitan University
 for educational purposes. The beambending module, although well documented, can only solve for simply supported beams. The full documentation for this project can be found [here](https://alfredocarella.github.io/simplebendingpractice/index.html).
