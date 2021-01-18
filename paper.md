@@ -34,16 +34,21 @@ IndeterminateBeam is a Python package aiming to serve as a foundation for civil 
 
 The module is based primarily on engineering concepts of statics as described in [@HibbelerRussell2013MoM], and Python packages Sympy [@sympy2017] and Matplotlib [@Hunter2007]. The [package documentation](https://indeterminatebeam.readthedocs.io/en/main/) provides a brief overview of the theory behind the solutions used to calculate the forces on the indeterminate beam.
 
+The package can be used by:
+
+   - teachers who want to generate problems
+   - students who want to verify solutions
+   - students who want to observe the effect minor geometry changes can have on forces
+   - students, teachers or engineers who want to create higher order engineering projects using this project as a starting point
+
+
 The `indeterminatebeam` package is ready for installation using `pip` or can be tested online using the provided [Jupyter notebook](https://colab.research.google.com/github/JesseBonanno/IndeterminateBeam/blob/main/docs/examples/readme_example.ipynb).
 
 
 # Statement of Need
-
-In the civil and structural engineering industry in-house software generally consists of numerous stand-alone spreadsheet files. Different spreadsheet files often share similar engineering calculations, but the programming style of these spreadsheets does not allow for an easy way to reliably share these calculations. 
-
-Python can be utilised to address this problem, allowing for the adoption of previous work as a Python module. This will allow for in-house engineering software to be more uniform, readable, manageable, and reliable.
-
-The demand for such a calculation module in the engineering industry can be observed with the existence of many websites that perform such a calculation. Examples of such websites are included in Table 1. Most of these websites require payment for full access to the software and only displays a graphical user interface, preventing the creation of higher order engineering programming projects.
+Statics is fundamental to many fields of engineering such as civil, structural and mechanical engineering. This package aims to help student understanding in two ways:
+   1. Explain the background theory used to solve the indeterminate beam briefly in the package documentation
+   2. Provide a software solution that allows students to recieve immediate visual feedback on changes a beam system can have on internal and external forces
 
 This Python package was heavily inspired by [beambending](https://github.com/alfredocarella/simplebendingpractice) [@Carella2019], an educational module created by Alfredo Carella of the Oslo Metropolitan University. The beambending module, although well documented, can only solve for simply supported beams consisting of a pin and roller support. The [package documentation](https://simplebendingpractice.readthedocs.io/en/latest/?badge=latest) for this project includes a more rigorous overview of the theory behind the basics for solving determinate structures.
 A feature comparison in Table 1 below has been taken from @Carella2019 and modified to include more packages and features.
@@ -131,13 +136,16 @@ beam.analyse()
 After the beam has been analysed the results can be plotted.
 
 ```python
-beam.plot()                            
+beam.plot_beam_diagram()
+beam.plot_beam_internal()                            
 ```
 
-The `plot` method is actually a wrapper that combines these five methods: `plot_beam_diagram`, `plot_normal_force`, `plot_shear_force`, `plot_bending_moment` and `plot_deflection` into a single A4-sized printer-friendly plot.
+The `plot_beam_internal` method is actually a wrapper that combines these four methods: `plot_normal_force`, `plot_shear_force`, `plot_bending_moment` and `plot_deflection` into a single A4-sized printer-friendly plot.
 
-The script above produces Figure 1 below.
+The script above produces Figure 1 and Figure 2 below.
 
-![example beam plot](docs/examples/readme_example.png){ height=650px }
+![example beam diagram plot](docs/examples/readme_example_diagram.png){ height=650px }
+
+![example beam internal plot](docs/examples/readme_example_internal.png){ height=650px }
 
 # References

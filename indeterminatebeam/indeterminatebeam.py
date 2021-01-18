@@ -18,8 +18,8 @@ import os
 from sympy import integrate, lambdify, Piecewise, sympify, symbols, linsolve, sin, cos,oo
 from sympy.abc import x
 from math import radians 
-from indeterminatebeam.data_validation import assert_number, assert_positive_number
-from indeterminatebeam.plotly_drawing_aid import draw_line, draw_arrowhead, draw_arrow, draw_support_triangle, draw_support_rectangle, \
+from data_validation import assert_number, assert_positive_number
+from plotly_drawing_aid import draw_line, draw_arrowhead, draw_arrow, draw_support_triangle, draw_support_rectangle, \
                                draw_moment, draw_force, draw_load_hoverlabel, draw_reaction_hoverlabel, \
                                draw_support_hoverlabel, draw_support_rollers, draw_support_spring, draw_support
 from plotly.subplots import make_subplots
@@ -1409,7 +1409,7 @@ if __name__ == "__main__":
     beam.add_loads(load_2)
 
     beam.analyse()
-    beam.plot_beam_external()
+    beam.plot_reaction_force()
     
     beam.add_query_points(1,2,3)
 

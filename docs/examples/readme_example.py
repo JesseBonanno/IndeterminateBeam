@@ -15,6 +15,9 @@ beam.add_loads(load_1,load_2,load_3)           # Assign the support objects to a
 
 beam.analyse()
 
-fig = beam.plot_beam_internal()
-fig.show()
+fig_1 = beam.plot_beam_diagram()
+fig_1.show()
+
+fig_2 = beam.plot_beam_internal()
+fig_2.show()
 #fig.write_image("./readme_example.png")

@@ -86,13 +86,16 @@ beam.analyse()                          #solves beam for unknowns
 ##### Plot results
 After the beam has been analysed we can plot the results.
 ```python
+beam.plot_beam_diagram()
 beam.plot_beam_internal()                            
 ```
 
 The `plot` method is actually a wrapper that combines these four methods: `plot_normal_force`, `plot_shear_force`, `plot_bending_moment` and `plot_deflection` into a single A4-sized printer-friendly plot.
 
-The script above produces the following figure:
-![example_1](https://github.com/JesseBonanno/IndeterminateBeam/blob/main/docs/examples/readme_example.png)
+The script above produces the following figures:
+![example_1 beam diagram plot](https://github.com/JesseBonanno/IndeterminateBeam/blob/main/docs/examples/readme_example_diagram.png)
+![example_1 beam internal plot](https://github.com/JesseBonanno/IndeterminateBeam/blob/main/docs/examples/readme_example_internal.png)
+
 
 ## Installing the package
 
