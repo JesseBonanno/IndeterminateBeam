@@ -148,4 +148,9 @@ The script above produces Figure 1 and Figure 2 below.
 
 ![Example beam internal forces plot](docs/examples/readme_example_internal.png)
 
+
+
+
+
+
 # References
