@@ -6,23 +6,23 @@
 [![Documentation Status](https://readthedocs.org/projects/indeterminatebeam/badge/?version=main)](https://indeterminatebeam.readthedocs.io/en/main/?badge=main)
 [![Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/JesseBonanno/IndeterminateBeam/blob/main/indeterminatebeam/simple_demo.ipynb)
 
-IndeterminateBeam is a Python Package aiming to serve as a foundation for civil and structural engineering projects in Python. The module can also serve as a standalone program and is useful for determining:
+IndeterminateBeam is a Python Package aiming to serve as a foundation for civil and structural engineering projects in Python. The module can also serve as a stand-alone program and is useful for determining:
 
   - reaction forces for indeterminate beams
-  - Internal forces for indeterminate beams (shear, bending, axial)
-  - deflection of the beam due to resulting forces
-  - axial force, shear force, and bending moment diagrams
+  - internal forces for indeterminate beams (shear, bending, axial)
+  - deflections of beams due to resulting forces
+  - axial force, shear force, bending moment and deflection diagrams.
 
 The package documentation can be accessed [here](https://indeterminatebeam.readthedocs.io/en/main/).
 
 
 ## Statement of Need
 
-In the civil and structural engineering industry in-house software generally consists of numerous standalone excel files. Although the excel files can often be greatly valueable once created, they are often created from scratch with difficulty in making use of previous excel projects.
+In the civil and structural engineering industry in-house software generally consists of numerous stand-alone spreadsheet files. Different spreadsheet files often share similar engineering calculations, but the programming style of these spreadsheets does not allow for an easy way to reliably share these calculations.
 
-Python can be utilised to combat this problem, allowing for the adoption of previous work as a python module. This will allow for in-house engineering software to be more uniform, readable, manageable, and reliable.
+Python can be utilised to address this problem, allowing for the adoption of previous work as a Python module. This will allow for in-house engineering software to be more uniform, readable, manageable, and reliable.
 
-Although there are many websites that allow for solving indeterminate beams, there are no well documented python packages.
+The demand for such a calculation module in the engineering industry can be observed with the existence of many websites that perform such a calculation. Examples of such websites are included in Table 1. Most of these websites require payment for full access to the software and only displays a graphical user interface, preventing the creation of higher order engineering programming projects.
 
 This python package was heavily inspired by [simplebendingpractice](https://github.com/alfredocarella/simplebendingpractice), a module created by [Alfredo Carella](https://github.com/alfredocarella) of the Oslo Metropolitan University
 for educational purposes. The beambending module, although well documented, can only solve for simply supported beams. The full documentation for this project can be found [here](https://alfredocarella.github.io/simplebendingpractice/index.html).
