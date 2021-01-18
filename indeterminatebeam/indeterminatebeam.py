@@ -985,6 +985,7 @@ class Beam:
         fig.update_layout(
                         height=1000, 
                         title={'text': "Analysis Results",'x':0.5},
+                        title_font_size = 24,
                         showlegend=False,
                         )
 
@@ -1020,10 +1021,12 @@ class Beam:
         else:
             fig = go.Figure(data=data)
             ##Hovermode x makes two hover labels appear if they are at the same point (default setting means only see the last updated point)
-            fig.update_layout(title_text="Beam Schematic", title_font_size=30,showlegend=False,hovermode='x')
+            fig.update_layout(title_text="Beam Schematic", title_font_size=24,showlegend=False,hovermode='x',title_x=0.5)
+            fig.update_xaxes(title_text='Beam Length (m)')
             ##visible false means y axis doesnt show, fixing range means wont zoom in y direction
         
         fig.update_yaxes(visible=False, range =[-3,3], fixedrange=True)
+
 
         #for each support append to figure to have the shapes/traces needed for the drawing
         if row and col:
@@ -1071,7 +1074,8 @@ class Beam:
             fig = go.Figure(data=data)
 
             ##Hovermode x makes two hover labels appear if they are at the same point (default setting means only see the last updated point)
-            fig.update_layout(title_text="Reaction Forces", title_font_size=30,showlegend=False,hovermode='x')
+            fig.update_layout(title_text="Reaction Forces", title_font_size=30,showlegend=False,hovermode='x',title_x=0.5)
+            fig.update_xaxes(title_text='Beam Length (m)')
 
         ##visible false means y axis doesnt show, fixing range means wont zoom in y direction
         fig.update_yaxes(visible=False, range =[-3,3], fixedrange=True)
