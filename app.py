@@ -460,14 +460,15 @@ content = html.Div(
 )
 
 # Initialise app
-app = dash.Dash(external_stylesheets=[dbc.themes.MINTY])
+app = dash.Dash(__name__,external_stylesheets=[dbc.themes.MINTY])
 server = app.server
 app.layout = html.Div([sidebar, content])
 
 # Main calculation, creates beam and analyses it.
 # Returns plots and/or calculation status.
 @app.callback(
-    [Output('alert-fade', 'color'), Output('alert-fade', 'children')],
+    [Output('graph_1', 'figure'), Output('graph_2', 'figure'),
+     Output('alert-fade', 'color'), Output('alert-fade', 'children')],
     [Input('submit_button', 'n_clicks')],
     [State('beam-table', 'data'), State('point-load-table', 'data'),
      State('point-torque-table', 'data'), State('query-table', 'data'),
@@ -586,7 +587,7 @@ def analyse_beam(click, beams, point_loads, point_torques, querys,
     if click == 0:
         color = "danger"
         message = "No analysis has been run."
-    return color, message
+    return graph_1, graph_2, color, message
 
 
 # Add button to add row for supports
