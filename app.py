@@ -561,7 +561,7 @@ def analyse_beam(click, beams, point_loads, point_torques, querys,
                             float(row['End x_coordinate (m)'])
                         ))
                     )
-        #beam.analyse()
+        beam.analyse()
 
         if querys:
             for row in querys:
@@ -571,7 +571,7 @@ def analyse_beam(click, beams, point_loads, point_torques, querys,
 
         graph_1 = beam.plot_beam_external()
 
-        #graph_2 = beam.plot_beam_internal()
+        graph_2 = beam.plot_beam_internal()
 
         t2 = time.perf_counter()
         t = t2 - t1
@@ -590,10 +590,10 @@ def analyse_beam(click, beams, point_loads, point_torques, querys,
 
     if type(graph_1)!=dict:
         graph_1 = graph_1.to_dict()
-    # if type(graph_2)!=dict:
-    #     graph_2 = graph_2.to_dict()
+    if type(graph_2)!=dict:
+        graph_2 = graph_2.to_dict()
 
-    return graph_1, graph_1, color, message
+    return graph_1, graph_2, color, message
 
 
 # Add button to add row for supports
