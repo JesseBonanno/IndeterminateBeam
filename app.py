@@ -7,7 +7,7 @@ import dash_html_components as html
 from dash.dependencies import Input, Output, State
 import dash_table
 from dash_table.Format import Format, Scheme, Sign, Symbol
-from indeterminatebeam import (
+from indeterminatebeam.indeterminatebeam import (
     Beam, Support, PointLoad, PointTorque, DistributedLoadV, TrapezoidalLoad
 )
 from datetime import datetime
@@ -461,6 +461,7 @@ content = html.Div(
 
 # Initialise app
 app = dash.Dash(external_stylesheets=[dbc.themes.MINTY])
+server = app.server
 app.layout = html.Div([sidebar, content])
 
 # Main calculation, creates beam and analyses it.
@@ -646,4 +647,4 @@ def add_row6(n_clicks, rows, columns):
 
 
 if __name__ == '__main__':
-    app.run_server(port='8085')
+    app.run_server()
