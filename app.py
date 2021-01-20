@@ -587,7 +587,13 @@ def analyse_beam(click, beams, point_loads, point_torques, querys,
     if click == 0:
         color = "danger"
         message = "No analysis has been run."
-    return graph_1.to_dict(), graph_2.to_dict(), color, message
+
+    if type(graph_1)!=dict:
+        graph_1 = graph_1.to_dict()
+    if type(graph_2)!=dict:
+        graph_2 = graph_2.to_dict()
+
+    return graph_1, graph_2, color, message
 
 
 # Add button to add row for supports

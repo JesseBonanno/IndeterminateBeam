@@ -475,14 +475,15 @@ def draw_force(fig, load, color='red', row=None, col=None):
         x_vec = np.linspace(x0, x1, int(min((x1 - x0) * 100 + 1, 1e4)))
         y_lam = lambdify(x, expr, "numpy")
         y_vec = np.array([y_lam(t) for t in x_vec])
+
         largest = abs(max(y_vec, key=abs))
         # normalise  , use -1 to flip direction so matches arrow direction
         y_vec = (-1) * y_vec / largest
 
         # Create trace object for graph of distributed force
         trace = go.Scatter(
-            x=x_vec,
-            y=y_vec,
+            x=x_vec.tolist(),
+            y=y_vec.tolist(),
             mode='lines',
             line=dict(
                 color='darkgreen',
@@ -603,18 +604,17 @@ def draw_load_hoverlabel(fig, load, row=None, col=None):
         x0, x1 = interval
         expr = sympify(expr)
         # numpy array for x positions closely spaced (allow for graphing)
-        x_vec = np.array([x0, x1])
+        
         y_lam = lambdify(x, expr, "numpy")
-        y_vec = np.array([y_lam(t) for t in x_vec])
 
         name = 'Distributed<br>Load'
         color = 'green'
         y_sup = 1
 
-        meta = [x0, x1, y_vec[0], y_vec[1]]
+        meta = [x0, x1, y_lam(x0), y_lam(x1)]
 
         trace_1 = go.Scatter(
-            x=[x_vec[0]], y=[0],
+            x=[x0], y=[0],
             showlegend=False, mode="markers",
             name=name,
             meta=meta,
@@ -625,7 +625,7 @@ def draw_load_hoverlabel(fig, load, row=None, col=None):
         )
 
         trace_2 = go.Scatter(
-            x=[x_vec[1]], y=[0],
+            x=[x1], y=[0],
             showlegend=False, mode="markers",
             name=name,
             meta=meta,

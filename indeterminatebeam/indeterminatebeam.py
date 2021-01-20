@@ -1280,7 +1280,7 @@ class Beam:
         y_lam = lambdify(x, sym_func, "numpy")                                          ##transform sympy expressions to lambda functions which can be used to calculate numerical values very fast (with numpy)
         y_vec = np.array([y_lam(t) for t in x_vec])   
                                           ##np.array for y values created 
-        data = go.Scatter(x=x_vec, y=y_vec,mode='lines',line=dict(color=color, width=1),fill='tozeroy',name=ylabel,hovertemplate="%{x:.3f} <br>%{y:.3f} ")
+        data = go.Scatter(x=x_vec.tolist(), y=y_vec.tolist(),mode='lines',line=dict(color=color, width=1),fill='tozeroy',name=ylabel,hovertemplate="%{x:.3f} <br>%{y:.3f} ")
         if row and col and fig:
             fig = fig.add_trace(data,row=row,col=col)
         else:
@@ -1413,10 +1413,12 @@ if __name__ == "__main__":
 
     load_1 = PointLoad(5,1,90)
     load_2 = PointTorque(2,2)
-    beam.add_loads(load_2)
+    load_3 = TrapezoidalLoad((0,1),(0,1))
+    beam.add_loads(load_1,load_2,load_3)
+        
+    beam.add_query_points(1,2,3)
+
 
     beam.analyse()
-    beam.plot_reaction_force()
-    
-    beam.add_query_points(1,2,3)
+    beam.plot_beam_external()
 
