@@ -11,6 +11,6 @@ MANIFEST
 
 *.pdf
 
-indeterminatebeam/app*
+indeterminatebeam/app_*
 
 indeterminatebeam/TODO.txt

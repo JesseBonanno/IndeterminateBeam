@@ -18,7 +18,7 @@ import os
 from sympy import integrate, lambdify, Piecewise, sympify, symbols, linsolve, sin, cos,oo
 from sympy.abc import x
 from math import radians 
-from data_validation import assert_number, assert_positive_number
+from data_validation import assert_number, assert_positive_number, assert_strictly_positive_number
 from plotly_drawing_aid import draw_line, draw_arrowhead, draw_arrow, draw_support_triangle, draw_support_rectangle, \
                                draw_moment, draw_force, draw_load_hoverlabel, draw_reaction_hoverlabel, \
                                draw_support_hoverlabel, draw_support_rollers, draw_support_spring, draw_support
@@ -332,10 +332,10 @@ class Beam:
             is 2300 mm4.
         """
 
-        assert_positive_number(span, 'span')
-        assert_positive_number(E, "Young's Modulus (E)")
-        assert_positive_number(I, 'Second Moment of Area (I)')
-        assert_positive_number(A, 'Area (A)')
+        assert_strictly_positive_number(span, 'span')
+        assert_strictly_positive_number(E, "Young's Modulus (E)")
+        assert_strictly_positive_number(I, 'Second Moment of Area (I)')
+        assert_strictly_positive_number(A, 'Area (A)')
 
 
         self._x0 = 0
@@ -378,16 +378,20 @@ class Beam:
                     assert_positive_number(right, "span right")
 
                     if self._x0 > left or right > self._x1:
-                        raise ValueError(f"{load[1]} is not a point on beam")
+                        raise ValueError(f"Coordinate {load[1]} for {str(load)} is not a point on beam.")
 
-                    if len(load[1]) != 2:
-                        raise ValueError(f"span should only have two numbers entered")
-
-                    self._loads.append(load)
+                    elif len(load[1]) != 2:
+                        raise ValueError(f"Coordinates for {str(load)} span should only have two numbers entered.")
+                    
+                    else:
+                        self._loads.append(load)
 
                 elif isinstance(load,(PointTorque,PointLoadV,PointLoadH,PointLoad)):
                     assert_number(load[0],'force')
-                    assert_number(load[1],'x coordinate')
+                    assert_positive_number(load[1],'x coordinate')
+
+                    if self._x0 > load[1] or load[1] > self._x1:
+                        raise ValueError(f"Coordinate {load[1]} for {str(load)} is not a point on beam.")
 
                     if isinstance(load,PointLoad):
                         assert_number(load[2],'angle')
