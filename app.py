@@ -571,7 +571,7 @@ def analyse_beam(click, beams, point_loads, point_torques, querys,
 
         graph_1 = beam.plot_beam_external()
 
-        graph_2 = beam.plot_beam_internal()
+        graph_2 = beam.plot_shear_force()
 
         t2 = time.perf_counter()
         t = t2 - t1
@@ -653,4 +653,4 @@ def add_row6(n_clicks, rows, columns):
 
 
 if __name__ == '__main__':
-    app.run_server(port='8005',debug=True)
+    app.run_server()
