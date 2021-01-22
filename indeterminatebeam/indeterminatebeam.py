@@ -1280,7 +1280,17 @@ class Beam:
         y_lam = lambdify(x, sym_func, "numpy")                                          ##transform sympy expressions to lambda functions which can be used to calculate numerical values very fast (with numpy)
         y_vec = np.array([y_lam(t) for t in x_vec])   
                                           ##np.array for y values created 
-        data = go.Scatter(x=x_vec.tolist(), y=y_vec.tolist(),mode='lines',line=dict(color=color, width=1),fill='tozeroy',name=ylabel,hovertemplate="%{x:.3f} <br>%{y:.3f} ")
+        data = go.Scatter(
+            x=x_vec.tolist(),
+            y=y_vec.tolist(),
+            mode='lines',
+            line=dict(color=color, width=1),
+            fill='tozeroy',
+            name=ylabel,
+            hovertemplate="%{x:.3f}<br>%{y:.3f}",
+            hoverinfo="skip",
+            )
+
         if row and col and fig:
             fig = fig.add_trace(data,row=row,col=col)
         else:
