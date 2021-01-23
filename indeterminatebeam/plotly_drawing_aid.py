@@ -2,6 +2,7 @@
 
 from plotly.subplots import make_subplots
 import plotly.graph_objects as go
+import plotly.express as px
 import numpy as np
 from sympy import lambdify, sympify, sin, cos, oo
 from sympy.abc import x
