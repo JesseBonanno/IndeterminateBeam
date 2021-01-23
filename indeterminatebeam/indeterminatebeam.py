@@ -1068,7 +1068,15 @@ class Beam:
         """
         ##if a figure is passed it is for the subplot
         ##append everything to it rather than creating a new plot.
-        data = go.Scatter(x=[self._x0,self._x1], y=[0,0],mode='lines',name="Beam",line=dict(color='purple', width=2),hovertemplate="%{x} m",hoverinfo='skip')
+        data = go.Scatter(
+            x=[self._x0,self._x1], 
+            y=[0,0],
+            mode='lines',
+            name="Beam",
+            line=dict(color='purple', width=2),
+            hovertemplate="%{x} m",
+            hoverinfo='skip'
+            )
         
         
         if fig and row and col:
@@ -1276,7 +1284,7 @@ class Beam:
         figure : `plotly.graph_objs._figure.Figure`
             Returns a handle to a figure with the deflection diagram.
         """
-        x_vec = np.linspace(self._x0, self._x1, int(100))  ## numpy array for x positions closely spaced (allow for graphing)
+        x_vec = np.linspace(self._x0, self._x1, 10)  ## numpy array for x positions closely spaced (allow for graphing)
         y_lam = lambdify(x, sym_func, "numpy")                                          ##transform sympy expressions to lambda functions which can be used to calculate numerical values very fast (with numpy)
         y_vec = np.array([y_lam(t) for t in x_vec])   
                                           ##np.array for y values created 
@@ -1287,7 +1295,6 @@ class Beam:
             line=dict(color=color, width=1),
             fill='tozeroy',
             name=ylabel,
-            hovertemplate="%{x:.3f}<br>%{y:.3f}",
             hoverinfo="skip",
             )
 
