@@ -983,14 +983,14 @@ class Beam:
         fig = self.plot_bending_moment(reverse_x=reverse_x, reverse_y=reverse_y, fig=fig, row=3, col=1)
         fig = self.plot_deflection(reverse_x=reverse_x, reverse_y=reverse_y, fig=fig, row=4, col=1)
 
-        fig.update_xaxes(title_text='Beam Length (m)',row=4,col=1)
+        # fig.update_xaxes(title_text='Beam Length (m)',row=4,col=1)
 
-        fig.update_layout(
-                        height=1000, 
-                        title={'text': "Analysis Results",'x':0.5},
-                        title_font_size = 24,
-                        showlegend=False,
-                        )
+        # fig.update_layout(
+        #                 height=1000, 
+        #                 title={'text': "Analysis Results",'x':0.5},
+        #                 title_font_size = 24,
+        #                 showlegend=False,
+        #                 )
 
         return fig
 
@@ -1294,25 +1294,23 @@ class Beam:
             mode='lines',
             line=dict(color=color, width=1),
             fill='tozeroy',
-            name=ylabel,
-            hoverinfo="skip",
             )
 
         if row and col and fig:
             fig = fig.add_trace(data,row=row,col=col)
         else:
             fig = go.Figure(data=data)
-            fig.update_layout(title_text=title, title_font_size=30)
-            fig.update_xaxes(title_text=str(xlabel+" ("+str(xunits)+")"))
+            #fig.update_layout(title_text=title, title_font_size=30)
+            #fig.update_xaxes(title_text=str(xlabel+" ("+str(xunits)+")"))
 
-        if row and col:
-            fig.update_yaxes(title_text=str(ylabel+" ("+str(yunits)+")"),row=row,col=col)
-            fig.update_yaxes(autorange="reversed",row=row,col=col) if reverse_y else None
-            fig.update_xaxes(autorange="reversed",row=row,col=col) if reverse_x else None
-        else:
-            fig.update_yaxes(title_text=str(ylabel+" ("+str(yunits)+")"))
-            fig.update_yaxes(autorange="reversed") if reverse_y else None
-            fig.update_xaxes(autorange="reversed") if reverse_x else None
+        # if row and col:
+        #     fig.update_yaxes(title_text=str(ylabel+" ("+str(yunits)+")"),row=row,col=col)
+        #     fig.update_yaxes(autorange="reversed",row=row,col=col) if reverse_y else None
+        #     fig.update_xaxes(autorange="reversed",row=row,col=col) if reverse_x else None
+        # else:
+        #     fig.update_yaxes(title_text=str(ylabel+" ("+str(yunits)+")"))
+        #     fig.update_yaxes(autorange="reversed") if reverse_y else None
+        #     fig.update_xaxes(autorange="reversed") if reverse_x else None
 
         for q_val in self._query:
             q_res = self._get_query_value(q_val, sym_func)
