@@ -571,7 +571,7 @@ def analyse_beam(click, beams, point_loads, point_torques, querys,
 
         graph_1 = beam.plot_bending_moment()
 
-        graph_2 = beam.plot_shear_force()
+        graph_2 = beam.plot_beam_internal()
 
         t2 = time.perf_counter()
         t = t2 - t1
