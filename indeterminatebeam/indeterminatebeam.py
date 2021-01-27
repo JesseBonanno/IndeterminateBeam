@@ -1284,9 +1284,10 @@ class Beam:
         figure : `plotly.graph_objs._figure.Figure`
             Returns a handle to a figure with the deflection diagram.
         """
-        x_vec = np.linspace(self._x0, self._x1, 10)  ## numpy array for x positions closely spaced (allow for graphing)
+        x_vec = np.linspace(self._x0, self._x1, int(1000))  ## numpy array for x positions closely spaced (allow for graphing)
         y_lam = lambdify(x, sym_func, "numpy")                                          ##transform sympy expressions to lambda functions which can be used to calculate numerical values very fast (with numpy)
         y_vec = np.array([y_lam(t) for t in x_vec])   
+                                          ##np.array for y values created 
                                           ##np.array for y values created 
         data = go.Scatter(
             x=x_vec.tolist(),
@@ -1297,7 +1298,7 @@ class Beam:
             )
 
         if row and col and fig:
-            fig = fig.add_trace(data,row=row,col=col)
+            fig = go.Figure(data,row=row,col=col)  ##why not go.Figure
         else:
             fig = go.Figure(data=data)
             #fig.update_layout(title_text=title, title_font_size=30)
@@ -1435,5 +1436,5 @@ if __name__ == "__main__":
 
 
     beam.analyse()
-    beam.plot_beam_external()
+    beam.plot_shear_force()
 
