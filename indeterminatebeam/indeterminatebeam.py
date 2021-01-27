@@ -1300,20 +1300,20 @@ class Beam:
             )
 
         if row and col and fig:
-            fig = fig.add_trace(data,row=row,col=col)  ##why not go.Figure
+            fig = fig.add_trace(data,row=row,col=col)
         else:
             fig = go.Figure(data=data)
-            #fig.update_layout(title_text=title, title_font_size=30)
-            #fig.update_xaxes(title_text=str(xlabel+" ("+str(xunits)+")"))
+            fig.update_layout(title_text=title, title_font_size=30)
+            fig.update_xaxes(title_text=str(xlabel+" ("+str(xunits)+")"))
 
-        # if row and col:
-        #     fig.update_yaxes(title_text=str(ylabel+" ("+str(yunits)+")"),row=row,col=col)
-        #     fig.update_yaxes(autorange="reversed",row=row,col=col) if reverse_y else None
-        #     fig.update_xaxes(autorange="reversed",row=row,col=col) if reverse_x else None
-        # else:
-        #     fig.update_yaxes(title_text=str(ylabel+" ("+str(yunits)+")"))
-        #     fig.update_yaxes(autorange="reversed") if reverse_y else None
-        #     fig.update_xaxes(autorange="reversed") if reverse_x else None
+        if row and col:
+            fig.update_yaxes(title_text=str(ylabel+" ("+str(yunits)+")"),row=row,col=col)
+            fig.update_yaxes(autorange="reversed",row=row,col=col) if reverse_y else None
+            fig.update_xaxes(autorange="reversed",row=row,col=col) if reverse_x else None
+        else:
+            fig.update_yaxes(title_text=str(ylabel+" ("+str(yunits)+")"))
+            fig.update_yaxes(autorange="reversed") if reverse_y else None
+            fig.update_xaxes(autorange="reversed") if reverse_x else None
 
         for q_val in self._query:
             q_res = self._get_query_value(q_val, sym_func)
