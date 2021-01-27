@@ -67,8 +67,19 @@ around 4 seconds to the calculation time.
 
 # the content for the sidebar
 sidebar_content = html.Div(
-    about
+    [
+        about,
+        html.Br(),
+        dbc.Button(
+            "Toggle Instructions",
+            id="instruction-button",
+            className="mb-3",
+            color="primary",
+            n_clicks=0,
+            )
+    ]
 )
+
 
 
 sidebar = html.Div(
@@ -125,11 +136,29 @@ beam_table = dash_table.DataTable(
     row_deletable=False,
 )
 
+beam_instructions = dcc.Markdown('''
+
+            Instructions:
+
+            1. Specify the length of the beam 
+            2. Specify the beam sectional properties as indicated for:
+               * Young's Modulus (E)
+               * Second Moment of Area (I)
+               * Cross-sectional Area (A)
+
+            Note: E and I will only affect the deflection unless a spring in the y direction is specified in which case they will also affect the load distribution.
+            Where a spring in the x direction is specified E and A will affect the load distribution for the horizontal loads only.
+            ''')
 
 beam_content = dbc.Card(
     dbc.CardBody(
         [
             beam_table,
+            html.Br(),
+            dbc.Collapse(
+                dbc.Card(dbc.CardBody(beam_instructions)),
+                id="beam_instructions",
+                ),
         ]
     ),
     className="mt-3",
@@ -182,13 +211,30 @@ support_table = dash_table.DataTable(
     row_deletable=True,
 )
 
+support_instructions = dcc.Markdown('''
+
+            Instructions:
+
+            1. Specify the coodinate location of the support 
+            2. For each direction specify one of the following:
+               * f or F - Indicates a free support
+               * r or R - Indicates a rigid support
+               * n - Indicates a spring stiffness of n kN /mm (where n is a (generally) positive number)
+
+            ''')
+
 support_content = dbc.Card(
     dbc.CardBody(
         [
             support_table,
             html.Br(),
             html.Button('Add Support', id='support-rows-button', n_clicks=0),
-
+            html.Br(),
+            html.Br(),
+            dbc.Collapse(
+                dbc.Card(dbc.CardBody(support_instructions)),
+                id="support_instructions",
+            ),
         ]
     ),
     className="mt-3",
@@ -650,6 +696,20 @@ def add_row6(n_clicks, rows, columns):
     if n_clicks > 0:
         rows.append(query_table_data)
     return rows
+
+
+@app.callback(
+    [Output("support_instructions", "is_open"),
+    Output("beam_instructions","is_open")],
+    Input("instruction-button", "n_clicks"),
+    State("beam_instructions", "is_open"),
+)
+def toggle_collapse(n, is_open):
+    if n:
+        a = not is_open
+    else:
+        a = is_open
+    return a, a
 
 
 if __name__ == '__main__':
