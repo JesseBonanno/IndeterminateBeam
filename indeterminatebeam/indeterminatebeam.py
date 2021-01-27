@@ -1098,7 +1098,7 @@ class Beam:
             y_ = round(values[1],3)
             m_ = round(values[2],3)
 
-            if x_ or y_ or m_ > 0:
+            if abs(x_)>0 or abs(y_)>0 or abs(m_) > 0:
                 if row and col:
                     fig = draw_reaction_hoverlabel(fig, reactions = [x_,y_,m_], x_sup=position,row=row,col=col)
 
