@@ -1147,7 +1147,7 @@ class Beam:
         title = "Normal Force Plot"
         color = "red"
 
-        fig = self._plot_analytical(self._normal_forces,color,title,xlabel,ylabel,xunits,yunits,reverse_x,reverse_y, fig=fig, row=row, col=col)
+        fig = self.plot_analytical(self._normal_forces,color,title,xlabel,ylabel,xunits,yunits,reverse_x,reverse_y, fig=fig, row=row, col=col)
         return fig
 
     def plot_shear_force(self, reverse_x=False, reverse_y=False, fig=None,row=None,col=None):
@@ -1179,7 +1179,7 @@ class Beam:
         title = "Shear Force Plot"
         color = "aqua"
 
-        fig = self._plot_analytical(self._shear_forces,color,title,xlabel,ylabel,xunits,yunits,reverse_x,reverse_y, fig=fig, row=row, col=col)
+        fig = self.plot_analytical(self._shear_forces,color,title,xlabel,ylabel,xunits,yunits,reverse_x,reverse_y, fig=fig, row=row, col=col)
 
         return fig
 
@@ -1211,7 +1211,7 @@ class Beam:
         yunits = 'kN.m'
         title = "Bending Moment Plot"
         color = "lightgreen"
-        fig = self._plot_analytical(self._bending_moments,color,title,xlabel,ylabel,xunits,yunits,reverse_x,reverse_y,fig=fig, row=row, col=col)
+        fig = self.plot_analytical(self._bending_moments,color,title,xlabel,ylabel,xunits,yunits,reverse_x,reverse_y,fig=fig, row=row, col=col)
 
         return fig
 
@@ -1243,11 +1243,11 @@ class Beam:
         yunits = 'mm'
         title = "Deflection Plot"
         color = "blue"
-        fig = self._plot_analytical(self._deflection_equation,color,title,xlabel,ylabel,xunits,yunits,reverse_x,reverse_y, fig=fig, row=row, col=col)
+        fig = self.plot_analytical(self._deflection_equation,color,title,xlabel,ylabel,xunits,yunits,reverse_x,reverse_y, fig=fig, row=row, col=col)
 
         return fig
 
-    def _plot_analytical(self, sym_func,color="blue",title="",xlabel="",ylabel="",xunits="",yunits="",reverse_x=False,reverse_y=False,fig=None,row=None,col=None):
+    def plot_analytical(self, sym_func,color="blue",title="",xlabel="",ylabel="",xunits="",yunits="",reverse_x=False,reverse_y=False,fig=None,row=None,col=None):
         """
         Auxiliary function for plotting a sympy.Piecewise analytical function.
 
