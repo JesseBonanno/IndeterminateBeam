@@ -985,14 +985,14 @@ class Beam:
         fig = self.plot_bending_moment(reverse_x=reverse_x, reverse_y=reverse_y, fig=fig, row=3, col=1)
         fig = self.plot_deflection(reverse_x=reverse_x, reverse_y=reverse_y, fig=fig, row=4, col=1)
 
-        # fig.update_xaxes(title_text='Beam Length (m)',row=4,col=1)
+        fig.update_xaxes(title_text='Beam Length (m)',row=4,col=1)
 
-        # fig.update_layout(
-        #                 height=1000, 
-        #                 title={'text': "Analysis Results",'x':0.5},
-        #                 title_font_size = 24,
-        #                 showlegend=False,
-        #                 )
+        fig.update_layout(
+                        height=1000, 
+                        title={'text': "Analysis Results",'x':0.5},
+                        title_font_size = 24,
+                        showlegend=False,
+                        )
 
         return fig
 
