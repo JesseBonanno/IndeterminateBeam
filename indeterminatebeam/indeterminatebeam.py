@@ -450,6 +450,8 @@ class Beam:
                 self._supports.append(support)
             else:
                 raise ValueError(f"This coordinate {support._position} already has a support associated with it")
+        
+        self._reactions = {a._position : [0,0,0] for a in self._supports}
 
     def remove_supports(self, *supports, remove_all = False):
         """Remove an arbitrary list of supports (Support objects) from the beam.
