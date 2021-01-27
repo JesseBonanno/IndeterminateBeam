@@ -1298,7 +1298,7 @@ class Beam:
             )
 
         if row and col and fig:
-            fig = go.Figure(data,row=row,col=col)  ##why not go.Figure
+            fig = fig.add_trace(data,row=row,col=col)  ##why not go.Figure
         else:
             fig = go.Figure(data=data)
             #fig.update_layout(title_text=title, title_font_size=30)
