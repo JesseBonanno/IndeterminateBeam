@@ -30,7 +30,6 @@ from indeterminatebeam.plotly_drawing_aid import (
     )
 from plotly.subplots import make_subplots
 import plotly.graph_objects as go
-import plotly.express as px
 
 
 class Support:
@@ -902,7 +901,7 @@ class Beam:
                     i = 1
                 else:
                     i = 2
-                self._reactions[position][i] = round(ans, 5)
+                self._reactions[position][i] = float(round(ans, 5))
 
         # moment unit is kn.m, dv_EI kn.m2, v_EI Kn.m3 --> *10^3, *10^9
         # to get base units. EI unit is N/mm2 , mm4 --> N.mm2
@@ -963,13 +962,8 @@ class Beam:
     # check if sym_func is the sum of the functions already in
     # plot_analytical
 
-    def _get_query_value(
-            self,
-            x_coord,
-            sym_func,
-            return_max=False,
-            return_min=False,
-            return_absmax=False):
+    def _get_query_value(self,x_coord,sym_func,return_max=False,
+                         return_min=False,return_absmax=False):
         """Find the value of a function at position x_coord.
 
         Parameters
@@ -1027,12 +1021,8 @@ class Beam:
         elif return_absmax:
             return round(max(abs(min_), max_), 3)
 
-    def get_bending_moment(
-            self,
-            *x_coord,
-            return_max=False,
-            return_min=False,
-            return_absmax=False):
+    def get_bending_moment(self,*x_coord, return_max=False,
+                           return_min=False, return_absmax=False):
         """Find the bending moment(s) on the beam object.
 
         Parameters
@@ -1382,6 +1372,7 @@ class Beam:
 
         if fig and row and col:
             fig.add_trace(data, row=row, col=col)
+            fig.update_yaxes(visible=False, range=[-3, 3], fixedrange=True,row=row,col=col)
         else:
             fig = go.Figure(data=data)
             # Hovermode x makes two hover labels appear if they are at
@@ -1397,7 +1388,7 @@ class Beam:
             # visible false means y axis doesnt show, fixing range
             # means wont zoom in y direction
 
-        fig.update_yaxes(visible=False, range=[-3, 3], fixedrange=True)
+            fig.update_yaxes(visible=False, range=[-3, 3], fixedrange=True)
 
         # for each support append to figure to have the shapes/traces
         # needed for the drawing
@@ -1450,6 +1441,8 @@ class Beam:
 
         if fig and row and col:
             fig.add_trace(data, row=row, col=col)
+            fig.update_yaxes(visible=False, range=[-3, 3], fixedrange=True,row=row,col=col)
+
         else:
             fig = go.Figure(data=data)
 
@@ -1458,22 +1451,25 @@ class Beam:
             # updated point)
             fig.update_layout(
                 title_text="Reaction Forces",
-                title_font_size=30,
+                title_font_size=24,
                 showlegend=False,
                 hovermode='x',
                 title_x=0.5)
+
             fig.update_xaxes(title_text='Beam Length (m)')
 
         # visible false means y axis doesnt show, fixing range means
         # wont zoom in y direction
-        fig.update_yaxes(visible=False, range=[-3, 3], fixedrange=True)
+            fig.update_yaxes(visible=False, range=[-3, 3], fixedrange=True)
 
         for position, values in self._reactions.items():
             x_ = round(values[0], 3)
             y_ = round(values[1], 3)
             m_ = round(values[2], 3)
 
-            if x_ or y_ or m_ > 0:
+            #if there are reaction forces
+            if abs(x_) > 0 or abs(y_)>0 or abs(m_) > 0:
+                #subplot case
                 if row and col:
                     fig = draw_reaction_hoverlabel(
                         fig,
@@ -1767,6 +1763,8 @@ class Beam:
             mode='lines',
             line=dict(color=color, width=1),
             fill='tozeroy',
+            name=ylabel,
+            hovertemplate="%{x:.3f} <br>%{y:.3f} "
         )
 
         if row and col and fig:
@@ -1930,4 +1928,5 @@ if __name__ == "__main__":
     beam.add_query_points(1, 2, 3)
 
     beam.analyse()
-    beam.plot_shear_force()
+    fig = beam.plot_reaction_force()
+    fig.write_image("./results.pdf")

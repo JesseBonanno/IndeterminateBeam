@@ -615,7 +615,7 @@ def analyse_beam(click, beams, point_loads, point_torques, querys,
                     float(row['Query coordinate (m)']),
                 )
 
-        graph_1 = beam.plot_beam_diagram()
+        graph_1 = beam.plot_beam_external()
 
         graph_2 = beam.plot_beam_internal()
 

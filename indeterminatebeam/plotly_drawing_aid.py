@@ -692,7 +692,7 @@ def draw_reaction_hoverlabel(fig, reactions, x_sup, row=None, col=None):
         hoverinfo="skip",
         opacity=0
     )
-
+    
     # Add to plot or subplot
     if row and col:
         fig.add_trace(trace, row=row, col=col)
