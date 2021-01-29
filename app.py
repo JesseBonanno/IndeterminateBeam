@@ -497,7 +497,7 @@ content_first_row = dbc.Row(
 
 content = html.Div(
     [
-        html.H2('Beam Calculator Proof of Concept', style=TEXT_STYLE),
+        html.H2('Beam Calculator', style=TEXT_STYLE),
         html.Hr(),
         calc_status,
         content_first_row,
