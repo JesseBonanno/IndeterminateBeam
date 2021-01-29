@@ -16,29 +16,17 @@ Example
 from collections import namedtuple
 import numpy as np
 import os
-from sympy import (
-    integrate, lambdify, Piecewise, sympify, symbols, linsolve, sin,
-    cos, oo
-)
+from sympy import (integrate, lambdify, Piecewise, sympify, symbols, 
+                   linsolve, sin, cos, oo)
 from sympy.abc import x
 from math import radians
-from data_validation import (assert_number, assert_positive_number,
-                             assert_strictly_positive_number
-                             )
-from plotly_drawing_aid import (
-    draw_line,
-    draw_arrowhead,
-    draw_arrow,
-    draw_support_triangle,
-    draw_support_rectangle,
-    draw_moment,
-    draw_force,
-    draw_load_hoverlabel,
-    draw_reaction_hoverlabel,
-    draw_support_hoverlabel,
-    draw_support_rollers,
-    draw_support_spring,
-    draw_support
+from indeterminatebeam.data_validation import (assert_number, assert_positive_number,
+                             assert_strictly_positive_number)
+from indeterminatebeam.plotly_drawing_aid import (
+    draw_line, draw_arrowhead, draw_arrow, draw_support_triangle,
+    draw_support_rectangle, draw_moment, draw_force, draw_load_hoverlabel,
+    draw_reaction_hoverlabel, draw_support_hoverlabel, draw_support_rollers,
+    draw_support_spring, draw_support
     )
 from plotly.subplots import make_subplots
 import plotly.graph_objects as go
@@ -308,6 +296,7 @@ def TrapezoidalLoad(force=(0, 0), span=(0, 0)):
     >>> trapezoidal_load = DistributedLoadV("-5 + 10 * x", (1,2))
     """
 
+    # Data validation
     if len(force) != 2 or len(span) != 2:
         raise TypeError(
             "A tuple of length 2 is required for both the force \
@@ -320,26 +309,27 @@ def TrapezoidalLoad(force=(0, 0), span=(0, 0)):
     assert_number(start_load, "force[0] (The starting force)")
     assert_number(end_load, "force[1] (The ending force)")
 
-    assert_number(
+    assert_positive_number(
         start_coordinate,
         "span[0] (The starting coordinate) "
     )
-    assert_number(end_coordinate, "span[1] (The ending coordinate)")
+    assert_strictly_positive_number(end_coordinate, "span[1] (The ending coordinate)")
 
     if start_coordinate >= end_coordinate:
         raise ValueError(
             "start coordinate should be less than end coordinate"
         )
+    
+    # Assemble trapzoidal load as a DistributedLoadV load
 
-    if start_coordinate == end_coordinate:
-        return DistributedLoadV(0, (start_coordinate, end_coordinate))
-
-    elif end_load == start_load:
+    # Case 1 - UDL i.e load is constant
+    if end_load == start_load:
         return DistributedLoadV(
             start_load,
             (start_coordinate, end_coordinate)
         )
 
+    # Case 2 - Load is not constant and has a non-zero slope
     else:
         a = (end_load - start_load) / (end_coordinate - start_coordinate)
         b = start_load - start_coordinate * a
@@ -462,9 +452,11 @@ class Beam:
             application point (or segment) must be within the Beam span.
 
         """
+        # For every load validate that has correct values to fit the
+        # beam such that no errors occur in analysis from the loads.
+        # If load valid then add to self._loads.
+        # Note: Have ignored distributedLoadH in this version.
         for load in loads:
-            # note have currently ignored distributed load h in this
-            # version of the program
             if isinstance(
                 load, (
                     PointLoad,
@@ -483,7 +475,7 @@ class Beam:
                     if self._x0 > left or right > self._x1:
                         raise ValueError(
                             f"Coordinate {load[1]} for {str(load)} is not a point on beam."
-                            )
+                        )
 
                     elif len(load[1]) != 2:
                         raise ValueError(
@@ -493,9 +485,9 @@ class Beam:
                         self._loads.append(load)
 
                 elif isinstance(
-                    load, 
+                    load,
                     (PointTorque, PointLoadV, PointLoadH, PointLoad)
-                    ):
+                ):
                     assert_number(load[0], 'force')
                     assert_positive_number(load[1], 'x coordinate')
 
@@ -512,23 +504,33 @@ class Beam:
         self._update_loads()
 
     def remove_loads(self, *loads, remove_all=False):
-        """Remove an arbitrary list of (point- or distributed) loads 
+        """Remove an arbitrary list of (point- or distributed) loads
         from the beam.
 
         Parameters
         ----------
         loads : iterable
-            An iterable containing DistributedLoad or PointLoad objects 
-            to be removed from the Beam object. If object not on beam 
+            An iterable containing DistributedLoad or PointLoad objects
+            to be removed from the Beam object. If object not on beam
             then does nothing.
         remove_all: boolean
             If true all loads associated with beam will be removed.
 
         """
+        # if remove all set, reintialize parameters
         if remove_all:
             self._loads = []
             self._update_loads()
             return None
+
+        # if individual loads check if associated with beam and if so
+        # remove. 
+
+        # Could be considered a bug that a user isnt notified
+        # if a load isnt removed because it wasnt there. This might be
+        # an issue if they dont properly recreate the load they were
+        # trying to remove and dont notice that they didnt actually 
+        # delete it.
 
         for load in loads:
             if load in self._loads:
@@ -537,17 +539,19 @@ class Beam:
         self._update_loads()
 
     def add_supports(self, *supports):
-        """Apply an arbitrary list of supports (Support objects) to the 
+        """Apply an arbitrary list of supports (Support objects) to the
         beam.
 
         Parameters
         ----------
         supports : iterable
-            An iterable containing Support objects to
-            be applied to the Beam object. Note that the load application 
-            point (or segment) must be within the Beam span.
+            An iterable containing Support objects to be applied to 
+            the Beam object. Note that the load application point 
+            (or segment) must be within the Beam span.
 
         """
+
+        # Check support valid then append to self._supports
         for support in supports:
             if not isinstance(support, Support):
                 raise TypeError("support must be of type class Support")
@@ -556,29 +560,26 @@ class Beam:
                     support._position > self._x1):
                 raise ValueError("Not a point on beam")
 
-            elif self._supports == []:
-                support._id = 1
+            if self._supports == []:
                 self._supports.append(support)
 
             elif support._position not in [
                 x._position for x in self._supports
-                ]:
-                support._id = self._supports[-1]._id + 1
+            ]:
                 self._supports.append(support)
             else:
                 raise ValueError(
                     f"This coordinate {support._position} already has a support associated with it")
 
     def remove_supports(self, *supports, remove_all=False):
-        """Remove an arbitrary list of supports (Support objects) from 
+        """Remove an arbitrary list of supports (Support objects) from
         the beam.
 
         Parameters
         ----------
-        ids : iterable
-            An iterable containing either Support objects or Support 
-            object ids to be removed from the Beam object. If support 
-            not on beam then does nothing.
+        *supports : iterable
+            An iterable containing Support objects to be removed from
+            the Beam object. If support not on beam then does nothing.
         remove_all: boolean
             If true all supports associated with beam will be removed.
 
@@ -588,10 +589,14 @@ class Beam:
             return None
 
         for support in self._supports:
-            if support._id in supports or support in supports:
+            if support in supports:
                 self._supports.remove(support)
-    # does not display error if ask to remove somethign that isnt there, 
-    # is this okay?
+    
+        # Could be considered a bug that a user isnt notified
+        # if a support isnt removed because it wasnt there. This might 
+        # be an issue if they dont properly recreate the support they 
+        # were trying to remove and dont notice that they didnt actually 
+        # delete it.
 
     def get_support_details(self):
         """Print out a readable summary of all supports on the beam. """
@@ -599,8 +604,6 @@ class Beam:
         print(f"There are {str(len(self._supports))} supports:", end='\n\n')
         for support in self._supports:
             print(support, end='\n\n')
-
-    ##SECTION - ANALYSE
 
     def check_determinancy(self):
         """Check the determinancy of the beam.
@@ -617,12 +620,20 @@ class Beam:
         unknowns = np.array([0, 0, 0])
         equations = 3
 
+        # DOF has a 1 where a reaction force is returned, the sum of 
+        # this list returns the number of unknowns associated with a 
+        # particular support. If consider all supports then have total
+        # number of unknowns to solve for.
         for support in self._supports:
             unknowns = np.array(support._DOF) + unknowns
 
+        # If you dont have any horizontal loads then x equilibrium isnt
+        # helpful to solve the beam
         if unknowns[0] == 0:
             equations -= 1
-
+        
+        # If you dont have any vertical loads then y equilibrium isnt
+        # helpful to solve the beam
         if unknowns[1] == 0:
             equations -= 1
 
@@ -645,36 +656,38 @@ class Beam:
 
         # create unknown sympy variables
         unknowns_x = {a._position: [
-            symbols("x_" + str(a._id)),
+            symbols("x_" + str(a._position)),
             a._stiffness[0]
-            ]
+        ]
             for a in self._supports if a._stiffness[0] != 0}
         unknowns_y = {a._position: [
-            symbols("y_" + str(a._id)), a._stiffness[1]] \
-                for a in self._supports if a._stiffness[1] != 0}
+            symbols("y_" + str(a._position)), a._stiffness[1]]
+            for a in self._supports if a._stiffness[1] != 0}
         unknowns_m = {a._position: [symbols(
-            "m_" + str(a._id)), a._stiffness[2]] 
+            "m_" + str(a._position)), a._stiffness[2]]
             for a in self._supports if a._stiffness[2] != 0}
 
-        # grab the set of all the sympy unknowns for y and m and change 
+        # grab the set of all the sympy unknowns for y and m and change
         # to a list, do same for x unknowns
         unknowns_ym = [a[0] for a in unknowns_y.values()] \
-                      + [a[0] for a in unknowns_m.values()]
+            + [a[0] for a in unknowns_m.values()]
 
         unknowns_xx = [a[0] for a in unknowns_x.values()]
 
         # Assert that there are enough supports. Even though it logically
-        # works to have no x support if you have no x loading, it works 
-        # much better in the program and makes the code alot shorter to 
-        # just enforce that an x support is there, even when there is no 
+        # works to have no x support if you have no x loading, it works
+        # much better in the program and makes the code alot shorter to
+        # just enforce that an x support is there, even when there is no
         # load.
         if len(unknowns_xx) < 1:
             raise ValueError(
-                'You need at least one x restraint, even if there are no x forces')
+                'You need at least one x restraint, even if there are \
+                no x forces')
 
         if len(unknowns_ym) < 2:
             raise ValueError(
-                'You need at least two y or m restraints, even if there are no y or m forces')
+                'You need at least two y or m restraints, even if there \
+                are no y or m forces')
 
         # locations where x reaction is and order, for indeterminate axial
         # determaintion
@@ -683,24 +696,24 @@ class Beam:
 
         # external reaction equations
         F_Rx = sum(
-                integrate(load, (x, x0, x1))
-                for load in self._distributed_forces_x
-                ) \
+            integrate(load, (x, x0, x1))
+            for load in self._distributed_forces_x
+        ) \
             + sum(f.force for f in self._point_loads_x()) \
             + sum([a[0] for a in unknowns_x.values()])
 
         F_Ry = sum(
-                integrate(load, (x, x0, x1))
-                for load in self._distributed_forces_y
-                ) \
+            integrate(load, (x, x0, x1))
+            for load in self._distributed_forces_y
+        ) \
             + sum(f.force for f in self._point_loads_y()) \
             + sum([a[0] for a in unknowns_y.values()])
 
         # moments taken at the left of the beam, anti-clockwise is positive
         M_R = sum(
-                integrate(load * x, (x, x0, x1))
-                for load in self._distributed_forces_y
-                ) \
+            integrate(load * x, (x, x0, x1))
+            for load in self._distributed_forces_y
+        ) \
             + sum(f.force * f.coord for f in self._point_loads_y()) \
             + sum([p * v[0] for p, v in unknowns_y.items()]) \
             + sum(f.torque for f in self._point_torques()) \
@@ -710,107 +723,107 @@ class Beam:
         C1, C2 = symbols('C1'), symbols('C2')
         unknowns_ym = unknowns_ym + [C1] + [C2]
 
-        # normal forces is same concept as shear forces only no 
+        # normal forces is same concept as shear forces only no
         # distributed for now.
         N_i = sum(
-                self._effort_from_pointload(f)
-                for f in self._point_loads_x()
-                ) \
+            self._effort_from_pointload(f)
+            for f in self._point_loads_x()
+        ) \
             + sum(
                 self._effort_from_pointload(PointLoadH(v[0], p))
                 for p, v in unknowns_x.items()
-                )
+        )
 
         # shear forces, an internal force acting down would be considered
-        # positive by adopted convention hence if the sum of forces on 
-        # the beam are all positive, our internal force would also be 
+        # positive by adopted convention hence if the sum of forces on
+        # the beam are all positive, our internal force would also be
         # positive due to difference in convention
         F_i = sum(
-                integrate(load,x)
-                for load in self._distributed_forces_y
-                ) \
+            integrate(load, x)
+            for load in self._distributed_forces_y
+        ) \
             + sum(
-                self._effort_from_pointload(f) 
+                self._effort_from_pointload(f)
                 for f in self._point_loads_y()
-                ) \
+        ) \
             + sum(
-                self._effort_from_pointload(PointLoadV(v[0],p)) 
+                self._effort_from_pointload(PointLoadV(v[0], p))
                 for p, v in unknowns_y.items()
-                )
+        )
 
-        # bending moments at internal point means we are now looking left 
-        # along the beam when we take our moments (vs when we did external 
+        # bending moments at internal point means we are now looking left
+        # along the beam when we take our moments (vs when we did external
         # external reactions and we looked right). An anti-clockwise moment
         # is adopted as positive internally. Hence we need to consider a
-        # postive for our shear forces and negative for our moments by 
+        # postive for our shear forces and negative for our moments by
         # our sign convention
         M_i = sum(
-                integrate(load,x, x) 
-                for load in self._distributed_forces_y
-                ) \
+            integrate(load, x, x)
+            for load in self._distributed_forces_y
+        ) \
             + sum(
-                integrate(self._effort_from_pointload(f), x) 
+                integrate(self._effort_from_pointload(f), x)
                 for f in self._point_loads_y()
-                ) \
+        ) \
             + sum(
-                integrate(self._effort_from_pointload(PointLoadV(v[0], p)),x)
-                for p,v in unknowns_y.items()
-                ) \
+                integrate(self._effort_from_pointload(PointLoadV(v[0], p)), x)
+                for p, v in unknowns_y.items()
+        ) \
             - sum(
-                self._effort_from_pointload(PointTorque(v[0], p)) 
-                for p,v in unknowns_m.items()
-                ) \
+                self._effort_from_pointload(PointTorque(v[0], p))
+                for p, v in unknowns_m.items()
+        ) \
             - sum(
-                self._effort_from_pointload(f) 
+                self._effort_from_pointload(f)
                 for f in self._point_torques()
-                )
+        )
 
         # with respect to x, + constants but the constants are the M at fixed
         # supports
 
         dv_EI = sum(
-                    integrate(load,x,x,x)
-                    for load in self._distributed_forces_y
-                    ) \
-                + sum(
-                    integrate(self._effort_from_pointload(f),x,x)
-                    for f in self._point_loads_y()
-                    ) \
-                + sum(
-                    integrate(self._effort_from_pointload(PointLoadV(v[0],p)),x,x) 
-                    for p,v in unknowns_y.items()
-                    ) \
-                - sum(
-                    integrate(self._effort_from_pointload(PointTorque(v[0],p)),x) 
-                    for p,v in unknowns_m.items()
-                    ) \
-                - sum(
-                    integrate(self._effort_from_pointload(f),x) 
-                    for f in self._point_torques()
-                    ) \
-                + C1
+            integrate(load, x, x, x)
+            for load in self._distributed_forces_y
+        ) \
+            + sum(
+            integrate(self._effort_from_pointload(f), x, x)
+            for f in self._point_loads_y()
+        ) \
+            + sum(
+            integrate(self._effort_from_pointload(PointLoadV(v[0], p)), x, x)
+            for p, v in unknowns_y.items()
+        ) \
+            - sum(
+            integrate(self._effort_from_pointload(PointTorque(v[0], p)), x)
+            for p, v in unknowns_m.items()
+        ) \
+            - sum(
+            integrate(self._effort_from_pointload(f), x)
+            for f in self._point_torques()
+        ) \
+            + C1
 
         v_EI = sum(
-                    integrate(load,x,x,x,x)
-                    for load in self._distributed_forces_y
-                    ) \
-                + sum(
-                    integrate(self._effort_from_pointload(f),x,x,x)
-                    for f in self._point_loads_y()
-                    ) \
-                + sum(
-                    integrate(self._effort_from_pointload(PointLoadV(v[0],p)),x,x,x) 
-                    for p,v in unknowns_y.items()
-                    ) \
-                - sum(
-                    integrate(self._effort_from_pointload(PointTorque(v[0],p)),x,x) 
-                    for p,v in unknowns_m.items()
-                    ) \
-                - sum(
-                    integrate(self._effort_from_pointload(f),x,x) 
-                    for f in self._point_torques()
-                    ) \
-                + C1 * x + C2
+            integrate(load, x, x, x, x)
+            for load in self._distributed_forces_y
+        ) \
+            + sum(
+            integrate(self._effort_from_pointload(f), x, x, x)
+            for f in self._point_loads_y()
+        ) \
+            + sum(
+            integrate(self._effort_from_pointload(PointLoadV(v[0], p)), x, x, x)
+            for p, v in unknowns_y.items()
+        ) \
+            - sum(
+            integrate(self._effort_from_pointload(PointTorque(v[0], p)), x, x)
+            for p, v in unknowns_m.items()
+        ) \
+            - sum(
+            integrate(self._effort_from_pointload(f), x, x)
+            for f in self._point_torques()
+        ) \
+            + C1 * x + C2
 
         # equations , create a lsit fo equations
         equations_ym = [F_Ry, M_R]
@@ -824,14 +837,14 @@ class Beam:
         # F/k)
         for position in unknowns_y.keys():
             equations_ym.append(
-                (v_EI.subs(x, position) * 10 ** 12 / (self._E * self._I)) \
+                (v_EI.subs(x, position) * 10 ** 12 / (self._E * self._I))
                 + (unknowns_y[position][0] / unknowns_y[position][1])
             )
 
         # equation for normal forces, only for indeterminate in x
         equations_xx = [F_Rx]
 
-        # the extension of the beam will be equal to the spring 
+        # the extension of the beam will be equal to the spring
         # displacement on right minus spring displacment on left
         if len(x_0) > 1:
             start = x_0[0]
@@ -844,15 +857,16 @@ class Beam:
                             integrate(
                                 self._effort_from_pointload(f),
                                 (x, x_0[0], position)
-                                ) 
-                            for f in self._point_loads_x()
                             )
+                            for f in self._point_loads_x()
+                        )
                         + sum(
                             integrate(
-                                self._effort_from_pointload(PointLoadH(v[0],p)),
-                                (x, x_0[0],position)) 
-                                for p,v in unknowns_x.items()
-                                )
+                                self._effort_from_pointload(
+                                    PointLoadH(v[0], p)),
+                                (x, x_0[0], position))
+                            for p, v in unknowns_x.items()
+                        )
                     )
                     * 10**3 / (self._E * self._A)
                     + unknowns_x[start][0] / unknowns_x[start][1]
@@ -877,12 +891,11 @@ class Beam:
             F_i = F_i.subs(var, ans)  # complete shear force equation
             N_i = N_i.subs(var, ans)  # complete normal force equation
 
-            # create self._reactions to allow for plotting of reaction 
+            # create self._reactions to allow for plotting of reaction
             # forces if wanted and for use with get_reaction method.
             if var not in [C1, C2]:
                 vec, num = str(var).split('_')
-                position = [
-                    a._position for a in self._supports if a._id == int(num)][0]
+                position = float(num)
                 if vec == 'x':
                     i = 0
                 elif vec == 'y':
@@ -891,7 +904,7 @@ class Beam:
                     i = 2
                 self._reactions[position][i] = round(ans, 5)
 
-        # moment unit is kn.m, dv_EI kn.m2, v_EI Kn.m3 --> *10^3, *10^9 
+        # moment unit is kn.m, dv_EI kn.m2, v_EI Kn.m3 --> *10^3, *10^9
         # to get base units. EI unit is N/mm2 , mm4 --> N.mm2
         self._shear_forces = F_i
         self._bending_moments = M_i
@@ -906,21 +919,21 @@ class Beam:
         Parameters
         ----------
         x_coord: float
-            The x_coordinates on the beam to be substituted into the 
+            The x_coordinates on the beam to be substituted into the
             equation. List returned (if bools all false)
         direction: str ('x','y' or 'm')
-            The direction of the reaction force to be returned. 
+            The direction of the reaction force to be returned.
             If not specified all are returned in a list.
 
         Returns
         --------
         int
-            If direction is 'x', 'y', or 'm' will return an integer 
-            representing the reaction force of the support in that 
+            If direction is 'x', 'y', or 'm' will return an integer
+            representing the reaction force of the support in that
             direction at location x_coord.
         list of ints
-            If direction = None, will return a list of 3 integers, 
-            representing the reaction forces of the support ['x','y','m'] 
+            If direction = None, will return a list of 3 integers,
+            representing the reaction forces of the support ['x','y','m']
             at location x_coord.
         None
             If there is no support at the x coordinate specified.
@@ -929,7 +942,7 @@ class Beam:
         if not self._reactions:
             print(
                 "You must analyse the structure before calling this function"
-                )
+            )
 
         assert_positive_number(x_coord, 'x coordinate')
 
@@ -947,7 +960,7 @@ class Beam:
         else:
             return self._reactions[x_coord]
 
-    # check if sym_func is the sum of the functions already in 
+    # check if sym_func is the sum of the functions already in
     # plot_analytical
 
     def _get_query_value(
@@ -962,7 +975,7 @@ class Beam:
         Parameters
         ----------
         x_coord: list
-            The x_coordinates on the beam to be substituted into the 
+            The x_coordinates on the beam to be substituted into the
             equation. List returned (if bools all false)
         sym_func: sympy function
             The function to be analysed
@@ -976,16 +989,16 @@ class Beam:
         Returns
         --------
         int
-            Max, min or absmax value of the sympy function depending 
+            Max, min or absmax value of the sympy function depending
             on which parameters are set.
         list of ints
-            If x-coordinate(s) are specfied value of sym_func at 
+            If x-coordinate(s) are specfied value of sym_func at
             x-coordinate(s).
 
         Notes
         -----
-        * Priority of query parameters is return_max, return_min, 
-          return_absmax, x_coord (if more than 1 of the parameters are 
+        * Priority of query parameters is return_max, return_min,
+          return_absmax, x_coord (if more than 1 of the parameters are
           specified).
 
         """
@@ -1025,7 +1038,7 @@ class Beam:
         Parameters
         ----------
         x_coord: list
-            The x_coordinates on the beam to be substituted into the 
+            The x_coordinates on the beam to be substituted into the
             equation. List returned (if bools all false)
         return_max: bool
             return max value of function if true
@@ -1037,16 +1050,16 @@ class Beam:
         Returns
         --------
         int
-            Max, min or absmax value of the bending moment function 
+            Max, min or absmax value of the bending moment function
             depending on which parameters are set.
         list of ints
-            If x-coordinate(s) are specfied value of the bending moment 
+            If x-coordinate(s) are specfied value of the bending moment
             function at x-coordinate(s).
 
         Notes
         -----
-        * Priority of query parameters is return_max, return_min, 
-          return_absmax, x_coord (if more than 1 of the parameters are 
+        * Priority of query parameters is return_max, return_min,
+          return_absmax, x_coord (if more than 1 of the parameters are
           specified).
 
         """
@@ -1057,16 +1070,16 @@ class Beam:
             return_max=return_max,
             return_min=return_min,
             return_absmax=return_absmax
-            )
+        )
 
-    def get_shear_force(self, *x_coord, return_max=False,return_min=False,
+    def get_shear_force(self, *x_coord, return_max=False, return_min=False,
                         return_absmax=False):
         """Find the shear force(s) on the beam object.
 
         Parameters
         ----------
         x_coord: list
-            The x_coordinates on the beam to be substituted into the 
+            The x_coordinates on the beam to be substituted into the
             equation. List returned (if bools all false)
         return_max: bool
             return max value of function if true
@@ -1078,16 +1091,16 @@ class Beam:
         Returns
         --------
         int
-            Max, min or absmax value of the shear force function 
+            Max, min or absmax value of the shear force function
             depending on which parameters are set.
         list of ints
-            If x-coordinate(s) are specfied value of the shear force 
+            If x-coordinate(s) are specfied value of the shear force
             function at x-coordinate(s).
 
         Notes
         -----
-        * Priority of query parameters is return_max, return_min, 
-          return_absmax, x_coord (if more than 1 of the parameters are 
+        * Priority of query parameters is return_max, return_min,
+          return_absmax, x_coord (if more than 1 of the parameters are
           specified).
 
         """
@@ -1098,16 +1111,16 @@ class Beam:
             return_max=return_max,
             return_min=return_min,
             return_absmax=return_absmax
-            )
+        )
 
-    def get_normal_force(self, *x_coord, return_max=False,return_min=False,
-                        return_absmax=False):
+    def get_normal_force(self, *x_coord, return_max=False, return_min=False,
+                         return_absmax=False):
         """Find the normal force(s) on the beam object.
 
         Parameters
         ----------
         x_coord: list
-            The x_coordinates on the beam to be substituted into the 
+            The x_coordinates on the beam to be substituted into the
             equation. List returned (if bools all false)
         return_max: bool
             return max value of function if true
@@ -1119,16 +1132,16 @@ class Beam:
         Returns
         --------
         int
-            Max, min or absmax value of the normal force function 
+            Max, min or absmax value of the normal force function
             depending on which parameters are set.
         list of ints
-            If x-coordinate(s) are specfied value of the normal force 
+            If x-coordinate(s) are specfied value of the normal force
             function at x-coordinate(s).
 
         Notes
         -----
-        * Priority of query parameters is return_max, return_min, 
-          return_absmax, x_coord (if more than 1 of the parameters are 
+        * Priority of query parameters is return_max, return_min,
+          return_absmax, x_coord (if more than 1 of the parameters are
           specified).
 
         """
@@ -1138,16 +1151,16 @@ class Beam:
             return_max=return_max,
             return_min=return_min,
             return_absmax=return_absmax
-            )
+        )
 
-    def get_deflection(self, *x_coord, return_max=False,return_min=False,
-                        return_absmax=False):
+    def get_deflection(self, *x_coord, return_max=False, return_min=False,
+                       return_absmax=False):
         """Find the deflection(s) on the beam object.
 
         Parameters
         ----------
         x_coord: list
-            The x_coordinates on the beam to be substituted into the 
+            The x_coordinates on the beam to be substituted into the
             equation. List returned (if bools all false)
         return_max: bool
             return max value of function if true
@@ -1159,16 +1172,16 @@ class Beam:
         Returns
         --------
         int
-            Max, min or absmax value of the deflection function depending 
+            Max, min or absmax value of the deflection function depending
             on which parameters are set.
         list of ints
-            If x-coordinate(s) are specfied value of the deflection 
+            If x-coordinate(s) are specfied value of the deflection
             function at x-coordinate(s).
 
         Notes
         -----
-        * Priority of query parameters is return_max, return_min, 
-          return_absmax, x_coord (if more than 1 of the parameters are 
+        * Priority of query parameters is return_max, return_min,
+          return_absmax, x_coord (if more than 1 of the parameters are
           specified).
 
         """
@@ -1180,10 +1193,10 @@ class Beam:
             return_min=return_min,
             return_absmax=return_absmax)
 
-    #SECTION - PLOTTING
+    # SECTION - PLOTTING
 
     def add_query_points(self, *x_coords):
-        """Document the forces on a beam at position x_coord when 
+        """Document the forces on a beam at position x_coord when
         plotting.
 
         Parameters
@@ -1204,7 +1217,7 @@ class Beam:
         Parameters
         ----------
         x_coord: list
-            The x_coordinates on the beam to be removed from query on 
+            The x_coordinates on the beam to be removed from query on
             plot.
         remove_all: boolean
             if true all query points will be removed.
@@ -1221,7 +1234,7 @@ class Beam:
                 return ValueError("Not an existing query point on beam")
 
     def plot_beam_external(self):
-        """A wrapper of several plotting functions that generates a 
+        """A wrapper of several plotting functions that generates a
         single figure with 2 plots corresponding respectively to:
 
         - a schematic of the loaded beam
@@ -1238,7 +1251,7 @@ class Beam:
             shared_xaxes=True,
             vertical_spacing=0.1,
             subplot_titles=("Beam schematic", "Reaction Forces")
-            )
+        )
 
         fig = self.plot_beam_diagram(fig=fig, row=1, col=1)
         fig = self.plot_reaction_force(fig=fig, row=2, col=1)
@@ -1252,12 +1265,12 @@ class Beam:
             hovermode='x')
 
         return fig
-    
+
     def plot_beam_internal(
             self,
             reverse_x=False,
             reverse_y=False):
-        """A wrapper of several plotting functions that generates a 
+        """A wrapper of several plotting functions that generates a
         single figure with 4 plots corresponding respectively to:
 
         - normal force diagram,
@@ -1288,8 +1301,8 @@ class Beam:
                 "Shear Force Diagram",
                 "Bending Moment Diagram",
                 "Deflection Diagram"
-                )
             )
+        )
 
         fig = self.plot_normal_force(
             reverse_x=reverse_x,
@@ -1297,48 +1310,48 @@ class Beam:
             fig=fig,
             row=1,
             col=1
-            )
+        )
         fig = self.plot_shear_force(
             reverse_x=reverse_x,
             reverse_y=reverse_y,
             fig=fig,
             row=2,
             col=1
-            )
+        )
         fig = self.plot_bending_moment(
             reverse_x=reverse_x,
             reverse_y=reverse_y,
             fig=fig,
             row=3,
             col=1
-            )
+        )
         fig = self.plot_deflection(
             reverse_x=reverse_x,
             reverse_y=reverse_y,
             fig=fig,
             row=4,
             col=1
-            )
+        )
 
-        fig.update_xaxes(title_text='Beam Length (m)',row=4,col=1)
+        fig.update_xaxes(title_text='Beam Length (m)', row=4, col=1)
 
         fig.update_layout(
             height=1000,
-                        title={'text': "Analysis Results",'x':0.5},
-                        title_font_size = 24,
-                        showlegend=False,
-                        )
+            title={'text': "Analysis Results", 'x': 0.5},
+            title_font_size=24,
+            showlegend=False,
+        )
 
         return fig
 
     def plot_beam_diagram(self, fig=None, row=None, col=None):
-        """Returns a schematic of the beam and all the loads applied on 
+        """Returns a schematic of the beam and all the loads applied on
         it
 
         Parameters
         ----------
         fig : bool, optional
-            Figure to append subplot diagram too. If creating standalone 
+            Figure to append subplot diagram too. If creating standalone
             figure then None, by default None
         row : int, optional
             row number if subplot, by default None
@@ -1350,29 +1363,29 @@ class Beam:
         figure : `plotly.graph_objs._figure.Figure`
             Returns a handle to a figure with the beam schematic.
         """
-        # can do point loads as arrows, not sure about directional point 
+        # can do point loads as arrows, not sure about directional point
         # loads though, hmm can have a set length for the arrow , say 50,
         # and use trigonometry to find the x and y offset to achieve.
         # for torques idk
-        # hoverinfo is skip to not show any default values, hover 
-        # template is used to show only the x value and to not worry 
+        # hoverinfo is skip to not show any default values, hover
+        # template is used to show only the x value and to not worry
         # about the y value
         data = go.Scatter(
-            x=[self._x0, self._x1], 
-            y=[0, 0], 
-            mode='lines', 
-            name="Beam_", 
+            x=[self._x0, self._x1],
+            y=[0, 0],
+            mode='lines',
+            name="Beam_",
             line=dict(color='purple', width=2),
             hovertemplate="%{x} m",
             hoverinfo='skip'
-            )
+        )
 
         if fig and row and col:
             fig.add_trace(data, row=row, col=col)
         else:
             fig = go.Figure(data=data)
-            # Hovermode x makes two hover labels appear if they are at 
-            # the same point (default setting means only see the last 
+            # Hovermode x makes two hover labels appear if they are at
+            # the same point (default setting means only see the last
             # updated point)
             fig.update_layout(
                 title_text="Beam Schematic",
@@ -1381,12 +1394,12 @@ class Beam:
                 hovermode='x',
                 title_x=0.5)
             fig.update_xaxes(title_text='Beam Length (m)')
-            # visible false means y axis doesnt show, fixing range 
+            # visible false means y axis doesnt show, fixing range
             # means wont zoom in y direction
 
         fig.update_yaxes(visible=False, range=[-3, 3], fixedrange=True)
 
-        # for each support append to figure to have the shapes/traces 
+        # for each support append to figure to have the shapes/traces
         # needed for the drawing
         if row and col:
             for support in self._supports:
@@ -1411,7 +1424,7 @@ class Beam:
         Parameters
         ----------
         fig : bool, optional
-            Figure to append subplot diagram too. If creating standalone 
+            Figure to append subplot diagram too. If creating standalone
             figure then None, by default None
         row : int, optional
             row number if subplot, by default None
@@ -1440,8 +1453,8 @@ class Beam:
         else:
             fig = go.Figure(data=data)
 
-            # Hovermode x makes two hover labels appear if they are at 
-            # the same point (default setting means only see the last 
+            # Hovermode x makes two hover labels appear if they are at
+            # the same point (default setting means only see the last
             # updated point)
             fig.update_layout(
                 title_text="Reaction Forces",
@@ -1451,7 +1464,7 @@ class Beam:
                 title_x=0.5)
             fig.update_xaxes(title_text='Beam Length (m)')
 
-        # visible false means y axis doesnt show, fixing range means 
+        # visible false means y axis doesnt show, fixing range means
         # wont zoom in y direction
         fig.update_yaxes(visible=False, range=[-3, 3], fixedrange=True)
 
@@ -1468,34 +1481,34 @@ class Beam:
                         x_sup=position,
                         row=row,
                         col=col
-                        )
+                    )
 
                     if abs(x_) > 0:
                         fig = draw_force(
-                            fig, 
+                            fig,
                             PointLoadH(x_, position),
-                            row=row, 
+                            row=row,
                             col=col
-                            )
+                        )
                     if abs(y_) > 0:
                         fig = draw_force(
-                            fig, 
-                            PointLoadV(y_, position), 
-                            row=row, 
+                            fig,
+                            PointLoadV(y_, position),
+                            row=row,
                             col=col)
                     if abs(m_) > 0:
                         fig = draw_force(
-                            fig, 
-                            PointTorque(m_, position), 
-                            row=row, 
+                            fig,
+                            PointTorque(m_, position),
+                            row=row,
                             col=col
-                            )
+                        )
                 else:
                     fig = draw_reaction_hoverlabel(
-                        fig, 
-                        reactions=[x_, y_, m_], 
+                        fig,
+                        reactions=[x_, y_, m_],
                         x_sup=position
-                        )
+                    )
 
                     if abs(x_) > 0:
                         fig = draw_force(fig, PointLoadH(x_, position))
@@ -1506,9 +1519,9 @@ class Beam:
 
         return fig
 
-    def plot_normal_force(self, reverse_x=False, reverse_y=False, fig=None, 
+    def plot_normal_force(self, reverse_x=False, reverse_y=False, fig=None,
                           row=None, col=None):
-        """Returns a plot of the normal force as a function of the 
+        """Returns a plot of the normal force as a function of the
         x-coordinate.
 
         Parameters
@@ -1518,7 +1531,7 @@ class Beam:
         reverse_y : bool, optional
             reverse the y axes, by default False
         fig : bool, optional
-            Figure to append subplot diagram too. If creating standalone 
+            Figure to append subplot diagram too. If creating standalone
             figure then None, by default None
         row : int, optional
             row number if subplot, by default None
@@ -1551,12 +1564,12 @@ class Beam:
             fig=fig,
             row=row,
             col=col
-            )
+        )
         return fig
 
-    def plot_shear_force(self, reverse_x=False, reverse_y=False, fig=None, 
-                          row=None, col=None):
-        """Returns a plot of the shear force as a function of the 
+    def plot_shear_force(self, reverse_x=False, reverse_y=False, fig=None,
+                         row=None, col=None):
+        """Returns a plot of the shear force as a function of the
         x-coordinate.
 
         Parameters
@@ -1566,7 +1579,7 @@ class Beam:
         reverse_y : bool, optional
             reverse the y axes, by default False
         fig : bool, optional
-            Figure to append subplot diagram too. If creating standalone 
+            Figure to append subplot diagram too. If creating standalone
             figure then None, by default None
         row : int, optional
             row number if subplot, by default None
@@ -1599,13 +1612,13 @@ class Beam:
             fig=fig,
             row=row,
             col=col
-            )
+        )
 
         return fig
 
-    def plot_bending_moment(self, reverse_x=False, reverse_y=False, fig=None, 
-                          row=None, col=None):
-        """Returns a plot of the bending moment as a function of the 
+    def plot_bending_moment(self, reverse_x=False, reverse_y=False, fig=None,
+                            row=None, col=None):
+        """Returns a plot of the bending moment as a function of the
         x-coordinate.
 
         Parameters
@@ -1615,7 +1628,7 @@ class Beam:
         reverse_y : bool, optional
             reverse the y axes, by default False
         fig : bool, optional
-            Figure to append subplot diagram too. If creating standalone 
+            Figure to append subplot diagram too. If creating standalone
             figure then None, by default None
         row : int, optional
             row number if subplot, by default None
@@ -1650,9 +1663,9 @@ class Beam:
 
         return fig
 
-    def plot_deflection(self, reverse_x=False, reverse_y=False, fig=None, 
-                          row=None, col=None):
-        """Returns a plot of the beam deflection as a function of the 
+    def plot_deflection(self, reverse_x=False, reverse_y=False, fig=None,
+                        row=None, col=None):
+        """Returns a plot of the beam deflection as a function of the
         x-coordinate.
 
         Parameters
@@ -1662,7 +1675,7 @@ class Beam:
         reverse_y : bool, optional
             reverse the y axes, by default False
         fig : bool, optional
-            Figure to append subplot diagram too. If creating standalone 
+            Figure to append subplot diagram too. If creating standalone
             figure then None, by default None
         row : int, optional
             row number if subplot, by default None
@@ -1694,15 +1707,15 @@ class Beam:
             fig=fig,
             row=row,
             col=col
-            )
+        )
 
         return fig
 
     def plot_analytical(self, sym_func, color="blue", title="", xlabel="",
-                        ylabel="", xunits="",yunits="", reverse_x=False,
-                        reverse_y=False, fig=None,row=None, col=None):
+                        ylabel="", xunits="", yunits="", reverse_x=False,
+                        reverse_y=False, fig=None, row=None, col=None):
         """
-        Auxiliary function for plotting a sympy.Piecewise analytical 
+        Auxiliary function for plotting a sympy.Piecewise analytical
         function.
 
         Parameters
@@ -1716,7 +1729,7 @@ class Beam:
         xlabel: str
             physical variable displayed on the x-axis. Example: "Length"
         ylabel: str
-            physical variable displayed on the y-axis. Example: "Shear 
+            physical variable displayed on the y-axis. Example: "Shear
             force"
         xunits: str
             physical unit to be used for the x-axis. Example: "m"
@@ -1727,7 +1740,7 @@ class Beam:
         reverse_y : bool, optional
             reverse the y axes, by default False
         fig : bool, optional
-            Figure to append subplot diagram too. If creating standalone 
+            Figure to append subplot diagram too. If creating standalone
             figure then None, by default None
         row : int, optional
             row number if subplot, by default None
@@ -1741,7 +1754,7 @@ class Beam:
             Returns a handle to a figure with the deflection diagram.
         """
         # numpy array for x positions closely spaced (allow for graphing)
-        x_vec = np.linspace(self._x0, self._x1, int(1000))  
+        x_vec = np.linspace(self._x0, self._x1, int(1000))
         # transform sympy expressions to lambda functions which can be used to
         # calculate numerical values very fast (with numpy)
         y_lam = lambdify(x, sym_func, "numpy")
@@ -1754,29 +1767,29 @@ class Beam:
             mode='lines',
             line=dict(color=color, width=1),
             fill='tozeroy',
-            )
+        )
 
         if row and col and fig:
             fig = fig.add_trace(data, row=row, col=col)
         else:
             fig = go.Figure(data=data)
             fig.update_layout(title_text=title, title_font_size=30)
-            fig.update_xaxes(title_text=str(xlabel+" ("+str(xunits)+")"))
+            fig.update_xaxes(title_text=str(xlabel + " (" + str(xunits) + ")"))
 
         if row and col:
             fig.update_yaxes(
-                title_text=str(ylabel+" ("+str(yunits)+")"),
+                title_text=str(ylabel + " (" + str(yunits) + ")"),
                 row=row,
                 col=col
-                )
+            )
             fig.update_yaxes(
-                autorange="reversed",row=row,col=col
-                ) if reverse_y else None
+                autorange="reversed", row=row, col=col
+            ) if reverse_y else None
             fig.update_xaxes(
-                autorange="reversed",row=row,col=col
-                ) if reverse_x else None
+                autorange="reversed", row=row, col=col
+            ) if reverse_x else None
         else:
-            fig.update_yaxes(title_text=str(ylabel+" ("+str(yunits)+")"))
+            fig.update_yaxes(title_text=str(ylabel + " (" + str(yunits) + ")"))
             fig.update_yaxes(autorange="reversed") if reverse_y else None
             fig.update_xaxes(autorange="reversed") if reverse_x else None
 
@@ -1806,28 +1819,30 @@ class Beam:
 
     def _update_loads(self):
         self._distributed_forces_x = [
-            self._create_distributed_force(f) 
+            self._create_distributed_force(f)
             for f in self._distributed_loads_x()
-            ]
+        ]
         self._distributed_forces_y = [
-            self._create_distributed_force(f) 
+            self._create_distributed_force(f)
             for f in self._distributed_loads_y()
-            ]
+        ]
 
     def _create_distributed_force(
             self,
             load: DistributedLoadH or DistributedLoadV,
             shift: bool = True):
         """
-        Create a sympy.Piecewise object representing the provided distributed load.
+        Create a sympy.Piecewise object representing the provided 
+        distributed load.
 
         :param expr: string with a valid sympy expression.
-        :param interval: tuple (x0, x1) containing the extremes of the interval on
-        which the load is applied.
-        :param shift: when set to False, the x-coordinate in the expression is
-        referred to the left end of the beam, instead of the left end of the
-        provided interval.
-        :return: sympy.Piecewise object with the value of the distributed load.
+        :param interval: tuple (x0, x1) containing the extremes of the 
+        interval on which the load is applied.
+        :param shift: when set to False, the x-coordinate in the 
+        expression is referred to the left end of the beam, instead 
+        of the left end of the provided interval.
+        :return: sympy.Piecewise object with the value of the 
+        distributed load.
         """
         expr, interval = load
         x0, x1 = interval
@@ -1839,13 +1854,14 @@ class Beam:
     def _effort_from_pointload(
             self, load: PointLoadH or PointLoadV or PointTorque):
         """
-        Create a sympy.Piecewise object representing the shear force caused by a
-        point load.
+        Create a sympy.Piecewise object representing the shear force 
+        caused by a point load.
 
-        :param value: float or string with the numerical value of the point load.
+        :param value: float or string with the numerical value of the 
+        point load.
         :param coord: x-coordinate on which the point load is applied.
-        :return: sympy.Piecewise object with the value of the shear force produced
-        by the provided point load.
+        :return: sympy.Piecewise object with the value of the shear 
+        force produced by the provided point load.
         """
         value, coord = load
         return Piecewise((0, x < coord), (value, True))
