@@ -49,21 +49,29 @@ This webpage is a graphical user interface (GUI) for the opensource \
 
 For more, you can view:
 
-* The Python package [here](
-    https://github.com/JesseBonanno/IndeterminateBeam)
-* The package documentation [here](
-    https://indeterminatebeam.readthedocs.io/en/main/?badge=main)
-* The sign conventions used [here](
-    https://indeterminatebeam.readthedocs.io/en/main/theory.html#sign-convention)
-* The Python based Jupyter Notebook examples [here](
-    https://colab.research.google.com/github/JesseBonanno/IndeterminateBeam/blob/main/indeterminatebeam/simple_demo.ipynb)
-* The JOSE article concerning this package [here](
-    https://github.com/JesseBonanno/IndeterminateBeam/blob/main/paper.md)
+* The Python package 
+   [![Version](https://img.shields.io/badge/version-v1.2.2-blue.svg)](https://github.com/JesseBonanno/IndeterminateBeam/releases/tag/v1.2.2)
+* The package documentation 
+   [![Package Documentation](https://readthedocs.org/projects/indeterminatebeam/badge/?version=main)](https://indeterminatebeam.readthedocs.io/en/main/?badge=main)
+* The sign conventions used 
+   [![Sign Conventions](https://readthedocs.org/projects/indeterminatebeam/badge/?version=main)](https://indeterminatebeam.readthedocs.io/en/main/theory.html#sign-convention)
+* The Python based Jupyter Notebook examples 
+   [![Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/JesseBonanno/IndeterminateBeam/blob/main/indeterminatebeam/simple_demo.ipynb)
+* The JOSE article concerning this package 
+   [![Article](https://img.shields.io/badge/Article-Submitted-orange.svg)](https://github.com/JesseBonanno/IndeterminateBeam/blob/main/paper.md)
 
 Note: As the Python package calculations are purely analytical calculation \
 times can be relatively slow. Each distributed load generally adds \
 around 4 seconds to the calculation time.
 ''')
+
+copyright_ = dbc.Row(
+            [
+                dbc.Col(dcc.Markdown("[![License](https://img.shields.io/badge/license-MIT-lightgreen.svg)](https://github.com/JesseBonanno/IndeterminateBeam/blob/main/LICENSE.txt)")),
+                dbc.Col(dcc.Markdown("Copyright (c) 2020, Jesse Bonanno")),
+                dbc.Col(dcc.Markdown("Contact: JesseBonanno@gmail.com")),
+            ]
+)
 
 # the content for the sidebar
 sidebar_content = html.Div(
@@ -501,6 +509,8 @@ content = html.Div(
         html.Hr(),
         calc_status,
         content_first_row,
+        html.Hr(),
+        copyright_
     ],
     style=CONTENT_STYLE
 )
