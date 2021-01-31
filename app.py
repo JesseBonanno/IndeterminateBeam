@@ -53,7 +53,7 @@ This webpage is a graphical user interface (GUI) for the opensource \
 
 For more, you can view the following:
 
-* [![Python Package](https://img.shields.io/badge/version-{__version__}-blue.svg)](https://github.com/JesseBonanno/IndeterminateBeam/releases/tag/v1.2.2)
+* [![Python Package](https://img.shields.io/badge/version-{__version__}-blue.svg)](https://github.com/JesseBonanno/IndeterminateBeam)
    The Python package
 * [![Package Documentation](https://readthedocs.org/projects/indeterminatebeam/badge/?version=main)](https://indeterminatebeam.readthedocs.io/en/main/?badge=main)
    The package documentation 
