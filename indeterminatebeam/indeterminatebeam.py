@@ -1250,7 +1250,9 @@ class Beam:
 
         fig.update_layout(
             height=550,
+            width=700,
             title={'text': "Beam External Conditions", 'x': 0.5},
+            title_font_size=24,
             showlegend=False,
             hovermode='x')
 
@@ -1327,6 +1329,7 @@ class Beam:
 
         fig.update_layout(
             height=1000,
+            width = 700,
             title={'text': "Analysis Results", 'x': 0.5},
             title_font_size=24,
             showlegend=False,

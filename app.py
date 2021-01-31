@@ -12,6 +12,10 @@ from indeterminatebeam.indeterminatebeam import (
 )
 from datetime import datetime
 import time
+from indeterminatebeam.version import __version__
+from dash_extensions import Download
+from plotly.io import to_html
+from dash_extensions.snippets import send_file
 
 # the style arguments for the sidebar.
 SIDEBAR_STYLE = {
@@ -42,27 +46,26 @@ CARD_TEXT_STYLE = {
 }
 
 # side bar markdown text
-about = dcc.Markdown('''
+about = dcc.Markdown(f'''
 
 This webpage is a graphical user interface (GUI) for the opensource \
 `IndeterminateBeam` Python package created using Dash.
 
-For more, you can view:
+For more, you can view the following:
 
-* The Python package 
-   [![Version](https://img.shields.io/badge/version-v1.2.2-blue.svg)](https://github.com/JesseBonanno/IndeterminateBeam/releases/tag/v1.2.2)
-* The package documentation 
-   [![Package Documentation](https://readthedocs.org/projects/indeterminatebeam/badge/?version=main)](https://indeterminatebeam.readthedocs.io/en/main/?badge=main)
-* The sign conventions used 
-   [![Sign Conventions](https://readthedocs.org/projects/indeterminatebeam/badge/?version=main)](https://indeterminatebeam.readthedocs.io/en/main/theory.html#sign-convention)
-* The Python based Jupyter Notebook examples 
-   [![Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/JesseBonanno/IndeterminateBeam/blob/main/indeterminatebeam/simple_demo.ipynb)
-* The JOSE article concerning this package 
-   [![Article](https://img.shields.io/badge/Article-Submitted-orange.svg)](https://github.com/JesseBonanno/IndeterminateBeam/blob/main/paper.md)
-
+* [![Python Package](https://img.shields.io/badge/version-{__version__}-blue.svg)](https://github.com/JesseBonanno/IndeterminateBeam/releases/tag/v1.2.2)
+   The Python package
+* [![Package Documentation](https://readthedocs.org/projects/indeterminatebeam/badge/?version=main)](https://indeterminatebeam.readthedocs.io/en/main/?badge=main)
+   The package documentation 
+* [![Sign Conventions](https://readthedocs.org/projects/indeterminatebeam/badge/?version=main)](https://indeterminatebeam.readthedocs.io/en/main/theory.html#sign-convention) 
+   The sign conventions used
+* [![Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/JesseBonanno/IndeterminateBeam/blob/main/indeterminatebeam/simple_demo.ipynb)
+   The Python based Jupyter Notebook examples 
+* [![Article](https://img.shields.io/badge/Article-Submitted-orange.svg)](https://github.com/JesseBonanno/IndeterminateBeam/blob/main/paper.md)
+   The JOSE article concerning this package 
+   
 Note: As the Python package calculations are purely analytical calculation \
-times can be relatively slow. Each distributed load generally adds \
-around 4 seconds to the calculation time.
+times can be relatively slow.
 ''')
 
 copyright_ = dbc.Row(
@@ -76,15 +79,7 @@ copyright_ = dbc.Row(
 # the content for the sidebar
 sidebar_content = html.Div(
     [
-        about,
-        html.Br(),
-        dbc.Button(
-            "Toggle Instructions",
-            id="instruction-button",
-            className="mb-3",
-            color="primary",
-            n_clicks=0,
-            )
+        about
     ]
 )
 
@@ -461,9 +456,9 @@ tabs = dbc.Tabs(
 submit_button = dbc.Button(
     id='submit_button',
     n_clicks=0,
-    children='Submit',
+    children='Analyse',
     color='primary',
-    block=True
+    block=True,
 )
 
 # Create a status bar/Alert
@@ -476,30 +471,68 @@ calc_status = dbc.Alert(
 )
 
 # Assemble main application content
-content_first_row = dbc.Row(
-    [
-        dbc.Col(
-            [
-                dbc.Card(
-                    dbc.Spinner(dcc.Graph(id='graph_1')),
-                ),
-                html.Br(),
-                tabs,
-                html.Br(),
-                submit_button
-
-            ],
-            md=6
-        ),
-
-        dbc.Col(
-            dbc.Card(
-                dbc.Spinner(dcc.Graph(id='graph_2'))
+content_first_row = html.Div(
+    dbc.Row(
+        [
+            dbc.Col(
+                [
+                    dbc.Row(
+                        dbc.Col(
+                            [
+                                dbc.Card(
+                                    dbc.Spinner(dcc.Graph(id='graph_1')),
+                                ),
+                                html.Br(),
+                                tabs,
+                                html.Br(),
+                            ],
+                            width = 12
+                        )
+                    ),
+                    dbc.Row(
+                        [
+                            dbc.Col(   
+                                dbc.Button(
+                                    "Toggle Instructions",
+                                    id="instruction-button",
+                                    className="mb-3",
+                                    color="info",
+                                    n_clicks=0,
+                                    block = True,
+                                    ),
+                                width=4
+                            ),
+                            dbc.Col(
+                                [
+                                    dbc.Button(
+                                        "Generate Report",
+                                        id="report-button",
+                                        className="mb-3",
+                                        color="info",
+                                        n_clicks=0,
+                                        block = True,
+                                        ),
+                                    Download(id='report'),
+                                ],
+                                width =4
+                            ),
+                            dbc.Col(
+                                submit_button,
+                                width = 4
+                            )
+                        ]
+                    )
+                ],
+                width = 6         
             ),
-            md=6
-        )
-
-    ]
+            dbc.Col(
+                dbc.Card(
+                    dbc.Spinner(dcc.Graph(id='graph_2'))
+                ),
+                width = 6
+            )
+        ]
+    )
 )
 
 
@@ -524,7 +557,8 @@ app.layout = html.Div([sidebar, content])
 # Returns plots and/or calculation status.
 @app.callback(
     [Output('graph_1', 'figure'), Output('graph_2', 'figure'),
-     Output('alert-fade', 'color'), Output('alert-fade', 'children')],
+     Output('alert-fade', 'color'), Output('alert-fade', 'children'), 
+     Output('alert-fade','is_open')],
     [Input('submit_button', 'n_clicks')],
     [State('beam-table', 'data'), State('point-load-table', 'data'),
      State('point-torque-table', 'data'), State('query-table', 'data'),
@@ -634,7 +668,7 @@ def analyse_beam(click, beams, point_loads, point_torques, querys,
         dt = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
 
         color = "success"
-        message = f"calculation completed in {t:.2f} seconds, at {dt}"
+        message = f"Calculation completed in {t:.2f} seconds, at {dt}"
     except BaseException:
         color = "danger"
         e = sys.exc_info()[1]
@@ -644,12 +678,7 @@ def analyse_beam(click, beams, point_loads, point_torques, querys,
         color = "danger"
         message = "No analysis has been run."
 
-    if type(graph_1)!=dict:
-        graph_1 = graph_1.to_dict()
-    if type(graph_2)!=dict:
-        graph_2 = graph_2.to_dict()
-
-    return graph_1, graph_2, color, message
+    return graph_1, graph_2, color, message, True
 
 
 # Add button to add row for supports
@@ -721,6 +750,24 @@ def toggle_collapse(n, is_open):
         a = is_open
     return a, a
 
+@app.callback(
+    Output("report", "data"),
+    Input('report-button', 'n_clicks'),
+    [State("graph_1", "figure"),
+    State("graph_2", "figure")]
+)
+def report(n, graph_1,graph_2):
+    date = datetime.now().strftime("%d/%m/%Y")
+    if n>0:
+        content = [
+            to_html(fig=graph_1,full_html=False, include_plotlyjs='cdn'),
+            "<br>Might Need to add 450 pixels worth of max min summary here in order to make the report look better",
+            "<br>Also the info on the graph is only available when hover, if print to pdf it isnt clear what is happening",
+            to_html(fig = graph_2,full_html=False, include_plotlyjs='cdn'),
+            f"<br>Report generated at https://indeterminate-beam.herokuapp.com/ on {date} </br>"
+        ]
+
+        return dict(content=content, filename="Report.html")
 
 if __name__ == '__main__':
     app.run_server()

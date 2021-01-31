@@ -12,3 +12,4 @@ dash-html-components==1.1.1
 dash-renderer==1.8.3
 dash-table==4.11.1
 gunicorn
+dash-extensions>=0.0.44
