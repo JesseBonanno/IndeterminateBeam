@@ -411,6 +411,7 @@ def draw_moment(fig, moment, x_sup, color='magenta', show_values=True, row=None,
     else:
         fig.add_annotation(annotation)
 
+    # Add text if show_values is true
     if show_values:
 
         annotation = dict(
@@ -786,7 +787,7 @@ def draw_support_hoverlabel(fig, support, kx=0, ky=0, row=None, col=None):
     # Spring
     if kx or ky:
         name = "Spring"
-        color = 'magenta'
+        color = 'orange'
         meta = [kx, ky]
         hovertemplate = "x: %{x} m"
         if kx:
@@ -892,7 +893,7 @@ def draw_support_rollers(fig, x_sup, orientation='up', offset=1, row=None,
     return fig
 
 
-def draw_support_spring(fig, support, orientation="up", row=None, col=None):
+def draw_support_spring(fig, support, orientation="up",color='orange',show_values=True, row=None, col=None):
     """Draw an anchored spring shape on a plotly figure.
 
     Parameters
@@ -931,8 +932,10 @@ def draw_support_spring(fig, support, orientation="up", row=None, col=None):
         # the hovertemplate
         if orientation == 'right':
             coords = [(5, 0), (7, 5), (12, -5), (14, 0), (19, 0)]
+            stiffness = support._stiffness[0]
         else:
             coords = [(0, 5), (-5, 7), (5, 12), (0, 14), (0, 19)]
+            stiffness = support._stiffness[1]
 
         # x1 and y1 are the ends of the line to be created
         for x1, y1 in coords:
@@ -944,7 +947,7 @@ def draw_support_spring(fig, support, orientation="up", row=None, col=None):
                 type="line",
                 xref="x", yref="y",
                 x0=x0, y0=y0, x1=x1, y1=y1,
-                line_color="orange",
+                line_color=color,
                 line_width=2,
                 xsizemode='pixel',
                 ysizemode='pixel',
@@ -960,6 +963,27 @@ def draw_support_spring(fig, support, orientation="up", row=None, col=None):
 
             # set end point to be start point for the next line
             x0, y0 = x1, y1
+
+        if show_values:
+            y0 = max(y0,7)
+
+            annotation = dict(
+                xref="x", yref="y",
+                x=x_sup,
+                y=0,
+                yshift=y0*1.5,
+                xshift=x0*2,
+                text=stiffness,
+                font_color=color,
+                showarrow=False,
+                )
+
+            # Append shape to plot or subplot
+            if row and col:
+                fig.add_annotation(annotation, row=row, col=col)
+            else:
+                fig.add_annotation(annotation)
+
 
     return fig
 

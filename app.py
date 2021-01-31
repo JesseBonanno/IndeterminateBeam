@@ -719,6 +719,12 @@ def analyse_beam(click, beams, point_loads, point_torques, querys,
         e = sys.exc_info()[1]
         message = f"Error with calculation. Please check inputs. \
             The following error was observed: {e}"
+        results_data = [
+            {'type':'Normal Force', 'max':0, 'min':0},
+            {'type':'Shear Force', 'max':0, 'min':0},
+            {'type':'Bending Moment', 'max':0, 'min':0},
+            {'type':'Deflection', 'max':0, 'min':0},
+        ]
     if click == 0:
         color = "danger"
         message = "No analysis has been run."
