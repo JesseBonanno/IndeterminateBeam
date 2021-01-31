@@ -233,7 +233,6 @@ support_content = dbc.Card(
             html.Br(),
             html.Button('Add Support', id='support-rows-button', n_clicks=0),
             html.Br(),
-            html.Br(),
             dbc.Collapse(
                 dbc.Card(dbc.CardBody(support_instructions)),
                 id="support_instructions",
@@ -440,6 +439,41 @@ query_content = dbc.Card(
     className="mt-3",
 )
 
+# Properties for results section
+results_columns = [
+        {"name": "", "id": "type"},
+        {"name": "Maximum Effect", "id": "max"},
+        {"name": "Minimum Effect", "id": "min"},
+    ]
+
+results_data = [
+        {'type':'Normal Force', 'max':0, 'min':0},
+        {'type':'Shear Force', 'max':0, 'min':0},
+        {'type':'Bending Moment', 'max':0, 'min':0},
+        {'type':'Deflection', 'max':0, 'min':0},
+    ]
+
+results_table = dash_table.DataTable(
+    id='results-table',
+    columns=results_columns,
+    data=results_data,
+    merge_duplicate_headers=True,
+    editable=False,
+    row_deletable=False,
+    style_cell={'textAlign': 'center'},
+)
+
+results_content = dbc.Card(
+    dbc.CardBody(
+        [
+            results_table,
+        ]
+    ),
+    className="mt-3",
+)
+
+
+
 # Assemble different input tabs
 tabs = dbc.Tabs(
     [
@@ -526,9 +560,12 @@ content_first_row = html.Div(
                 width = 6         
             ),
             dbc.Col(
-                dbc.Card(
-                    dbc.Spinner(dcc.Graph(id='graph_2'))
-                ),
+                [
+                    dbc.Card(
+                        dbc.Spinner(dcc.Graph(id='graph_2'))
+                    ),
+                    results_content,
+                ],
                 width = 6
             )
         ]
@@ -558,7 +595,7 @@ app.layout = html.Div([sidebar, content])
 @app.callback(
     [Output('graph_1', 'figure'), Output('graph_2', 'figure'),
      Output('alert-fade', 'color'), Output('alert-fade', 'children'), 
-     Output('alert-fade','is_open')],
+     Output('alert-fade','is_open'),Output('results-table','data')],
     [Input('submit_button', 'n_clicks')],
     [State('beam-table', 'data'), State('point-load-table', 'data'),
      State('point-torque-table', 'data'), State('query-table', 'data'),
@@ -669,6 +706,14 @@ def analyse_beam(click, beams, point_loads, point_torques, querys,
 
         color = "success"
         message = f"Calculation completed in {t:.2f} seconds, at {dt}"
+
+        results_data = [
+            {'type':'Normal Force (kN)', 'max':beam.get_normal_force(return_max=True), 'min':beam.get_normal_force(return_min=True)},
+            {'type':'Shear Force (kN)', 'max':beam.get_shear_force(return_max=True), 'min':beam.get_shear_force(return_min=True)},
+            {'type':'Bending Moment (kN.m)', 'max':beam.get_bending_moment(return_max=True), 'min':beam.get_bending_moment(return_min=True)},
+            {'type':'Deflection (mm)', 'max':beam.get_deflection(return_max=True), 'min':beam.get_deflection(return_min=True)},
+        ]
+
     except BaseException:
         color = "danger"
         e = sys.exc_info()[1]
@@ -678,7 +723,7 @@ def analyse_beam(click, beams, point_loads, point_torques, querys,
         color = "danger"
         message = "No analysis has been run."
 
-    return graph_1, graph_2, color, message, True
+    return graph_1, graph_2, color, message, True, results_data 
 
 
 # Add button to add row for supports
@@ -754,18 +799,63 @@ def toggle_collapse(n, is_open):
     Output("report", "data"),
     Input('report-button', 'n_clicks'),
     [State("graph_1", "figure"),
-    State("graph_2", "figure")]
+    State("graph_2", "figure"),
+    State('results-table','data')]
 )
-def report(n, graph_1,graph_2):
+def report(n, graph_1,graph_2,results):
     date = datetime.now().strftime("%d/%m/%Y")
     if n>0:
         content = [
             to_html(fig=graph_1,full_html=False, include_plotlyjs='cdn'),
-            "<br>Might Need to add 450 pixels worth of max min summary here in order to make the report look better",
-            "<br>Also the info on the graph is only available when hover, if print to pdf it isnt clear what is happening",
+            """
+            <style type="text/css">
+            .tg  {border-collapse:collapse;border-spacing:0;margin:120px}
+            .tg td{border-color:black;border-style:solid;border-width:1px;font-family:Arial, sans-serif;font-size:14px;
+            overflow:hidden;padding:10px 20px;word-break:normal;}
+            .tg th{border-color:black;border-style:solid;border-width:1px;font-family:Arial, sans-serif;font-size:14px;
+            font-weight:normal;overflow:hidden;padding:10px 20px;word-break:normal;}
+            .tg .tg-5gn2{background-color:#efefef;font-family:Arial, Helvetica, sans-serif !important;;font-size:12px;text-align:center;
+            vertical-align:middle}
+            .tg .tg-uqo3{background-color:#efefef;text-align:center;vertical-align:top}
+            .tg .tg-baqh{text-align:center;vertical-align:top}
+            </style>
+            <table class="tg">
+            <thead>
+            <tr>
+                <th class="tg-5gn2"></th>
+                <th class="tg-uqo3">Maximum Effect</th>
+                <th class="tg-uqo3">Minimum Effect</th>
+            </tr>""" + f"""
+            </thead>
+            <tbody>
+            <tr>
+                <td class="tg-baqh">Normal Force</td>
+                <td class="tg-baqh">{results[0]['max']}</td>
+                <td class="tg-baqh">{results[0]['min']}</td>
+            </tr>
+            <tr>
+                <td class="tg-baqh">Shear Force</td>
+                <td class="tg-baqh">{results[1]['max']}</td>
+                <td class="tg-baqh">{results[1]['min']}</td>
+            </tr>
+            <tr>
+                <td class="tg-baqh">Bending Moment</td>
+                <td class="tg-baqh">{results[2]['max']}</td>
+                <td class="tg-baqh">{results[2]['min']}</td>
+            </tr>
+            <tr>
+                <td class="tg-baqh">Deflection</td>
+                <td class="tg-baqh">{results[3]['max']}</td>
+                <td class="tg-baqh">{results[3]['min']}</td>
+            </tr>
+            </tbody>
+            </table>
+            """,
             to_html(fig = graph_2,full_html=False, include_plotlyjs='cdn'),
-            f"<br>Report generated at https://indeterminate-beam.herokuapp.com/ on {date} </br>"
+            f'Report generated at https://indeterminate-beam.herokuapp.com/ on {date} </br>'
         ]
+
+        content = "<br>".join(content)
 
         return dict(content=content, filename="Report.html")
 

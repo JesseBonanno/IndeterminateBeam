@@ -143,7 +143,7 @@ def draw_arrowhead(fig, angle, x_sup, length=5, xoffset=0, yoffset=0,
 
 
 def draw_arrow(fig, angle, force, x_sup, xoffset=0, yoffset=0, color='red',
-               line_width=2, arrowhead=5, arrowlength=30, row=None, col=None):
+               line_width=2, arrowhead=5, arrowlength=30, show_values=True,row=None, col=None):
     """Draw an anchored arrow on a plotly figure.
 
     Parameters
@@ -218,6 +218,36 @@ def draw_arrow(fig, angle, force, x_sup, xoffset=0, yoffset=0, color='red',
         line_width=line_width,
         row=row,
         col=col)
+    if show_values:
+        # determine start and end of arrow
+        x0 = xoffset + x_sup
+        y0 = yoffset
+        x1 = (x0 + int(sympify(-arrowlength* d * cos(radians(angle))).evalf(2)))*1.1
+        y1 = (y0 + int(sympify(-arrowlength * d * sin(radians(angle))).evalf(2)))*1.3
+        
+        # make so text doesnt intersect x axis
+        if abs(y1)<5:
+            if y1 >= 0:
+                y1=10
+            else:
+                y1=-10
+
+        annotation = dict(
+            xref="x", yref="y",
+            x=x0,
+            y=y0,
+            xshift=x1,
+            yshift=y1,
+            text=force,
+            font_color=color,
+            showarrow=False,
+            )
+
+        # Append shape to plot or subplot
+        if row and col:
+            fig.add_annotation(annotation, row=row, col=col)
+        else:
+            fig.add_annotation(annotation)
 
     return fig
 
@@ -330,7 +360,7 @@ def draw_support_rectangle(fig, x_sup, orientation="up", row=None, col=None):
     return fig
 
 
-def draw_moment(fig, x_sup, direction='clockwise', color='red', row=None,
+def draw_moment(fig, moment, x_sup, color='magenta', show_values=True, row=None,
                 col=None):
     """Draw a moment (torque) shape (circular arrow) on a plotly figure.
 
@@ -358,11 +388,12 @@ def draw_moment(fig, x_sup, direction='clockwise', color='red', row=None,
         arrow appended to it.
     """
     # Choose symbol based on direction given
-    if direction in ['clockwise', 'anti-clockwise']:
-        if direction == 'clockwise':
-            d = "⭮"
-        else:
-            d = "⭯"
+    if moment < 0:
+        d = "⭮"
+    elif moment > 0:
+        d = "⭯"
+    else:
+        return fig
 
     # Create dictionary for annotation object representing moment.
     annotation = dict(
@@ -371,7 +402,7 @@ def draw_moment(fig, x_sup, direction='clockwise', color='red', row=None,
         showarrow=False,
         yshift=0,
         font_size=26,
-        font_color='red',
+        font_color=color,
     )
 
     # Append shape to plot or subplot
@@ -380,10 +411,28 @@ def draw_moment(fig, x_sup, direction='clockwise', color='red', row=None,
     else:
         fig.add_annotation(annotation)
 
+    if show_values:
+
+        annotation = dict(
+            xref="x", yref="y",
+            x=x_sup,
+            y=0,
+            yshift=-20,
+            text=moment,
+            font_color=color,
+            showarrow=False,
+            )
+
+        # Append shape to plot or subplot
+        if row and col:
+            fig.add_annotation(annotation, row=row, col=col)
+        else:
+            fig.add_annotation(annotation)
+
     return fig
 
 
-def draw_force(fig, load, color='red', row=None, col=None):
+def draw_force(fig, load, row=None, col=None):
     """Draw a force (for load or reaction) on a plotly figure
 
     Parameters
@@ -413,16 +462,11 @@ def draw_force(fig, load, color='red', row=None, col=None):
     load_type = str(load).split('(')[0]
 
     if load_type == 'PointTorque':
-        if load[0] > 0:
-            direction = 'anti-clockwise'
-        else:
-            direction = 'clockwise'
-
+        moment, x_sup = load
         fig = draw_moment(
             fig,
-            load[1],
-            direction=direction,
-            color=color,
+            moment,
+            x_sup,
             row=row,
             col=col)
 
@@ -435,7 +479,6 @@ def draw_force(fig, load, color='red', row=None, col=None):
             angle,
             force,
             x_sup,
-            color=color,
             row=row,
             col=col)
 
@@ -448,7 +491,6 @@ def draw_force(fig, load, color='red', row=None, col=None):
             angle,
             force,
             x_sup,
-            color=color,
             row=row,
             col=col)
 
@@ -460,7 +502,6 @@ def draw_force(fig, load, color='red', row=None, col=None):
             angle,
             force,
             x_sup,
-            color=color,
             row=row,
             col=col)
 
@@ -502,24 +543,25 @@ def draw_force(fig, load, color='red', row=None, col=None):
         # draw arrow for left force and right force (if larger than 2% of
         # max load)
         angle = 90
-        if abs(y_vec[0] / largest) > 0.02:
+        if abs(y_vec[0]) > 0.02:
             fig = draw_arrow(
                 fig,
                 angle,
-                -y_vec[0],
+                -y_vec[0] * largest,
                 x_vec[0],
                 color='green',
-                arrowlength=50 * abs(y_vec[0]),
-                row=row, col=col)
+                arrowlength=30*abs(y_vec[0]),
+                row=row, 
+                col=col)
 
-        if abs(y_vec[-1] / largest) > 0.02:
+        if abs(y_vec[-1]) > 0.02:
             fig = draw_arrow(
                 fig,
                 angle,
-                -y_vec[-1],
+                -y_vec[-1]* largest,
                 x_vec[-1],
                 color='green',
-                arrowlength=50 * abs(y_vec[-1]),
+                arrowlength=30*abs(y_vec[-1]),
                 row=row,
                 col=col)
 
@@ -562,6 +604,7 @@ def draw_load_hoverlabel(fig, load, row=None, col=None):
         meta = [load[0], load[1]]  # load, position
 
         if load_type == 'PointTorque':
+            color = 'magenta'
             hovertemplate = 'x: %{meta[1]} m<br>Moment: %{meta[0]} kN.m'
             name = 'Point<br>Torque'
         elif load_type == 'PointLoad':
@@ -743,7 +786,7 @@ def draw_support_hoverlabel(fig, support, kx=0, ky=0, row=None, col=None):
     # Spring
     if kx or ky:
         name = "Spring"
-        color = 'orange'
+        color = 'magenta'
         meta = [kx, ky]
         hovertemplate = "x: %{x} m"
         if kx:
@@ -964,9 +1007,10 @@ def draw_support(fig, support, row=None, col=None):
         if fixed == [0, 0, 1]:
             fig = draw_moment(
                 fig,
+                moment = 1,
                 x_sup=support._position,
-                direction='anti-clockwise',
                 color='blue',
+                show_values=False,
                 row=row,
                 col=col)
 
