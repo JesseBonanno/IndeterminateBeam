@@ -115,12 +115,7 @@ If you install the package via `pip`, the listed dependencies should be installe
 The following are areas that can be implemented in future:
 - allow for segmental beam properties (E,I,A)
 - calculate axial deflections
-- allow for spring supports
-- better graphing (a more readable or interactive graph)
-- indication of support type in graph (currently all supports look like a pin support) 
-- GUI user interface
 - Latex or PDF output of calculations
-- More user input validation checks
 - More indeterminate beams in testing
 
 ## Contributing
