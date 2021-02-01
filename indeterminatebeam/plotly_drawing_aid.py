@@ -717,7 +717,7 @@ def draw_reaction_hoverlabel(fig, reactions, x_sup, row=None, col=None):
     x_, y_, m_ = reactions
 
     # Write hovertemplate depending on support restraints
-    hovertemplate = "Reactions"
+    hovertemplate = "Reactions<br>x coord: %{x}"
     if x_:
         hovertemplate += "<br>x: %{meta[0]} kN"
     if y_:

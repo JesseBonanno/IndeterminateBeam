@@ -234,7 +234,6 @@ class DistributedLoadV(namedtuple("DistributedLoadV", "expr, span")):
     >>> UDL = DistributedLoadV(10, (1,3))
     """
 
-
 class DistributedLoadH(namedtuple("DistributedLoadH", "expr, span")):
     """Distributed horizontal load, described by its functional form
     and application interval.
@@ -247,14 +246,17 @@ class DistributedLoadH(namedtuple("DistributedLoadH", "expr, span")):
         Requires quotation marks around expression.
     span: tuple of floats
         A tuple containing the starting and ending coordinate that
-        the function is applied to.
 
-        Examples
+    Examples
     --------
     # Linearly growing load for 0<x<2 m
-    >>> weight = DistributedLoadH("10*x+5", (0, 2))
+    >>> snow_load = DistributedLoadH("10*x+5", (0, 2))
+    # Linearly growing load starting at 5kN/m at 1m coordinate and
+    # ending at 15kn/m at 2m coordinate
+    >>> trapezoidal_load = DistributedLoadH("-5 + 10 * x", (1,2))
+    # Uniformly distributed load of 10 kn/m from 1m to 3m coordinate
+    >>> UDL = DistributedLoadH(10, (1,3))
     """
-
 
 class PointTorque(namedtuple("PointTorque", "torque, coord")):
     """Point clockwise torque, described by a tuple of floats:
@@ -336,6 +338,69 @@ def TrapezoidalLoad(force=(0, 0), span=(0, 0)):
         return DistributedLoadV(
             f"{a}*x+{b}", (start_coordinate, end_coordinate))
 
+
+
+def TrapezoidalLoadH(force=(0, 0), span=(0, 0)):
+    """Wrapper for the DistributedLoadH class, used to express a
+    trapezoidal load distribution.
+
+    Parameters
+    ------------
+        force : tuple of two floats
+            Describes the starting force value and ending force
+            value (kN/m)
+        span : tuple of two floats
+            Describes the starting coordinate value and ending
+            coordinate value (m)
+
+    Examples
+    --------
+    # Linearly growing load starting at 5kN/m ending at 15kn/m
+    >>> trapezoidal_load = TrapezoidalLoad((5,15), (1,2))
+    # Equivalent expression created using DistributedLoadV
+    >>> trapezoidal_load = DistributedLoadV("-5 + 10 * x", (1,2))
+    """
+
+    # Data validation
+    if len(force) != 2 or len(span) != 2:
+        raise TypeError(
+            "A tuple of length 2 is required for both the force \
+            and span arguments"
+        )
+
+    start_load, end_load = force
+    start_coordinate, end_coordinate = span
+
+    assert_number(start_load, "force[0] (The starting force)")
+    assert_number(end_load, "force[1] (The ending force)")
+
+    assert_positive_number(
+        start_coordinate,
+        "span[0] (The starting coordinate) "
+    )
+    assert_strictly_positive_number(end_coordinate, "span[1] (The ending coordinate)")
+
+    if start_coordinate >= end_coordinate:
+        raise ValueError(
+            "start coordinate should be less than end coordinate"
+        )
+    
+    # Assemble trapzoidal load as a DistributedLoadV load
+
+    # Case 1 - UDL i.e load is constant
+    if end_load == start_load:
+        return DistributedLoadH(
+            start_load,
+            (start_coordinate, end_coordinate)
+        )
+
+    # Case 2 - Load is not constant and has a non-zero slope
+    else:
+        a = (end_load - start_load) / (end_coordinate - start_coordinate)
+        b = start_load - start_coordinate * a
+
+        return DistributedLoadH(
+            f"{a}*x+{b}", (start_coordinate, end_coordinate))
 
 class Beam:
     """
@@ -462,10 +527,11 @@ class Beam:
                     PointLoadH,
                     PointLoadV,
                     PointTorque,
-                    DistributedLoadV
+                    DistributedLoadV,
+                    DistributedLoadH,
                 )
             ):
-                if isinstance(load, DistributedLoadV):
+                if isinstance(load, (DistributedLoadV,DistributedLoadH)):
                     left = min(load[1])
                     right = max(load[1])
                     assert_positive_number(left, "span left")
@@ -725,6 +791,10 @@ class Beam:
         # normal forces is same concept as shear forces only no
         # distributed for now.
         N_i = sum(
+            integrate(load, x)
+            for load in self._distributed_forces_x
+        ) \
+            + sum(
             self._effort_from_pointload(f)
             for f in self._point_loads_x()
         ) \
@@ -732,6 +802,26 @@ class Beam:
                 self._effort_from_pointload(PointLoadH(v[0], p))
                 for p, v in unknowns_x.items()
         )
+
+        Nv_EA = sum(
+                integrate(load, x, x)
+                for load in self._distributed_forces_x
+            ) \
+            + sum(
+                integrate(
+                    self._effort_from_pointload(f),
+                    x
+                )
+                for f in self._point_loads_x()
+            ) \
+            + sum(
+                integrate(
+                    self._effort_from_pointload(
+                        PointLoadH(v[0], p)),
+                        x
+                )
+                for p, v in unknowns_x.items()
+            )
 
         # shear forces, an internal force acting down would be considered
         # positive by adopted convention hence if the sum of forces on
@@ -845,30 +935,15 @@ class Beam:
 
         # the extension of the beam will be equal to the spring
         # displacement on right minus spring displacment on left
+        start_x = x_0[0]
         if len(x_0) > 1:
-            start = x_0[0]
             # dont consider the starting point? only want to look between
             # supports and not at cantilever sections i think
             for position in x_0[1:]:
                 equations_xx.append(
-                    (
-                        sum(
-                            integrate(
-                                self._effort_from_pointload(f),
-                                (x, x_0[0], position)
-                            )
-                            for f in self._point_loads_x()
-                        )
-                        + sum(
-                            integrate(
-                                self._effort_from_pointload(
-                                    PointLoadH(v[0], p)),
-                                (x, x_0[0], position))
-                            for p, v in unknowns_x.items()
-                        )
-                    )
+                    (Nv_EA.subs(x, position) - Nv_EA.subs(x, start_x))
                     * 10**3 / (self._E * self._A)
-                    + unknowns_x[start][0] / unknowns_x[start][1]
+                    + unknowns_x[start_x][0] / unknowns_x[start_x][1]
                     # represents elongation displacment on right
                     - unknowns_x[position][0] / unknowns_x[position][1]
                 )
@@ -889,6 +964,7 @@ class Beam:
             M_i = M_i.subs(var, ans)  # complete moment equation
             F_i = F_i.subs(var, ans)  # complete shear force equation
             N_i = N_i.subs(var, ans)  # complete normal force equation
+            Nv_EA = Nv_EA.subs(var,ans)
 
             # create self._reactions to allow for plotting of reaction
             # forces if wanted and for use with get_reaction method.
@@ -910,6 +986,16 @@ class Beam:
         # a positive moment indicates a negative deflection, i thought??
         self._deflection_equation = v_EI * 10 ** 12 / (self._E * self._I)
         self._normal_forces = N_i
+        # Nv_EI represents the beam elongation, to make displacement need to add initial
+        # Comparatively v_EI is already the beam displacement and has a constant in it
+        # (C2) that considers any intial displacement
+        if unknowns_x[start_x][1] == oo:
+            initial_displacement_x = 0
+        else:
+            initial_displacement_x = float(solutions_xx[0]  / unknowns_x[start_x][1])
+        # in meters
+        self._axial_deflection= Nv_EA * 10**3 / (self._E * self._A) \
+            + initial_displacement_x / 10 ** 3 
 
     # SECTION - QUERY VALUE
     def get_reaction(self, x_coord, direction=None):
@@ -1179,6 +1265,46 @@ class Beam:
         return self._get_query_value(
             x_coord,
             sym_func=self._deflection_equation,
+            return_max=return_max,
+            return_min=return_min,
+            return_absmax=return_absmax)
+
+    def get_axial_deflection(self, *x_coord, return_max=False, return_min=False,
+                       return_absmax=False):
+        """Find the axial deflection(s) on the beam object.
+
+        Parameters
+        ----------
+        x_coord: list
+            The x_coordinates on the beam to be substituted into the
+            equation. List returned (if bools all false)
+        return_max: bool
+            return max value of function if true
+        return_min: bool
+            return minx value of function if true
+        return_absmax: bool
+            return absolute max value of function if true
+
+        Returns
+        --------
+        int
+            Max, min or absmax value of the axial deflection function 
+            depending on which parameters are set.
+        list of ints
+            If x-coordinate(s) are specfied value of the deflection
+            function at x-coordinate(s).
+
+        Notes
+        -----
+        * Priority of query parameters is return_max, return_min,
+          return_absmax, x_coord (if more than 1 of the parameters are
+          specified).
+
+        """
+
+        return self._get_query_value(
+            x_coord,
+            sym_func=self._axial_deflection,
             return_max=return_max,
             return_min=return_min,
             return_absmax=return_absmax)
@@ -1710,6 +1836,55 @@ class Beam:
 
         return fig
 
+
+    def plot_axial_deflection(self, reverse_x=False, reverse_y=False, 
+                              fig=None, row=None, col=None):
+        """Returns a plot of the beam axial deflection as a function 
+        of the x-coordinate.
+
+        Parameters
+        ----------
+        reverse_x : bool, optional
+            reverse the x axes, by default False
+        reverse_y : bool, optional
+            reverse the y axes, by default False
+        fig : bool, optional
+            Figure to append subplot diagram too. If creating standalone
+            figure then None, by default None
+        row : int, optional
+            row number if subplot, by default None
+        col : int, optional
+            column number if subplot, by default None
+
+        Returns
+        -------
+        figure : `plotly.graph_objs._figure.Figure`
+            Returns a handle to a figure with the axial deflection diagram.
+        """
+
+        xlabel = 'Beam Length'
+        ylabel = 'Axial Deflection'
+        xunits = 'm'
+        yunits = 'mm'
+        title = "Axial Deflection Plot"
+        color = "blue"
+        fig = self.plot_analytical(
+            self._axial_deflection,
+            color,
+            title,
+            xlabel,
+            ylabel,
+            xunits,
+            yunits,
+            reverse_x,
+            reverse_y,
+            fig=fig,
+            row=row,
+            col=col
+        )
+
+        return fig
+
     def plot_analytical(self, sym_func, color="blue", title="", xlabel="",
                         ylabel="", xunits="", yunits="", reverse_x=False,
                         reverse_y=False, fig=None, row=None, col=None):
@@ -1917,19 +2092,21 @@ class Beam:
 
 
 if __name__ == "__main__":
-    beam = Beam(5)
 
-    a = Support(0, (1, 1, 1))
-    b = Support(5, (0, 1, 0))
-    beam.add_supports(a, b)
+    beam = Beam(0.5,A = (3.14*15**2/4),E=4000)
+    b = Support(0, kx = 100)
 
-    load_1 = PointLoad(5, 1, 90)
-    load_2 = PointTorque(2, 2)
-    load_3 = TrapezoidalLoad((0, 1), (0, 1))
-    beam.add_loads(load_1, load_2, load_3)
+    a = Support(0.5)
 
-    beam.add_query_points(1, 2, 3)
+    load_1 = PointLoadH(10, 0.5)
+    load_2 = PointLoadH(-30,0.3)
+
+    beam.add_supports(a,b)
+    beam.add_loads(load_1,load_2)
+
+
 
     beam.analyse()
-    fig = beam.plot_reaction_force()
-    fig.write_image("./results.pdf")
+    beam.plot_normal_force()
+    beam.plot_beam_external()
+    beam.plot_axial_deflection()
