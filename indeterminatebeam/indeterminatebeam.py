@@ -246,6 +246,9 @@ class DistributedLoadH(namedtuple("DistributedLoadH", "expr, span")):
         Requires quotation marks around expression.
     span: tuple of floats
         A tuple containing the starting and ending coordinate that
+         the function is applied to.
+
+    Note: Use case would be weight for a vertical beam.
 
     Examples
     --------
