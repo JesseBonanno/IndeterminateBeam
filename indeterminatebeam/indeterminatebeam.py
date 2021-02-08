@@ -1647,8 +1647,8 @@ class Beam:
 
         return fig
 
-    def plot_normal_force(self, reverse_x=False, reverse_y=False, fig=None,
-                          row=None, col=None):
+    def plot_normal_force(self, reverse_x=False, reverse_y=False, switch_axes=False,
+                          fig=None, row=None, col=None):
         """Returns a plot of the normal force as a function of the
         x-coordinate.
 
@@ -1658,6 +1658,8 @@ class Beam:
             reverse the x axes, by default False
         reverse_y : bool, optional
             reverse the y axes, by default False
+        switch_axes: bool, optional
+            switch the x and y axis, by default False
         fig : bool, optional
             Figure to append subplot diagram too. If creating standalone
             figure then None, by default None
@@ -1689,14 +1691,15 @@ class Beam:
             yunits,
             reverse_x,
             reverse_y,
+            switch_axes,
             fig=fig,
             row=row,
             col=col
         )
         return fig
 
-    def plot_shear_force(self, reverse_x=False, reverse_y=False, fig=None,
-                         row=None, col=None):
+    def plot_shear_force(self, reverse_x=False, reverse_y=False, switch_axes=False,
+                        fig=None, row=None, col=None):
         """Returns a plot of the shear force as a function of the
         x-coordinate.
 
@@ -1706,6 +1709,8 @@ class Beam:
             reverse the x axes, by default False
         reverse_y : bool, optional
             reverse the y axes, by default False
+        switch_axes: bool, optional
+            switch the x and y axis, by default False
         fig : bool, optional
             Figure to append subplot diagram too. If creating standalone
             figure then None, by default None
@@ -1737,6 +1742,7 @@ class Beam:
             yunits,
             reverse_x,
             reverse_y,
+            switch_axes,
             fig=fig,
             row=row,
             col=col
@@ -1744,8 +1750,8 @@ class Beam:
 
         return fig
 
-    def plot_bending_moment(self, reverse_x=False, reverse_y=False, fig=None,
-                            row=None, col=None):
+    def plot_bending_moment(self, reverse_x=False, reverse_y=False, switch_axes=False,
+                        fig=None, row=None, col=None):
         """Returns a plot of the bending moment as a function of the
         x-coordinate.
 
@@ -1755,6 +1761,8 @@ class Beam:
             reverse the x axes, by default False
         reverse_y : bool, optional
             reverse the y axes, by default False
+        switch_axes: bool, optional
+            switch the x and y axis, by default False
         fig : bool, optional
             Figure to append subplot diagram too. If creating standalone
             figure then None, by default None
@@ -1785,14 +1793,15 @@ class Beam:
             yunits,
             reverse_x,
             reverse_y,
+            switch_axes,
             fig=fig,
             row=row,
             col=col)
 
         return fig
 
-    def plot_deflection(self, reverse_x=False, reverse_y=False, fig=None,
-                        row=None, col=None):
+    def plot_deflection(self, reverse_x=False, reverse_y=False, switch_axes=False,
+                        fig=None, row=None, col=None):
         """Returns a plot of the beam deflection as a function of the
         x-coordinate.
 
@@ -1802,6 +1811,8 @@ class Beam:
             reverse the x axes, by default False
         reverse_y : bool, optional
             reverse the y axes, by default False
+        switch_axes: bool, optional
+            switch the x and y axis, by default False
         fig : bool, optional
             Figure to append subplot diagram too. If creating standalone
             figure then None, by default None
@@ -1832,6 +1843,7 @@ class Beam:
             yunits,
             reverse_x,
             reverse_y,
+            switch_axes,
             fig=fig,
             row=row,
             col=col
@@ -1840,7 +1852,7 @@ class Beam:
         return fig
 
 
-    def plot_axial_deflection(self, reverse_x=False, reverse_y=False, 
+    def plot_axial_deflection(self, reverse_x=False, reverse_y=False, switch_axes=False,
                               fig=None, row=None, col=None):
         """Returns a plot of the beam axial deflection as a function 
         of the x-coordinate.
@@ -1851,6 +1863,8 @@ class Beam:
             reverse the x axes, by default False
         reverse_y : bool, optional
             reverse the y axes, by default False
+        switch_axes: bool, optional
+            switch the x and y axis, by default False
         fig : bool, optional
             Figure to append subplot diagram too. If creating standalone
             figure then None, by default None
@@ -1881,6 +1895,7 @@ class Beam:
             yunits,
             reverse_x,
             reverse_y,
+            switch_axes,
             fig=fig,
             row=row,
             col=col
@@ -1890,7 +1905,7 @@ class Beam:
 
     def plot_analytical(self, sym_func, color="blue", title="", xlabel="",
                         ylabel="", xunits="", yunits="", reverse_x=False,
-                        reverse_y=False, fig=None, row=None, col=None):
+                        reverse_y=False, switch_axes = False, fig=None, row=None, col=None):
         """
         Auxiliary function for plotting a sympy.Piecewise analytical
         function.
@@ -1916,6 +1931,8 @@ class Beam:
             reverse the x axes, by default False
         reverse_y : bool, optional
             reverse the y axes, by default False
+        switch_axes: bool, optional
+            switch the x and y axis, by default False
         fig : bool, optional
             Figure to append subplot diagram too. If creating standalone
             figure then None, by default None
@@ -1938,12 +1955,25 @@ class Beam:
         y_vec = np.array([y_lam(t) for t in x_vec])
         # np.array for y values created
         # np.array for y values created
+        fill = 'tozeroy'
+
+        if switch_axes:
+            x_vec, y_vec = y_vec, x_vec
+            xlabel, ylabel = ylabel, xlabel
+            xunits, yunits = yunits, xunits
+            fill = 'tozerox'
+
+            # will also need to update the annotation furtehr down
+            # can also try add units to hoverlabels using meta?
+
+
+
         data = go.Scatter(
             x=x_vec.tolist(),
             y=y_vec.tolist(),
             mode='lines',
             line=dict(color=color, width=1),
-            fill='tozeroy',
+            fill=fill,
             name=ylabel,
             hovertemplate="%{x:.3f} <br>%{y:.3f} "
         )
@@ -1979,16 +2009,29 @@ class Beam:
             else:
                 ay = -40
 
-            annotation = dict(
-                x=q_val, y=q_res,
-                text=f"{str(q_val)}<br>{str(q_res)}",
-                showarrow=True,
-                arrowhead=1,
-                xref='x',
-                yref='y',
-                ax=0,
-                ay=ay
-            )
+            if switch_axes:
+
+                annotation = dict(
+                    x=q_res, y=q_val,
+                    text=f"{str(q_val)}<br>{str(q_res)}",
+                    showarrow=True,
+                    arrowhead=1,
+                    xref='x',
+                    yref='y',
+                    ax=ay,
+                    ay=0,
+                )
+            else:
+                annotation = dict(
+                    x=q_val, y=q_res,
+                    text=f"{str(q_val)}<br>{str(q_res)}",
+                    showarrow=True,
+                    arrowhead=1,
+                    xref='x',
+                    yref='y',
+                    ax=0,
+                    ay=ay
+                )
             if row and col:
                 fig.add_annotation(annotation, row=row, col=col)
             else:

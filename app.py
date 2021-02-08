@@ -15,7 +15,6 @@ import time
 from indeterminatebeam.version import __version__
 from dash_extensions import Download
 from plotly.io import to_html
-from dash_extensions.snippets import send_file
 
 # the style arguments for the sidebar.
 SIDEBAR_STYLE = {
@@ -232,9 +231,11 @@ support_content = dbc.Card(
             support_table,
             html.Br(),
             html.Button('Add Support', id='support-rows-button', n_clicks=0),
-            html.Br(),
             dbc.Collapse(
-                dbc.Card(dbc.CardBody(support_instructions)),
+                [
+                    html.Br(),
+                    dbc.Card(dbc.CardBody(support_instructions))
+                ],
                 id="support_instructions",
             ),
         ]
@@ -282,6 +283,18 @@ point_load_table = dash_table.DataTable(
     row_deletable=True,
 )
 
+point_load_instructions = dcc.Markdown('''
+
+            Instructions:
+
+            1. Specify the coodinate location of the point load.
+            2. Specify the force applied in kN.
+            3. Specify the load angle where:
+               * A positive force with an angle of 0 points horizontally to the right.
+               * A positive force with an angle of 90 points vertically upwards.
+               
+            ''')
+
 point_load_content = dbc.Card(
     dbc.CardBody(
         [
@@ -291,6 +304,13 @@ point_load_content = dbc.Card(
                 'Add Point Load',
                 id='point-load-rows-button',
                 n_clicks=0),
+            dbc.Collapse(
+                [
+                    html.Br(),
+                    dbc.Card(dbc.CardBody(point_load_instructions))
+                ],
+                id="point_load_instructions",
+            ),
         ]
     ),
     className="mt-3",
@@ -330,6 +350,17 @@ point_torque_table = dash_table.DataTable(
     row_deletable=True,
 )
 
+point_torque_instructions = dcc.Markdown('''
+
+            Instructions:
+
+            1. Specify the coodinate location of the point torque.
+            2. Specify the moment applied in kN.m.
+
+            Note: A positive moment indicates an anti-clockwise moment direction.
+
+            ''')
+
 point_torque_content = dbc.Card(
     dbc.CardBody(
         [
@@ -339,6 +370,13 @@ point_torque_content = dbc.Card(
                 'Add Point Torque',
                 id='point-torque-rows-button',
                 n_clicks=0),
+            dbc.Collapse(
+                [
+                    html.Br(),
+                    dbc.Card(dbc.CardBody(point_torque_instructions))
+                ],
+                id="point_torque_instructions",
+            ),
         ]
     ),
     className="mt-3",
@@ -390,6 +428,17 @@ distributed_load_table = dash_table.DataTable(
     row_deletable=True,
 )
 
+distributed_load_instructions = dcc.Markdown('''
+
+            Instructions:
+
+            1. Specify the start and end locations of the distributed load.
+            2. Specify the start and end loads in kN/m.
+
+            Note: A positive load acts in an upwards direction.
+
+            ''')
+
 distributed_load_content = dbc.Card(
     dbc.CardBody(
         [
@@ -399,6 +448,14 @@ distributed_load_content = dbc.Card(
                 'Add Distributed Load',
                 id='distributed-load-rows-button',
                 n_clicks=0),
+            html.Br(),
+            dbc.Collapse(
+                [
+                    html.Br(),
+                    dbc.Card(dbc.CardBody(distributed_load_instructions))
+                ],
+                id="distributed_load_instructions",
+            ),
 
         ]
     ),
@@ -427,12 +484,27 @@ query_table = dash_table.DataTable(
     row_deletable=True
 )
 
+query_instructions = dcc.Markdown('''
+
+            Instructions:
+
+            1. Specify a point of interest to have values annotated on graph.
+
+            ''')
+
 query_content = dbc.Card(
     dbc.CardBody(
         [
             query_table,
             html.Br(),
             html.Button('Add Query', id='query-rows-button', n_clicks=0),
+            dbc.Collapse(
+                [
+                    html.Br(),
+                    dbc.Card(dbc.CardBody(query_instructions))
+                ],
+                id="query_instructions",
+            ),
 
         ]
     ),
@@ -789,8 +861,12 @@ def add_row6(n_clicks, rows, columns):
 
 
 @app.callback(
-    [Output("support_instructions", "is_open"),
-    Output("beam_instructions","is_open")],
+    [Output("beam_instructions", "is_open"),
+    Output("support_instructions","is_open"),
+    Output("point_load_instructions","is_open"),
+    Output("point_torque_instructions","is_open"),
+    Output("distributed_load_instructions","is_open"),
+    Output("query_instructions","is_open")],
     Input("instruction-button", "n_clicks"),
     State("beam_instructions", "is_open"),
 )
@@ -799,7 +875,7 @@ def toggle_collapse(n, is_open):
         a = not is_open
     else:
         a = is_open
-    return a, a
+    return a, a, a, a, a, a
 
 @app.callback(
     Output("report", "data"),
@@ -835,22 +911,22 @@ def report(n, graph_1,graph_2,results):
             </thead>
             <tbody>
             <tr>
-                <td class="tg-baqh">Normal Force</td>
+                <td class="tg-baqh">Normal Force (kN)</td>
                 <td class="tg-baqh">{results[0]['max']}</td>
                 <td class="tg-baqh">{results[0]['min']}</td>
             </tr>
             <tr>
-                <td class="tg-baqh">Shear Force</td>
+                <td class="tg-baqh">Shear Force (kN)</td>
                 <td class="tg-baqh">{results[1]['max']}</td>
                 <td class="tg-baqh">{results[1]['min']}</td>
             </tr>
             <tr>
-                <td class="tg-baqh">Bending Moment</td>
+                <td class="tg-baqh">Bending Moment (kN.m)</td>
                 <td class="tg-baqh">{results[2]['max']}</td>
                 <td class="tg-baqh">{results[2]['min']}</td>
             </tr>
             <tr>
-                <td class="tg-baqh">Deflection</td>
+                <td class="tg-baqh">Deflection (mm)</td>
                 <td class="tg-baqh">{results[3]['max']}</td>
                 <td class="tg-baqh">{results[3]['min']}</td>
             </tr>
