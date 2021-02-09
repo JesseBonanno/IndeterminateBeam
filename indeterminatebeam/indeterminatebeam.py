@@ -166,7 +166,6 @@ class PointLoad(namedtuple("PointLoad", "force, coord, angle")):
     PointLoad(force=-30, coord=3, angle=0)
     """
 
-
 class PointLoadV(namedtuple("PointLoadV", "force, coord")):
     """Vertical point load described by a tuple of floats:
     (force, coord).
@@ -185,7 +184,6 @@ class PointLoadV(namedtuple("PointLoadV", "force, coord")):
     >>> external_force
     PointLoadV(force=-30, coord=3)
     """
-
 
 class PointLoadH(namedtuple("PointLoadH", "force, coord")):
     """Horizontal point load described by a tuple of floats:
@@ -234,7 +232,6 @@ class DistributedLoad(namedtuple("DistributedLoadV", "expr, span, angle")):
     # Linearly growing load for 0<x<2 m
     >>> snow_load = DistributedLoad("10*x+5", (0, 2),90)
     """
-
 
 class DistributedLoadV(namedtuple("DistributedLoadV", "expr, span")):
     """Distributed vertical load, described by its functional form
@@ -289,25 +286,75 @@ class DistributedLoadH(namedtuple("DistributedLoadH", "expr, span")):
     >>> UDL = DistributedLoadH(10, (1,3))
     """
 
-class PointTorque(namedtuple("PointTorque", "torque, coord")):
-    """Point clockwise torque, described by a tuple of floats:
-    (torque, coord).
+def TrapezoidalLoad(force=(0, 0), span=(0, 0), angle=0):
+    """Wrapper for the DistributedLoad class, used to express a
+    trapezoidal load distribution.
 
-    Parameters:
-    -----------
-    torque: float
-        Torque in kN.m
-    coord: float
-        x coordinate of torque on beam
+    Parameters
+    ------------
+        force : tuple of two floats
+            Describes the starting force value and ending force
+            value (kN/m)
+        span : tuple of two floats
+            Describes the starting coordinate value and ending
+            coordinate value (m)
+        angle: float
+            angle of point load where:
+            - 0 degrees is purely horizontal +ve
+            - 90 degrees is purely vertical +ve
+            - 180 degrees is purely horizontal -ve of force sign specified.
 
     Examples
     --------
-    # 30 kN·m (clockwise) torque at x=4 m
-    >>> motor_torque = PointTorque(30, 4)
+    # Linearly growing load starting at 5kN/m ending at 15kn/m
+    >>> trapezoidal_load = TrapezoidalLoad((5,15), (1,2), 90)
+    # Equivalent expression created using DistributedLoad
+    >>> trapezoidal_load = DistributedLoad("-5 + 10 * x", (1,2),90)
     """
 
+    # Data validation
+    if len(force) != 2 or len(span) != 2:
+        raise TypeError(
+            "A tuple of length 2 is required for both the force \
+            and span arguments"
+        )
 
-def TrapezoidalLoad(force=(0, 0), span=(0, 0)):
+    start_load, end_load = force
+    start_coordinate, end_coordinate = span
+
+    assert_number(start_load, "force[0] (The starting force)")
+    assert_number(end_load, "force[1] (The ending force)")
+
+    assert_positive_number(
+        start_coordinate,
+        "span[0] (The starting coordinate) "
+    )
+    assert_strictly_positive_number(end_coordinate, "span[1] (The ending coordinate)")
+
+    if start_coordinate >= end_coordinate:
+        raise ValueError(
+            "start coordinate should be less than end coordinate"
+        )
+    
+    # Assemble trapzoidal load as a DistributedLoadV load
+
+    # Case 1 - UDL i.e load is constant
+    if end_load == start_load:
+        return DistributedLoad(
+            start_load,
+            (start_coordinate, end_coordinate),
+            angle
+        )
+
+    # Case 2 - Load is not constant and has a non-zero slope
+    else:
+        a = (end_load - start_load) / (end_coordinate - start_coordinate)
+        b = start_load - start_coordinate * a
+
+        return DistributedLoadH(
+            f"{a}*x+{b}", (start_coordinate, end_coordinate), angle)
+
+def TrapezoidalLoadV(force=(0, 0), span=(0, 0)):
     """Wrapper for the DistributedLoadV class, used to express a
     trapezoidal load distribution.
 
@@ -323,7 +370,7 @@ def TrapezoidalLoad(force=(0, 0), span=(0, 0)):
     Examples
     --------
     # Linearly growing load starting at 5kN/m ending at 15kn/m
-    >>> trapezoidal_load = TrapezoidalLoad((5,15), (1,2))
+    >>> trapezoidal_load = TrapezoidalLoadV((5,15), (1,2))
     # Equivalent expression created using DistributedLoadV
     >>> trapezoidal_load = DistributedLoadV("-5 + 10 * x", (1,2))
     """
@@ -368,8 +415,6 @@ def TrapezoidalLoad(force=(0, 0), span=(0, 0)):
 
         return DistributedLoadV(
             f"{a}*x+{b}", (start_coordinate, end_coordinate))
-
-
 
 def TrapezoidalLoadH(force=(0, 0), span=(0, 0)):
     """Wrapper for the DistributedLoadH class, used to express a
@@ -387,9 +432,9 @@ def TrapezoidalLoadH(force=(0, 0), span=(0, 0)):
     Examples
     --------
     # Linearly growing load starting at 5kN/m ending at 15kn/m
-    >>> trapezoidal_load = TrapezoidalLoad((5,15), (1,2))
-    # Equivalent expression created using DistributedLoadV
-    >>> trapezoidal_load = DistributedLoadV("-5 + 10 * x", (1,2))
+    >>> trapezoidal_load = TrapezoidalLoadH((5,15), (1,2))
+    # Equivalent expression created using DistributedLoadH
+    >>> trapezoidal_load = DistributedLoadH("-5 + 10 * x", (1,2))
     """
 
     # Data validation
@@ -432,6 +477,23 @@ def TrapezoidalLoadH(force=(0, 0), span=(0, 0)):
 
         return DistributedLoadH(
             f"{a}*x+{b}", (start_coordinate, end_coordinate))
+
+class PointTorque(namedtuple("PointTorque", "torque, coord")):
+    """Point clockwise torque, described by a tuple of floats:
+    (torque, coord).
+
+    Parameters:
+    -----------
+    torque: float
+        Torque in kN.m
+    coord: float
+        x coordinate of torque on beam
+
+    Examples
+    --------
+    # 30 kN·m (clockwise) torque at x=4 m
+    >>> motor_torque = PointTorque(30, 4)
+    """
 
 class Beam:
     """

@@ -8,7 +8,7 @@ from dash.dependencies import Input, Output, State
 import dash_table
 from dash_table.Format import Format, Scheme, Sign, Symbol
 from indeterminatebeam.indeterminatebeam import (
-    Beam, Support, PointLoad, PointTorque, DistributedLoadV, TrapezoidalLoad
+    Beam, Support, PointLoad, PointTorque, DistributedLoadV, TrapezoidalLoadV
 )
 from datetime import datetime
 import time
@@ -750,7 +750,7 @@ def analyse_beam(click, beams, point_loads, point_torques, querys,
             for row in distributed_loads:
                 if abs(float(row['Start x_coordinate (m)'])) > 0 or \
                         abs(float(row['End x_coordinate (m)'])) > 0:
-                    beam.add_loads(TrapezoidalLoad(
+                    beam.add_loads(TrapezoidalLoadV(
                         force=(
                             float(row['Start Load (kN/m)']),
                             float(row['End Load (kN/m)'])

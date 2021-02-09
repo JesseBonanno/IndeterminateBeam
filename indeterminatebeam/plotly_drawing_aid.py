@@ -609,16 +609,16 @@ def draw_load_hoverlabel(fig, load, row=None, col=None):
             name = 'Point<br>Torque'
         elif load_type == 'PointLoad':
             meta.append(load[2])
-            hovertemplate = 'x: %{meta[1]} m<br>Force: %{meta[0]} \
-                kN<br>Angle: %{meta[2]} deg'
+            hovertemplate = 'x: %{meta[1]} m<br>Force: %{meta[0]} kN\
+                <br>Angle: %{meta[2]} deg'
             name = 'Point<br>Load'
         elif load_type == 'PointLoadV':
-            hovertemplate = 'x: %{meta[1]} m<br>Force: %{meta[0]} \
-                kN<br>Direction: Vertical'
+            hovertemplate = 'x: %{meta[1]} m<br>Force: %{meta[0]} kN\
+                <br>Direction: Vertical'
             name = 'Point<br>LoadV'
         else:
-            hovertemplate = 'x: %{meta[1]} m<br>Force: %{meta[0]} \
-                kN<br>Angle: Horizontal'
+            hovertemplate = 'x: %{meta[1]} m<br>Force: %{meta[0]} kN\
+                <br>Angle: Horizontal'
             name = 'Point<br>LoadH'
 
         # Define hoverlabel as a marker with 0 opacity and a hovertemplate that
@@ -665,7 +665,7 @@ def draw_load_hoverlabel(fig, load, row=None, col=None):
         y_sup = 1
 
         meta = [(x0, round(y_lam(x0),3), angle), (x1, round(y_lam(x1),3), angle)]
-        hovertemplate = 'x: %{meta[0]} m<br>Force: %{meta[1]} kN/m<br>Angle: %{meta[2]}'
+        hovertemplate = 'x: %{meta[0]} m<br>Force: %{meta[1]} kN/m<br>Angle: %{meta[2]} deg'
 
         for x_,y_,a_ in meta:
             trace = go.Scatter(
@@ -715,7 +715,7 @@ def draw_reaction_hoverlabel(fig, reactions, x_sup, row=None, col=None):
     x_, y_, m_ = reactions
 
     # Write hovertemplate depending on support restraints
-    hovertemplate = "Reactions<br>x coord: %{x}"
+    hovertemplate = "Reactions<br>x coord: %{x} m"
     if x_:
         hovertemplate += "<br>x: %{meta[0]} kN"
     if y_:
