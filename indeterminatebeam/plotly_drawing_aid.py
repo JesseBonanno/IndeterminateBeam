@@ -506,17 +506,27 @@ def draw_force(fig, load, row=None, col=None):
             row=row,
             col=col)
 
-    elif load_type == 'DistributedLoadV':
+    elif load_type in ['DistributedLoadV' ,'DistributedLoadH', 'DistributedLoad']:
+        if load_type == 'DistributedLoadV':
+            color = 'purple'
+            expr, interval = load
+            angle = 90
+        elif load_type == 'DistributedLoadH':
+            color = 'darkgreen'
+            expr, interval = load
+            angle = 0
+        else:
+            color = 'maroon'
+            expr, interval, angle = load
         # need to know sign for each side.
         # draw each function normalised to 1. ie the max is always 1.
         # evaluate force at left and force at right to plot
-        expr, interval = load
         x0, x1 = interval
         expr = sympify(expr)
         # numpy array for x positions closely spaced (allow for graphing)
         x_vec = np.linspace(x0, x1, int(min((x1 - x0) * 100 + 1, 1e4)))
         y_lam = lambdify(x, expr, "numpy")
-        y_vec = np.array([y_lam(t) for t in x_vec])
+        y_vec = np.array([round(y_lam(t),3) for t in x_vec])
 
         largest = abs(max(y_vec, key=abs))
         # normalise  , use -1 to flip direction so matches arrow direction
@@ -528,10 +538,10 @@ def draw_force(fig, load, row=None, col=None):
             y=y_vec.tolist(),
             mode='lines',
             line=dict(
-                color='darkgreen',
+                color=color,
                 width=1),
             fill='tozeroy',
-            name='DistributedLoadV',
+            name=load_type,
             hovertemplate="",
             hoverinfo="skip")
 
@@ -543,28 +553,17 @@ def draw_force(fig, load, row=None, col=None):
 
         # draw arrow for left force and right force (if larger than 2% of
         # max load)
-        angle = 90
-        if abs(y_vec[0]) > 0.02:
-            fig = draw_arrow(
-                fig,
-                angle,
-                -y_vec[0] * largest,
-                x_vec[0],
-                color='green',
-                arrowlength=30*abs(y_vec[0]),
-                row=row, 
-                col=col)
-
-        if abs(y_vec[-1]) > 0.02:
-            fig = draw_arrow(
-                fig,
-                angle,
-                -y_vec[-1]* largest,
-                x_vec[-1],
-                color='green',
-                arrowlength=30*abs(y_vec[-1]),
-                row=row,
-                col=col)
+        for a in [0,-1]:
+            if abs(y_vec[a]) > 0.02:
+                fig = draw_arrow(
+                    fig,
+                    angle,
+                    -y_vec[a] * largest,
+                    x_vec[a],
+                    color=color,
+                    arrowlength=30*abs(y_vec[a]),
+                    row=row, 
+                    col=col)
 
     return fig
 
@@ -644,7 +643,18 @@ def draw_load_hoverlabel(fig, load, row=None, col=None):
     # Else is distributed load type, hoverlabel needed for arrow at each side
     # of function
     else:
-        expr, interval = load
+        if load_type == 'DistributedLoadV':
+            color = 'purple'
+            expr, interval = load
+            angle = 90
+        elif load_type == 'DistributedLoadH':
+            color = 'darkgreen'
+            expr, interval = load
+            angle = 0
+        else:
+            color = 'maroon'
+            expr, interval, angle = load
+
         x0, x1 = interval
         expr = sympify(expr)
         # numpy array for x positions closely spaced (allow for graphing)
@@ -652,39 +662,27 @@ def draw_load_hoverlabel(fig, load, row=None, col=None):
         y_lam = lambdify(x, expr, "numpy")
 
         name = 'Distributed<br>Load'
-        color = 'green'
         y_sup = 1
 
-        meta = [x0, x1, y_lam(x0), y_lam(x1)]
+        meta = [(x0, round(y_lam(x0),3), angle), (x1, round(y_lam(x1),3), angle)]
+        hovertemplate = 'x: %{meta[0]} m<br>Force: %{meta[1]} kN/m<br>Angle: %{meta[2]}'
 
-        trace_1 = go.Scatter(
-            x=[x0], y=[0],
-            showlegend=False, mode="markers",
-            name=name,
-            meta=meta,
-            marker=dict(symbol="triangle-up", size=10, color=color),
-            hovertemplate='x: %{meta[0]} m<br>Force: %{meta[2]} kN/m',
-            hoverinfo="skip",
-            opacity=0
-        )
+        for x_,y_,a_ in meta:
+            trace = go.Scatter(
+                x=[x_], y=[0],
+                showlegend=False, mode="markers",
+                name=name,
+                meta=[x_,y_,a_],
+                marker=dict(symbol="triangle-up", size=10, color=color),
+                hovertemplate=hovertemplate,
+                hoverinfo="skip",
+                opacity=0
+            )
 
-        trace_2 = go.Scatter(
-            x=[x1], y=[0],
-            showlegend=False, mode="markers",
-            name=name,
-            meta=meta,
-            marker=dict(symbol="triangle-up", size=10, color=color),
-            hovertemplate='x: %{meta[1]} m<br>Force: %{meta[3]} kN/m',
-            hoverinfo="skip",
-            opacity=0
-        )
-
-        if row and col:
-            fig.add_trace(trace_1, row=row, col=col)
-            fig.add_trace(trace_2, row=row, col=col)
-        else:
-            fig.add_trace(trace_1)
-            fig.add_trace(trace_2)
+            if row and col:
+                fig.add_trace(trace, row=row, col=col)
+            else:
+                fig.add_trace(trace)
 
     return fig
 

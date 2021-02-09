@@ -149,8 +149,8 @@ class PointLoad(namedtuple("PointLoad", "force, coord, angle")):
         Force in kN
     coord: float
         x coordinate of load on beam
-    angle: float (between 0 and 180)
-        angle of point load in range 0 to 180 where:
+    angle: float
+        angle of point load where:
         - 0 degrees is purely horizontal +ve
         - 90 degrees is purely vertical +ve
         - 180 degrees is purely horizontal -ve of force sign specified.
@@ -205,6 +205,34 @@ class PointLoadH(namedtuple("PointLoadH", "force, coord")):
     >>> external_force = PointLoadH(10, 9)
     >>> external_force
     PointLoadH(force=10, coord=9)
+    """
+
+class DistributedLoad(namedtuple("DistributedLoadV", "expr, span, angle")):
+    """Distributed load, described by its functional form, application 
+    interval and the angle of the load relative to the beam.
+
+    Parameters:
+    -----------
+    expr: sympy expression
+        Sympy expression of the distributed load function expressed
+        using variable x which represents the beam x-coordinate.
+        Requires quotation marks around expression.
+    span: tuple of floats
+        A tuple containing the starting and ending coordinate that
+         the function is applied to.
+    angle: float
+        angle of point load where:
+        - 0 degrees is purely horizontal +ve
+        - 90 degrees is purely vertical +ve
+        - 180 degrees is purely horizontal -ve of force sign specified.
+
+
+
+
+    Examples
+    --------
+    # Linearly growing load for 0<x<2 m
+    >>> snow_load = DistributedLoad("10*x+5", (0, 2),90)
     """
 
 
@@ -532,9 +560,10 @@ class Beam:
                     PointTorque,
                     DistributedLoadV,
                     DistributedLoadH,
+                    DistributedLoad,
                 )
             ):
-                if isinstance(load, (DistributedLoadV,DistributedLoadH)):
+                if isinstance(load, (DistributedLoadV,DistributedLoadH,DistributedLoad)):
                     left = min(load[1])
                     right = max(load[1])
                     assert_positive_number(left, "span left")
@@ -2116,11 +2145,25 @@ class Beam:
         for f in self._loads:
             if isinstance(f, DistributedLoadH):
                 yield f
+            elif isinstance(f, DistributedLoad):
+                force, position, angle = f
+
+                force = sympify(force)
+                force_x = force * cos(radians(angle)).evalf(10)
+
+                yield DistributedLoadH(force_x, position)
 
     def _distributed_loads_y(self):
         for f in self._loads:
             if isinstance(f, DistributedLoadV):
                 yield f
+            elif isinstance(f, DistributedLoad):
+                force, position, angle = f
+
+                force = sympify(force)
+                force_y = force * sin(radians(angle)).evalf(10)
+
+                yield DistributedLoadV(force_y, position)
 
     def _point_torques(self):
         for f in self._loads:
@@ -2139,12 +2182,12 @@ class Beam:
 
 if __name__ == "__main__":
 
-    beam = Beam(0.5,A = (3.14*15**2/4),E=4000)
+    beam = Beam(2,A = (3.14*15**2/4),E=4000)
     b = Support(0, kx = 100)
 
     a = Support(0.5)
 
-    load_1 = PointLoadH(10, 0.5)
+    load_1 = DistributedLoad("10 * x",(0,1), 90)
     load_2 = PointLoadH(-30,0.3)
 
     beam.add_supports(a,b)
@@ -2153,6 +2196,7 @@ if __name__ == "__main__":
 
 
     beam.analyse()
+    beam.plot_beam_diagram()
     beam.plot_normal_force()
     beam.plot_beam_external()
     beam.plot_axial_deflection()
