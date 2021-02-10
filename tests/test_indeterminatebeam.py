@@ -1,7 +1,21 @@
 import sys, os
 sys.path.insert(0, os.path.abspath('../'))
 
-from indeterminatebeam.indeterminatebeam import Support, Beam, PointLoad, PointTorque, DistributedLoadV, PointLoadH, PointLoadV, TrapezoidalLoad,oo
+from indeterminatebeam.indeterminatebeam import (
+    Support, 
+    Beam, 
+    PointTorque,
+    PointLoad,
+    PointLoadV, 
+    PointLoadH,
+    DistributedLoad, 
+    DistributedLoadV, 
+    DistributedLoadH,
+    TrapezoidalLoad,
+    TrapezoidalLoadV,
+    TrapezoidalLoadH,
+    oo
+)
 import unittest
 
 
@@ -122,10 +136,15 @@ class BeamTestCase(unittest.TestCase):
         b = PointLoadV(-15,1)
         c = PointLoadH(-15,1)
         d = PointTorque(-15,1)
-        e = DistributedLoadV(5,(0,1))
-        f = TrapezoidalLoad((0,1),(0,1))
+        e = DistributedLoad(5,(0,1),45)
+        f = DistributedLoadV(5,(0,1))
+        g = DistributedLoadH(5,(0,1))
+        h = TrapezoidalLoad((0,1),(0,1),45)
+        i = TrapezoidalLoadV((0,1),(0,1))
+        j = TrapezoidalLoadH((0,1),(0,1))
 
-        load_beam.add_loads(a,b,c,d,e)
+        load_beam.add_loads(a,b,c,d,e,f,g,h,i,j)
+        load_beam.remove_loads(f,g,h,i,j)
         load_beam.remove_loads(a)   
         load_beam.remove_loads(b,c) 
 
