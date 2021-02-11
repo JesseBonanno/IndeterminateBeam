@@ -14,15 +14,16 @@ Example
 """
 
 from collections import namedtuple
+from copy import deepcopy
 import numpy as np
 import os
 from sympy import (integrate, lambdify, Piecewise, sympify, symbols, 
                    linsolve, sin, cos, oo)
 from sympy.abc import x
 from math import radians
-from indeterminatebeam.data_validation import (assert_number, assert_positive_number,
+from data_validation import (assert_number, assert_positive_number,
                              assert_strictly_positive_number)
-from indeterminatebeam.plotly_drawing_aid import (
+from plotly_drawing_aid import (
     draw_line, draw_arrowhead, draw_arrow, draw_support_triangle,
     draw_support_rectangle, draw_moment, draw_force, draw_load_hoverlabel,
     draw_reaction_hoverlabel, draw_support_hoverlabel, draw_support_rollers,
@@ -1557,7 +1558,8 @@ class Beam:
 
         return fig
 
-    def plot_beam_diagram(self, fig=None, row=None, col=None):
+    def plot_beam_diagram(self, reverse_x=False, reverse_y=False, switch_axes=False,
+                            fig=None, row=None, col=None):
         """Returns a schematic of the beam and all the loads applied on
         it
 
@@ -1583,9 +1585,29 @@ class Beam:
         # hoverinfo is skip to not show any default values, hover
         # template is used to show only the x value and to not worry
         # about the y value
+
+        # Dont worry about supports because wont need for retaining wall, just rotate for forces.
+        # That means rotate for reactions and all other forces,
+        # point moments dont matter
+        # only really arrows that will change i think.
+
+        # for reverse x: 
+        # add angle mod 90 * 2 to x arrows, y the same
+        # for reverse y 
+        # add 180 to y arrows, x the same
+
+        # reverse x and y shouldnt need actual drawing change.
+        # could affect switch axes though
+        x_vec=[self._x0, self._x1]
+        y_vec=[0, 0]
+
+        if switch_axes:
+            x_vec, y_vec = y_vec, x_vec
+
+
         data = go.Scatter(
-            x=[self._x0, self._x1],
-            y=[0, 0],
+            x=x_vec,
+            y=y_vec,
             mode='lines',
             name="Beam_",
             line=dict(color='purple', width=2),
@@ -1595,9 +1617,13 @@ class Beam:
 
         if fig and row and col:
             fig.add_trace(data, row=row, col=col)
-            fig.update_yaxes(visible=False, range=[-3, 3], fixedrange=True,row=row,col=col)
+            fig.update_yaxes(autorange="reversed", row=row, col=col) if reverse_y else None
+            fig.update_xaxes(autorange="reversed", row=row, col=col) if reverse_x else None
         else:
             fig = go.Figure(data=data)
+            fig.update_yaxes(autorange="reversed") if reverse_y else None
+            fig.update_xaxes(autorange="reversed") if reverse_x else None
+
             # Hovermode x makes two hover labels appear if they are at
             # the same point (default setting means only see the last
             # updated point)
@@ -1607,11 +1633,6 @@ class Beam:
                 showlegend=False,
                 hovermode='x',
                 title_x=0.5)
-            fig.update_xaxes(title_text='Beam Length (m)')
-            # visible false means y axis doesnt show, fixing range
-            # means wont zoom in y direction
-
-            fig.update_yaxes(visible=False, range=[-3, 3], fixedrange=True)
 
         # for each support append to figure to have the shapes/traces
         # needed for the drawing
@@ -1620,19 +1641,35 @@ class Beam:
                 fig = draw_support(fig, support, row=row, col=col)
 
             for load in self._loads:
-                fig = draw_force(fig, load, row=row, col=col)
+                fig = draw_force(fig, load,switch_axes, row=row, col=col)
                 fig = draw_load_hoverlabel(fig, load, row=row, col=col)
         else:
             for support in self._supports:
                 fig = draw_support(fig, support)
 
             for load in self._loads:
-                fig = draw_force(fig, load)
+                fig = draw_force(fig, load, switch_axes)
                 fig = draw_load_hoverlabel(fig, load)
+
+                        
+        if switch_axes:
+            if fig and row and col:
+                fig.update_xaxes(visible=False, range=[-3, 3], fixedrange=True,row=row,col=col)
+            else:
+                fig.update_yaxes(title_text='Beam Length (m)')
+                fig.update_xaxes(visible=False, range=[-3, 3], fixedrange=True)
+        else:
+            if fig and row and col:
+                fig.update_yaxes(visible=False, range=[-3, 3], fixedrange=True,row=row,col=col)
+            else:
+                fig.update_xaxes(title_text='Beam Length (m)')
+                fig.update_yaxes(visible=False, range=[-3, 3], fixedrange=True)
+
 
         return fig
 
-    def plot_reaction_force(self, fig=None, row=None, col=None):
+    def plot_reaction_force(self, reverse_x=False, reverse_y=False, switch_axes=False,
+                            fig=None, row=None, col=None):
         """Returns a plot of the beam with reaction forces.
 
         Parameters
@@ -1650,6 +1687,7 @@ class Beam:
         figure : `plotly.graph_objs._figure.Figure`
             Returns a handle to a figure with reaction forces.
         """
+
         # if a figure is passed it is for the subplot
         # append everything to it rather than creating a new plot.
         data = go.Scatter(
@@ -1665,9 +1703,14 @@ class Beam:
         if fig and row and col:
             fig.add_trace(data, row=row, col=col)
             fig.update_yaxes(visible=False, range=[-3, 3], fixedrange=True,row=row,col=col)
+            fig.update_yaxes(autorange="reversed", row=row, col=col) if reverse_y else None
+            fig.update_xaxes(autorange="reversed", row=row, col=col) if reverse_x else None
 
         else:
             fig = go.Figure(data=data)
+            fig.update_yaxes(autorange="reversed") if reverse_y else None
+            fig.update_xaxes(autorange="reversed") if reverse_x else None
+
 
             # Hovermode x makes two hover labels appear if they are at
             # the same point (default setting means only see the last
@@ -1706,6 +1749,7 @@ class Beam:
                         fig = draw_force(
                             fig,
                             PointLoadH(x_, position),
+                            switch_axes = switch_axes,
                             row=row,
                             col=col
                         )
@@ -1713,12 +1757,14 @@ class Beam:
                         fig = draw_force(
                             fig,
                             PointLoadV(y_, position),
+                            switch_axes = switch_axes,
                             row=row,
                             col=col)
                     if abs(m_) > 0:
                         fig = draw_force(
                             fig,
                             PointTorque(m_, position),
+                            switch_axes = switch_axes,
                             row=row,
                             col=col
                         )
@@ -1730,11 +1776,23 @@ class Beam:
                     )
 
                     if abs(x_) > 0:
-                        fig = draw_force(fig, PointLoadH(x_, position))
+                        fig = draw_force(
+                            fig, 
+                            PointLoadH(x_, position),
+                            switch_axes = switch_axes
+                        )
                     if abs(y_) > 0:
-                        fig = draw_force(fig, PointLoadV(y_, position))
+                        fig = draw_force(
+                            fig, 
+                            PointLoadV(y_, position),
+                            switch_axes = switch_axes
+                        )
                     if abs(m_) > 0:
-                        fig = draw_force(fig, PointTorque(m_, position))
+                        fig = draw_force(
+                            fig, 
+                            PointTorque(m_, position),
+                            switch_axes = switch_axes
+                        )
 
         return fig
 
@@ -1941,7 +1999,6 @@ class Beam:
         )
 
         return fig
-
 
     def plot_axial_deflection(self, reverse_x=False, reverse_y=False, switch_axes=False,
                               fig=None, row=None, col=None):
@@ -2241,6 +2298,12 @@ class Beam:
     def __repr__(self):
         return f"<Beam({self._x0})>"
 
+    def __add__(self,other):
+        new_beam = deepcopy(self)
+        if isinstance(other, Beam):
+            new_beam.add_loads(*other._loads)
+
+        return new_beam
 
 if __name__ == "__main__":
 

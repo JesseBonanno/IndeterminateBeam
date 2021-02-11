@@ -433,7 +433,7 @@ def draw_moment(fig, moment, x_sup, color='magenta', show_values=True, row=None,
     return fig
 
 
-def draw_force(fig, load, row=None, col=None):
+def draw_force(fig, load, switch_axes=False, row=None, col=None):
     """Draw a force (for load or reaction) on a plotly figure
 
     Parameters
@@ -457,6 +457,10 @@ def draw_force(fig, load, row=None, col=None):
         Returns the plotly figure passed into function with the force
         representation appended to it.
     """
+    # initialise angle
+    angle = 0
+    if switch_axes:
+        angle += 90
     # Get namedtuple name to check the type of load.  (Is used as an
     # alternative to isinstance method in order to avoid importing the
     # load classes to avoid circular dependency.)
@@ -473,7 +477,7 @@ def draw_force(fig, load, row=None, col=None):
 
     elif load_type == 'PointLoadH':
         force, x_sup = load
-        angle = 0
+        angle += 0
 
         fig = draw_arrow(
             fig,
@@ -485,7 +489,7 @@ def draw_force(fig, load, row=None, col=None):
 
     elif load_type == 'PointLoadV':
         force, x_sup = load
-        angle = 90
+        angle += 90
 
         fig = draw_arrow(
             fig,
@@ -496,7 +500,8 @@ def draw_force(fig, load, row=None, col=None):
             col=col)
 
     elif load_type == 'PointLoad':
-        force, x_sup, angle = load
+        force, x_sup, angle_ = load
+        angle += angle_
 
         fig = draw_arrow(
             fig,
@@ -510,14 +515,15 @@ def draw_force(fig, load, row=None, col=None):
         if load_type == 'DistributedLoadV':
             color = 'purple'
             expr, interval = load
-            angle = 90
+            angle += 90
         elif load_type == 'DistributedLoadH':
             color = 'darkgreen'
             expr, interval = load
-            angle = 0
+            angle += 0
         else:
             color = 'maroon'
-            expr, interval, angle = load
+            expr, interval, angle_ = load
+            angle += angle_
         # need to know sign for each side.
         # draw each function normalised to 1. ie the max is always 1.
         # evaluate force at left and force at right to plot
