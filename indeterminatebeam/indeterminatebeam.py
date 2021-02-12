@@ -20,9 +20,9 @@ from sympy import (integrate, lambdify, Piecewise, sympify, symbols,
                    linsolve, sin, cos, oo)
 from sympy.abc import x
 from math import radians
-from indeterminatebeam.data_validation import (assert_number, assert_positive_number,
+from data_validation import (assert_number, assert_positive_number,
                              assert_strictly_positive_number)
-from indeterminatebeam.plotly_drawing_aid import (
+from plotly_drawing_aid import (
     draw_line, draw_arrowhead, draw_arrow, draw_support_triangle,
     draw_support_rectangle, draw_moment, draw_force, draw_load_hoverlabel,
     draw_reaction_hoverlabel, draw_support_hoverlabel, draw_support_rollers,
@@ -30,6 +30,8 @@ from indeterminatebeam.plotly_drawing_aid import (
     )
 from plotly.subplots import make_subplots
 import plotly.graph_objects as go
+
+import time
 
 
 class Support:
@@ -351,7 +353,7 @@ def TrapezoidalLoad(force=(0, 0), span=(0, 0), angle=0):
         a = (end_load - start_load) / (end_coordinate - start_coordinate)
         b = start_load - start_coordinate * a
 
-        return DistributedLoadH(
+        return DistributedLoad(
             f"{a}*x+{b}", (start_coordinate, end_coordinate), angle)
 
 def TrapezoidalLoadV(force=(0, 0), span=(0, 0)):
@@ -855,14 +857,14 @@ class Beam:
 
         # external reaction equations
         F_Rx = sum(
-            integrate(load, (x, x0, x1))
+            load[5]
             for load in self._distributed_forces_x
         ) \
             + sum(f.force for f in self._point_loads_x()) \
             + sum([a[0] for a in unknowns_x.values()])
 
         F_Ry = sum(
-            integrate(load, (x, x0, x1))
+            load[5]
             for load in self._distributed_forces_y
         ) \
             + sum(f.force for f in self._point_loads_y()) \
@@ -870,7 +872,7 @@ class Beam:
 
         # moments taken at the left of the beam, anti-clockwise is positive
         M_R = sum(
-            integrate(load * x, (x, x0, x1))
+            load[6]
             for load in self._distributed_forces_y
         ) \
             + sum(f.force * f.coord for f in self._point_loads_y()) \
@@ -885,7 +887,7 @@ class Beam:
         # normal forces is same concept as shear forces only no
         # distributed for now.
         N_i = sum(
-            integrate(load, x)
+            load[1]
             for load in self._distributed_forces_x
         ) \
             + sum(
@@ -898,7 +900,7 @@ class Beam:
         )
 
         Nv_EA = sum(
-                integrate(load, x, x)
+                load[2]
                 for load in self._distributed_forces_x
             ) \
             + sum(
@@ -922,7 +924,7 @@ class Beam:
         # the beam are all positive, our internal force would also be
         # positive due to difference in convention
         F_i = sum(
-            integrate(load, x)
+            load[1]
             for load in self._distributed_forces_y
         ) \
             + sum(
@@ -941,7 +943,7 @@ class Beam:
         # postive for our shear forces and negative for our moments by
         # our sign convention
         M_i = sum(
-            integrate(load, x, x)
+            load[2]
             for load in self._distributed_forces_y
         ) \
             + sum(
@@ -965,7 +967,7 @@ class Beam:
         # supports
 
         dv_EI = sum(
-            integrate(load, x, x, x)
+            load[3]
             for load in self._distributed_forces_y
         ) \
             + sum(
@@ -987,7 +989,7 @@ class Beam:
             + C1
 
         v_EI = sum(
-            integrate(load, x, x, x, x)
+            load[4]
             for load in self._distributed_forces_y
         ) \
             + sum(
@@ -2142,8 +2144,7 @@ class Beam:
 
     def _create_distributed_force(
             self,
-            load: DistributedLoadH or DistributedLoadV,
-            shift: bool = True):
+            load: DistributedLoadH or DistributedLoadV):
         """
         Create a sympy.Piecewise object representing the provided 
         distributed load.
@@ -2160,9 +2161,83 @@ class Beam:
         expr, interval = load
         x0, x1 = interval
         expr = sympify(expr)
-        if shift:
-            expr.subs(x, x - x0)
-        return Piecewise((0, x < x0), (0, x > x1), (expr, True))
+
+        # a list to contain an expression for a distributed laod and
+        # the values of the expression at either end
+
+        t1 = time.perf_counter()
+
+        func_list = [[expr, 0]]
+        for a in range(1,5):
+            # integrate main function and solve to equal 0 at left
+            func = integrate(func_list[-1][0], x)
+            c1 = func.subs(x, x0)
+            func -= c1
+
+            # integrate second function
+            func_2 = integrate(func_list[-1][1], x)
+            c2 = func.subs(x, x1)
+            func_2 += c2 - func_2.subs(x, x1) 
+
+            func_list.append([func, func_2])
+
+
+        a1 = Piecewise((0, x < x0), (0, x > x1), (func_list[0][0], True))
+        b1 = Piecewise((0, x < x0), (func_list[1][0], x <= x1), (func_list[1][1], True))
+        c1 = Piecewise((0, x < x0), (func_list[2][0], x <= x1), (func_list[2][1], True))
+        d1 = Piecewise((0, x < x0), (func_list[3][0], x <= x1), (func_list[3][1], True))
+        e1 = Piecewise((0, x < x0), (func_list[4][0], x <= x1), (func_list[4][1], True))
+        f1 = func_list[1][1]
+        print('new')
+        print(t1 - time.perf_counter())
+        t1 = time.perf_counter()
+
+        a = Piecewise((0, x < x0), (0, x > x1), (expr, True))
+        b = integrate(a, x)
+        c = integrate(a, x,x)
+        d = integrate(a, x,x,x)
+        e = integrate(a, x,x,x,x)
+        f = integrate(expr, (x, x0, x1))
+        print('old')
+
+        print(t1 - time.perf_counter())
+        t1 = time.perf_counter()
+
+        if a == a1:
+            print('same a')
+        if b == b1:
+            print('same b')
+        if c == c1:
+            print('same c')
+        if d == d1:
+            print('same d')
+        if e == e1:
+            print('same e')
+        if f == f1:
+            print('same f')
+
+        if isinstance(load, DistributedLoadV):
+            return (
+                a,
+                integrate(a, x),
+                integrate(a, x,x),
+                integrate(a, x,x,x),
+                integrate(a, x,x,x,x),
+                integrate(expr, (x, x0, x1)),
+                integrate(expr * x, (x, x0, x1)),
+            )
+
+        elif isinstance(load, DistributedLoadH):
+            return (
+                a,
+                integrate(a, x),
+                integrate(a, x,x),
+                0,
+                0,
+                integrate(expr, (x, x0, x1)),
+                0,
+            )
+                
 
     def _effort_from_pointload(
             self, load: PointLoadH or PointLoadV or PointTorque):
@@ -2212,8 +2287,8 @@ class Beam:
 
                 force = sympify(force)
                 force_x = force * cos(radians(angle)).evalf(10)
-
-                yield DistributedLoadH(force_x, position)
+                if abs(round(force_x.subs(x,1), 5)) > 0:
+                    yield DistributedLoadH(force_x, position)
 
     def _distributed_loads_y(self):
         for f in self._loads:
@@ -2224,8 +2299,8 @@ class Beam:
 
                 force = sympify(force)
                 force_y = force * sin(radians(angle)).evalf(10)
-
-                yield DistributedLoadV(force_y, position)
+                if abs(round(force_y.subs(x,1), 5)) > 0:
+                    yield DistributedLoadV(force_y, position)
 
     def _point_torques(self):
         for f in self._loads:
@@ -2243,22 +2318,38 @@ class Beam:
 
 
 if __name__ == "__main__":
+    t1 = time.perf_counter()
+    beam = Beam(7)                          # Initialize a Beam object of length 9m with E and I as defaults
+    beam_2 = Beam(9,E=2000, I =100000)      # Initializa a Beam specifying some beam parameters
 
-    beam = Beam(2,A = (3.14*15**2/4),E=4000)
-    b = Support(0, kx = 100)
+    a = Support(5,(1,1,0))                  # Defines a pin support at location x = 5m  
+    b = Support(0,(0,1,0))                  # Defines a roller support at location x = 0m
+    c = Support(7,(1,1,1))                  # Defines a fixed support at location x = 7m
+    beam.add_supports(a,b,c)    
 
-    a = Support(0.5)
+    load_1 = PointLoadV(1,2)                # Defines a point load of 1kn acting up, at location x = 2m   # Defines a 2kN UDL from location x = 1m to x = 4m 
+    load_3 = PointTorque(2, 3.5)              # Defines a 2kN.m point torque at location x = 3.5m
+    load_2 = TrapezoidalLoad((0,5),(0,5),90)
+    load_4 = TrapezoidalLoad((5,5),(1,4),90)
+    load_5 = DistributedLoad("2 * x + 5",(0,5),90)
 
-    load_1 = DistributedLoad("10 * x",(0,1), 90)
-    load_2 = PointLoadH(-30,0.3)
+    load_6 = TrapezoidalLoad((1,2),(1,2),45)
+    load_7 = TrapezoidalLoadV((2,2),(2,3))
+    load_8 = TrapezoidalLoadH((2,3),(2,3))
+    load_9 = DistributedLoad("2 * x + 5",(0,5),45)
+    load_10 = DistributedLoadV("2 * x * x + 5",(0,5))
+    load_11 = DistributedLoadH("2 * x + 5",(0,5))
+    
+    print(t1 - time.perf_counter())
+    t1 = time.perf_counter()
 
-    beam.add_supports(a,b)
-    beam.add_loads(load_1,load_2)
+    beam.add_loads(load_1,load_3, load_2, load_4, load_5,load_6, load_7, load_8, load_9, load_10, load_11)           # Assign the support objects to a beam object created earlier
 
 
+    print(t1 - time.perf_counter())
+    t1 = time.perf_counter()
 
     beam.analyse()
-    beam.plot_beam_diagram()
-    beam.plot_normal_force()
-    beam.plot_beam_external()
-    beam.plot_axial_deflection()
+    
+    print(t1 - time.perf_counter())
+    t1 = time.perf_counter()
