@@ -20,9 +20,9 @@ from sympy import (integrate, lambdify, Piecewise, sympify, symbols,
                    linsolve, sin, cos, oo)
 from sympy.abc import x
 from math import radians
-from data_validation import (assert_number, assert_positive_number,
+from indeterminatebeam.data_validation import (assert_number, assert_positive_number,
                              assert_strictly_positive_number)
-from plotly_drawing_aid import (
+from indeterminatebeam.plotly_drawing_aid import (
     draw_line, draw_arrowhead, draw_arrow, draw_support_triangle,
     draw_support_rectangle, draw_moment, draw_force, draw_load_hoverlabel,
     draw_reaction_hoverlabel, draw_support_hoverlabel, draw_support_rollers,
@@ -2182,59 +2182,32 @@ class Beam:
             func_list.append([func, func_2])
 
 
-        a1 = Piecewise((0, x < x0), (0, x > x1), (func_list[0][0], True))
-        b1 = Piecewise((0, x < x0), (func_list[1][0], x <= x1), (func_list[1][1], True))
-        c1 = Piecewise((0, x < x0), (func_list[2][0], x <= x1), (func_list[2][1], True))
-        d1 = Piecewise((0, x < x0), (func_list[3][0], x <= x1), (func_list[3][1], True))
-        e1 = Piecewise((0, x < x0), (func_list[4][0], x <= x1), (func_list[4][1], True))
-        f1 = func_list[1][1]
-        print('new')
-        print(t1 - time.perf_counter())
-        t1 = time.perf_counter()
-
-        a = Piecewise((0, x < x0), (0, x > x1), (expr, True))
-        b = integrate(a, x)
-        c = integrate(a, x,x)
-        d = integrate(a, x,x,x)
-        e = integrate(a, x,x,x,x)
-        f = integrate(expr, (x, x0, x1))
-        print('old')
-
-        print(t1 - time.perf_counter())
-        t1 = time.perf_counter()
-
-        if a == a1:
-            print('same a')
-        if b == b1:
-            print('same b')
-        if c == c1:
-            print('same c')
-        if d == d1:
-            print('same d')
-        if e == e1:
-            print('same e')
-        if f == f1:
-            print('same f')
+        a = Piecewise((0, x < x0), (0, x > x1), (func_list[0][0], True))
+        b = Piecewise((0, x < x0), (func_list[1][0], x <= x1), (func_list[1][1], True))
+        c = Piecewise((0, x < x0), (func_list[2][0], x <= x1), (func_list[2][1], True))
+        d = Piecewise((0, x < x0), (func_list[3][0], x <= x1), (func_list[3][1], True))
+        e = Piecewise((0, x < x0), (func_list[4][0], x <= x1), (func_list[4][1], True))
+        f = func_list[1][1]
 
         if isinstance(load, DistributedLoadV):
             return (
                 a,
-                integrate(a, x),
-                integrate(a, x,x),
-                integrate(a, x,x,x),
-                integrate(a, x,x,x,x),
-                integrate(expr, (x, x0, x1)),
+                b,
+                c,
+                d,
+                e,
+                f,
                 integrate(expr * x, (x, x0, x1)),
             )
 
         elif isinstance(load, DistributedLoadH):
             return (
                 a,
-                integrate(a, x),
-                integrate(a, x,x),
+                b,
+                c,
                 0,
                 0,
-                integrate(expr, (x, x0, x1)),
+                f,
                 0,
             )
                 
@@ -2340,16 +2313,6 @@ if __name__ == "__main__":
     load_10 = DistributedLoadV("2 * x * x + 5",(0,5))
     load_11 = DistributedLoadH("2 * x + 5",(0,5))
     
-    print(t1 - time.perf_counter())
-    t1 = time.perf_counter()
-
     beam.add_loads(load_1,load_3, load_2, load_4, load_5,load_6, load_7, load_8, load_9, load_10, load_11)           # Assign the support objects to a beam object created earlier
 
-
-    print(t1 - time.perf_counter())
-    t1 = time.perf_counter()
-
     beam.analyse()
-    
-    print(t1 - time.perf_counter())
-    t1 = time.perf_counter()
