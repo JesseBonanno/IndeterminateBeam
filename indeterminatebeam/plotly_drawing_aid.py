@@ -512,11 +512,11 @@ def draw_force(fig, load, row=None, col=None):
             expr, interval = load
             angle = 90
         elif load_type == 'DistributedLoadH':
-            color = 'darkgreen'
+            color = 'maroon'
             expr, interval = load
             angle = 0
         else:
-            color = 'maroon'
+            color = 'darkgreen'
             expr, interval, angle = load
 
         if sin(angle)>=0:
@@ -653,11 +653,11 @@ def draw_load_hoverlabel(fig, load, row=None, col=None):
             expr, interval = load
             angle = 90
         elif load_type == 'DistributedLoadH':
-            color = 'darkgreen'
+            color = 'maroon'
             expr, interval = load
             angle = 0
         else:
-            color = 'maroon'
+            color = 'darkgreen'
             expr, interval, angle = load
 
         x0, x1 = interval
