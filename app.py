@@ -9,7 +9,7 @@ from dash.dependencies import Input, Output, State
 import dash_table
 from dash_table.Format import Format, Scheme, Sign, Symbol
 from indeterminatebeam.indeterminatebeam import (
-    Beam, Support, PointLoad, PointTorque, DistributedLoadV, TrapezoidalLoadV
+    Beam, Support, PointLoad, PointTorque, DistributedLoadV, TrapezoidalLoad
 )
 from datetime import datetime
 import time
@@ -139,6 +139,8 @@ beam_table = dash_table.DataTable(
     data=[beam_table_init],
     editable=True,
     row_deletable=False,
+    persistence = True,
+    persistence_type = 'session'
 )
 
 beam_instructions = dcc.Markdown('''
@@ -151,8 +153,11 @@ beam_instructions = dcc.Markdown('''
                * Second Moment of Area (I)
                * Cross-sectional Area (A)
 
-            Note: E and I will only affect the deflection unless a spring in the y direction is specified in which case they will also affect the load distribution.
-            Where a spring in the x direction is specified E and A will affect the load distribution for the horizontal loads only.
+            Note: E and I will only affect the deflection unless a spring  
+            in the y direction is specified in which case they will also  
+            affect the load distribution. Where a spring in the x direction  
+            is specified E and A will affect the load distribution for the  
+            horizontal loads only.
             ''')
 
 beam_content = dbc.Card(
@@ -245,6 +250,76 @@ support_content = dbc.Card(
     ),
     className="mt-3",
 )
+
+# Basic support
+
+basic_support_table_data = {
+    'Coordinate (m)': {
+        'init': 0,
+        'type': 'numeric',
+        'presentation': 'input'
+    },
+    "Support": {
+        'init': 'Fixed',
+        'type': 'any',
+        'presentation' : 'dropdown'
+    }
+}
+
+
+basic_support_table_init = {k: v['init'] for k, v in basic_support_table_data.items()}
+
+basic_support_table = dash_table.DataTable(
+    id='basic-support-table',
+    columns=[{
+        'name': d,
+        'id': d,
+        'deletable': False,
+        'renamable': False,
+        'type': basic_support_table_data[d]['type'],
+        'presentation': basic_support_table_data[d]['presentation'],
+    } for d in basic_support_table_data.keys()],
+    data=[basic_support_table_init],
+    editable=True,
+    row_deletable=True,
+    dropdown={
+        "Support": {
+            'options': [
+                {'label': 'Fixed', 'value': 'Fixed'},
+                {'label': 'Pinned', 'value': 'Pinned'},
+                {'label': 'Roller', 'value': 'Roller'},
+            ]
+        }
+    },
+)
+
+basic_support_instructions = dcc.Markdown('''
+
+            Instructions:
+
+            1. Specify the coodinate location of the support 
+            2. For each direction specify the conventional support type from the dropdown.
+
+            ''')
+
+basic_support_content = dbc.Card(
+    dbc.CardBody(
+        [
+            basic_support_table,
+            html.Br(),
+            html.Button('Add Support', id='basic-support-rows-button', n_clicks=0),
+            dbc.Collapse(
+                [
+                    html.Br(),
+                    dbc.Card(dbc.CardBody(basic_support_instructions))
+                ],
+                id="basic_support_instructions",
+            ),
+        ]
+    ),
+    className="mt-3",
+)
+
 
 # Properties for point_load Tab
 
@@ -538,26 +613,154 @@ results_table = dash_table.DataTable(
     style_cell={'textAlign': 'center'},
 )
 
-results_content = dbc.Card(
+results_content = dbc.Collapse(
+                [
+                    dbc.Card(
+                        dbc.CardBody(
+                            [
+                                results_table,    
+                            ]
+                        ),
+                        className="mt-3",
+                    ),
+                ],
+                id = 'results-collapse'
+            )
+
+# Options
+option_instructions = dcc.Markdown('''
+
+            Instructions:
+
+            Toggle options as desired.
+
+            1. Results Table:
+               - Choose to show or hide the table that  
+                summarises the maximum and minimum effects   
+                determined over the beam  
+            2. Support Input:
+               - Choose mode to use for support input where:
+                  - Basic: Provides a dropdown for conventional supports
+                  - Advanced: Allows for custom support configurations,  
+                    as well as spring supports  
+            3. Positive y direction:
+               - Choose the positive y direction.  
+               Note: The python package conventionally takes `UP` as being the   
+               direction for positive forces, as indicated in the package  
+               documentaion. Due to popular request the option to change the  
+               positive direction for y forces to be downwards has been allowed.  
+               This is actually achieved by reversing the angle direction  
+               of loading behind the scenes, (multiplying by negative 1)  
+               which can be revealed by hoverlabels.  
+            ''')
+
+
+option_support_input = dbc.FormGroup(
+    [
+        dbc.Label("Support Mode", html_for="option_support_input", width=3),
+        dbc.Col(
+            dbc.RadioItems(
+                id="option_support_input",
+                options=[
+                    {'label': 'Basic', 'value': 'basic'},
+                    {'label': 'Advanced', 'value': 'advanced'},
+                ],
+                value='basic',
+                inline = True,
+            ),
+            width=8,
+        ),
+    ],
+    row=True,
+)
+
+
+option_positive_direction_y = dbc.FormGroup(
+    [
+        dbc.Label("Positive y direction", html_for='option_positive_direction_y', width=3),
+        dbc.Col(
+            dbc.RadioItems(
+                id='option_positive_direction_y',
+                options=[
+                    {'label': 'Up', 'value': 'up'},
+                    {'label': 'Down', 'value': 'down'},
+                ],
+                value='down',
+                inline = True,
+            ),
+            width=8,
+        ),
+    ],
+    row=True,
+)
+
+
+option_result_table = dbc.FormGroup(
+    [
+        dbc.Label("Result Table", html_for="option-result-table", width=3),
+        dbc.Col(
+            dbc.RadioItems(
+                id="option-result-table",
+                options=[
+                    {'label': 'Hide', 'value': 'hide'},
+                    {'label': 'Show', 'value': 'show'},
+                ],
+                value='hide',
+                inline = True,
+            ),
+            width=8,
+        ),
+    ],
+    row=True,
+)
+
+option_content = dbc.Form([
+    option_result_table,
+    option_support_input,
+    option_positive_direction_y
+
+])
+
+option_content = dbc.Card(
     dbc.CardBody(
         [
-            results_table,
+            option_content,
+            html.Br(),
+            dbc.Collapse(
+                [
+                    html.Br(),
+                    dbc.Card(dbc.CardBody(option_instructions))
+                ],
+                id="option_instructions",
+            ),
+
         ]
     ),
     className="mt-3",
 )
 
-
-
 # Assemble different input tabs
 tabs = dbc.Tabs(
     [
         dbc.Tab(beam_content, label="Beam"),
-        dbc.Tab(support_content, label="Supports"),
+        dbc.Tab(
+            [
+                dbc.Collapse(
+                    support_content,
+                    id = 'advanced-support'
+                ),
+                dbc.Collapse(
+                    basic_support_content,
+                    id = 'basic-support'
+                ),
+            ],
+            label="Supports",
+        ),
         dbc.Tab(point_load_content, label="Point Loads"),
         dbc.Tab(point_torque_content, label="Point Torques"),
         dbc.Tab(distributed_load_content, label="Distributed Load"),
-        dbc.Tab(query_content, label="Query")
+        dbc.Tab(query_content, label="Query"),
+        dbc.Tab(option_content,label='Options')
     ]
 )
 
@@ -596,7 +799,7 @@ content_first_row = html.Div(
                                 tabs,
                                 html.Br(),
                             ],
-                            width = 12
+                            width = 12,
                         )
                     ),
                     dbc.Row(
@@ -631,9 +834,11 @@ content_first_row = html.Div(
                                 width = 4
                             )
                         ]
-                    )
+                    ),
+                    html.Br(),
                 ],
-                width = 6         
+                width={"size": 5.5, "offset": 0},
+                style = {'padding': '5px'}
             ),
             dbc.Col(
                 [
@@ -642,7 +847,8 @@ content_first_row = html.Div(
                     ),
                     results_content,
                 ],
-                width = 6
+                width={"size": 5.8, "offset": 0},
+                style = {'padding': '5px'}
             )
         ]
     )
@@ -667,6 +873,32 @@ app = dash.Dash(__name__,external_stylesheets=[dbc.themes.MINTY])
 server = app.server
 app.layout = html.Div([sidebar, content])
 
+# options - support mode
+@app.callback(
+    [Output('advanced-support', 'is_open'),
+    Output('basic-support', 'is_open')],
+    Input('option_support_input', 'value')
+)
+def support_setup(mode):
+    if mode == 'basic':
+        return False , True
+    else:
+        return True , False
+
+# option - result data (to be query data in future really)
+@app.callback(
+    Output('results-collapse', 'is_open'),
+    Input('option-result-table', 'value')
+)
+def results_setup(mode):
+    if mode == 'hide':
+        return False
+    else:
+        return True
+
+# option - positive y direction
+
+
 @app.callback(
     [Output('graph_1', 'figure'), Output('graph_2', 'figure'),
      Output('alert-fade', 'color'), Output('alert-fade', 'children'), 
@@ -676,10 +908,34 @@ app.layout = html.Div([sidebar, content])
     [State('beam-table', 'data'), State('point-load-table', 'data'),
      State('point-torque-table', 'data'), State('query-table', 'data'),
      State('distributed-load-table', 'data'), State('support-table', 'data'),
+     State('basic-support-table', 'data'),
      State('graph_1', 'figure'), State('graph_2', 'figure'),
-     State('hidden-input', 'children')])
+     State('hidden-input', 'children'), State('advanced-support', 'is_open'),
+     State('option_positive_direction_y','value')])
 def analyse_beam(click, beams, point_loads, point_torques, querys,
-                 distributed_loads, supports, graph_1, graph_2, prev_input):
+                 distributed_loads, advanced_supports, basic_supports, graph_1, 
+                 graph_2, prev_input, advanced_support_open, positive_y_direction):
+    
+    if advanced_support_open:
+        supports = advanced_supports
+    else:
+        for i,s in enumerate(basic_supports):
+            sup = s.pop('Support')
+            if sup == 'Fixed':
+                s['X'] = 'R'
+                s['Y'] = 'R'
+                s['M'] = 'R'
+            elif sup == 'Pinned':
+                s['X'] = 'R'
+                s['Y'] = 'R'
+                s['M'] = 'F'
+            elif sup == 'Roller':
+                s['X'] = 'F'
+                s['Y'] = 'R'
+                s['M'] = 'F'
+            basic_supports[i] = s
+        supports = basic_supports
+    
     input_json = json.dumps(
         {
             'beam': beams,
@@ -688,6 +944,7 @@ def analyse_beam(click, beams, point_loads, point_torques, querys,
             'point_torques':point_torques, 
             'distributed_loads':distributed_loads,
             'querys':querys,
+            'y': positive_y_direction,
         }
     )
 
@@ -696,6 +953,11 @@ def analyse_beam(click, beams, point_loads, point_torques, querys,
 
     try:
         t1 = time.perf_counter()
+
+        if positive_y_direction == 'up':
+            d_ = 1
+        else:
+            d_ = -1
 
         for row in beams:
             beam = Beam(*(float(a) for a in row.values()))
@@ -748,12 +1010,30 @@ def analyse_beam(click, beams, point_loads, point_torques, querys,
                 )
                 )
         # TO DO: add capitals
+        
+        if distributed_loads:
+            for row in distributed_loads:
+                if abs(float(row['Start x_coordinate (m)'])) > 0 or \
+                        abs(float(row['End x_coordinate (m)'])) > 0:
+                    beam.add_loads(TrapezoidalLoad(
+                        force=(
+                            float(row['Start Load (kN/m)']),
+                            float(row['End Load (kN/m)'])
+                        ),
+                        span=(
+                            float(row['Start x_coordinate (m)']),
+                            float(row['End x_coordinate (m)'])
+                        ),
+                        angle = d_ * 90
+                        )
+                    )
+
         if point_loads:
             for row in point_loads:
                 beam.add_loads(PointLoad(
                     float(row['Force (kN)']),
                     float(row['Coordinate (m)']),
-                    float(row['Angle (deg)'])
+                    d_ * float(row['Angle (deg)'])
                 )
                 )
 
@@ -765,20 +1045,6 @@ def analyse_beam(click, beams, point_loads, point_torques, querys,
                 )
                 )
 
-        if distributed_loads:
-            for row in distributed_loads:
-                if abs(float(row['Start x_coordinate (m)'])) > 0 or \
-                        abs(float(row['End x_coordinate (m)'])) > 0:
-                    beam.add_loads(TrapezoidalLoadV(
-                        force=(
-                            float(row['Start Load (kN/m)']),
-                            float(row['End Load (kN/m)'])
-                        ),
-                        span=(
-                            float(row['Start x_coordinate (m)']),
-                            float(row['End x_coordinate (m)'])
-                        ))
-                    )
         beam.analyse()
 
         if querys:
@@ -790,6 +1056,7 @@ def analyse_beam(click, beams, point_loads, point_torques, querys,
         graph_1 = beam.plot_beam_external()
 
         graph_2 = beam.plot_beam_internal()
+
 
         t2 = time.perf_counter()
         t = t2 - t1
@@ -833,6 +1100,15 @@ def add_row2(n_clicks, rows, columns):
         rows.append(support_table_init)
     return rows
 
+@app.callback(
+    Output('basic-support-table', 'data'),
+    Input('basic-support-rows-button', 'n_clicks'),
+    State('basic-support-table', 'data'),
+    State('basic-support-table', 'columns'))
+def add_row2b(n_clicks, rows, columns):
+    if n_clicks > 0:
+        rows.append(basic_support_table_init)
+    return rows
 # Add button to add row for point loads
 @app.callback(
     Output('point-load-table', 'data'),
@@ -881,10 +1157,12 @@ def add_row6(n_clicks, rows, columns):
 @app.callback(
     [Output("beam_instructions", "is_open"),
     Output("support_instructions","is_open"),
+    Output("basic_support_instructions", "is_open"),
     Output("point_load_instructions","is_open"),
     Output("point_torque_instructions","is_open"),
     Output("distributed_load_instructions","is_open"),
-    Output("query_instructions","is_open")],
+    Output("query_instructions","is_open"),
+    Output("option_instructions","is_open")],
     Input("instruction-button", "n_clicks"),
     State("beam_instructions", "is_open"),
 )
@@ -893,7 +1171,7 @@ def toggle_collapse(n, is_open):
         a = not is_open
     else:
         a = is_open
-    return a, a, a, a, a, a
+    return a, a, a, a, a, a, a, a
 
 @app.callback(
     Output("report", "data"),
@@ -960,4 +1238,4 @@ def report(n, graph_1,graph_2,results):
         return dict(content=content, filename="Report.html")
 
 if __name__ == '__main__':
-    app.run_server()
+    app.run_server(debug=True)

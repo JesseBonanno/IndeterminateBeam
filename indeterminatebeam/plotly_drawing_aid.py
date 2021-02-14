@@ -143,7 +143,7 @@ def draw_arrowhead(fig, angle, x_sup, length=5, xoffset=0, yoffset=0,
 
 
 def draw_arrow(fig, angle, force, x_sup, xoffset=0, yoffset=0, color='red',
-               line_width=2, arrowhead=5, arrowlength=30, show_values=True,row=None, col=None):
+               line_width=2, arrowhead=5, arrowlength=40, show_values=True,row=None, col=None):
     """Draw an anchored arrow on a plotly figure.
 
     Parameters
@@ -508,7 +508,7 @@ def draw_force(fig, load, row=None, col=None):
 
     elif load_type in ['DistributedLoadV' ,'DistributedLoadH', 'DistributedLoad']:
         if load_type == 'DistributedLoadV':
-            color = 'purple'
+            color = 'mediumpurple'
             expr, interval = load
             angle = 90
         elif load_type == 'DistributedLoadH':
@@ -518,6 +518,11 @@ def draw_force(fig, load, row=None, col=None):
         else:
             color = 'maroon'
             expr, interval, angle = load
+
+        if sin(angle)>=0:
+            angle_factor = -1
+        else:
+            angle_factor = 1
         # need to know sign for each side.
         # draw each function normalised to 1. ie the max is always 1.
         # evaluate force at left and force at right to plot
@@ -530,7 +535,7 @@ def draw_force(fig, load, row=None, col=None):
 
         largest = abs(max(y_vec, key=abs))
         # normalise  , use -1 to flip direction so matches arrow direction
-        y_vec = (-1) * y_vec / largest
+        y_vec = (angle_factor) * y_vec / largest
 
         # Create trace object for graph of distributed force
         trace = go.Scatter(
@@ -558,7 +563,7 @@ def draw_force(fig, load, row=None, col=None):
                 fig = draw_arrow(
                     fig,
                     angle,
-                    -y_vec[a] * largest,
+                    angle_factor * y_vec[a] * largest,
                     x_vec[a],
                     color=color,
                     arrowlength=30*abs(y_vec[a]),
@@ -644,7 +649,7 @@ def draw_load_hoverlabel(fig, load, row=None, col=None):
     # of function
     else:
         if load_type == 'DistributedLoadV':
-            color = 'purple'
+            color = 'mediumpurple'
             expr, interval = load
             angle = 90
         elif load_type == 'DistributedLoadH':
