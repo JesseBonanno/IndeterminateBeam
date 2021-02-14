@@ -1,5 +1,6 @@
 import sys
 import os
+import json
 import dash
 import dash_bootstrap_components as dbc
 import dash_core_components as dcc
@@ -14,7 +15,9 @@ from datetime import datetime
 import time
 from indeterminatebeam.version import __version__
 from dash_extensions import Download
+from dash.exceptions import PreventUpdate
 from plotly.io import to_html
+
 
 # the style arguments for the sidebar.
 SIDEBAR_STYLE = {
@@ -565,6 +568,7 @@ submit_button = dbc.Button(
     children='Analyse',
     color='primary',
     block=True,
+    disabled=False,
 )
 
 # Create a status bar/Alert
@@ -623,7 +627,7 @@ content_first_row = html.Div(
                                 width =4
                             ),
                             dbc.Col(
-                                submit_button,
+                                dbc.Spinner(submit_button),
                                 width = 4
                             )
                         ]
@@ -651,6 +655,7 @@ content = html.Div(
         html.Hr(),
         calc_status,
         content_first_row,
+        html.Div(id='hidden-input', style=dict(display='none')),
         html.Hr(),
         copyright_
     ],
@@ -662,19 +667,33 @@ app = dash.Dash(__name__,external_stylesheets=[dbc.themes.MINTY])
 server = app.server
 app.layout = html.Div([sidebar, content])
 
-# Main calculation, creates beam and analyses it.
-# Returns plots and/or calculation status.
 @app.callback(
     [Output('graph_1', 'figure'), Output('graph_2', 'figure'),
      Output('alert-fade', 'color'), Output('alert-fade', 'children'), 
-     Output('alert-fade','is_open'),Output('results-table','data')],
+     Output('alert-fade','is_open'),Output('results-table','data'),
+     Output('hidden-input', 'children'), Output('submit_button', 'disabled')],
     [Input('submit_button', 'n_clicks')],
     [State('beam-table', 'data'), State('point-load-table', 'data'),
      State('point-torque-table', 'data'), State('query-table', 'data'),
      State('distributed-load-table', 'data'), State('support-table', 'data'),
-     State('graph_1', 'figure'), State('graph_2', 'figure')])
+     State('graph_1', 'figure'), State('graph_2', 'figure'),
+     State('hidden-input', 'children')])
 def analyse_beam(click, beams, point_loads, point_torques, querys,
-                 distributed_loads, supports, graph_1, graph_2):
+                 distributed_loads, supports, graph_1, graph_2, prev_input):
+    input_json = json.dumps(
+        {
+            'beam': beams,
+            'supports':supports,
+            'point_loads':point_loads, 
+            'point_torques':point_torques, 
+            'distributed_loads':distributed_loads,
+            'querys':querys,
+        }
+    )
+
+    if input_json == prev_input:
+        raise PreventUpdate
+
     try:
         t1 = time.perf_counter()
 
@@ -800,8 +819,7 @@ def analyse_beam(click, beams, point_loads, point_torques, querys,
     if click == 0:
         color = "danger"
         message = "No analysis has been run."
-
-    return graph_1, graph_2, color, message, True, results_data 
+    return graph_1, graph_2, color, message, True, results_data , input_json, False
 
 
 # Add button to add row for supports

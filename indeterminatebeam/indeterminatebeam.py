@@ -14,6 +14,7 @@ Example
 """
 
 from collections import namedtuple
+from copy import deepcopy
 import numpy as np
 import os
 from sympy import (integrate, lambdify, Piecewise, sympify, symbols, 
@@ -584,8 +585,8 @@ class Beam:
         self._x1 = span
 
         self._loads = []
-        self._distributed_forces_x = []
-        self._distributed_forces_y = []
+        self._distributed_forces_x = {}
+        self._distributed_forces_y = {}
 
         self._normal_forces = []
         self._shear_forces = []
@@ -644,6 +645,7 @@ class Beam:
 
                     else:
                         self._loads.append(load)
+                        self._update_distributed_loads(load)
 
                 elif isinstance(
                     load,
@@ -662,7 +664,7 @@ class Beam:
                     if abs(round(load[0], 10)) > 0:
                         self._loads.append(load)
 
-        self._update_loads()
+        #self._update_loads()
 
     def remove_loads(self, *loads, remove_all=False):
         """Remove an arbitrary list of (point- or distributed) loads
@@ -681,7 +683,8 @@ class Beam:
         # if remove all set, reintialize parameters
         if remove_all:
             self._loads = []
-            self._update_loads()
+            self._distributed_forces_x = {}
+            self._distributed_forces_y = {}
             return None
 
         # if individual loads check if associated with beam and if so
@@ -696,8 +699,8 @@ class Beam:
         for load in loads:
             if load in self._loads:
                 self._loads.remove(load)
-
-        self._update_loads()
+                if isinstance(load,(DistributedLoad,DistributedLoadH,DistributedLoadV)):
+                    self._update_distributed_loads(load, remove = True)
 
     def add_supports(self, *supports):
         """Apply an arbitrary list of supports (Support objects) to the
@@ -858,14 +861,14 @@ class Beam:
         # external reaction equations
         F_Rx = sum(
             load[5]
-            for load in self._distributed_forces_x
+            for load in self._distributed_forces_x.values()
         ) \
             + sum(f.force for f in self._point_loads_x()) \
             + sum([a[0] for a in unknowns_x.values()])
 
         F_Ry = sum(
             load[5]
-            for load in self._distributed_forces_y
+            for load in self._distributed_forces_y.values()
         ) \
             + sum(f.force for f in self._point_loads_y()) \
             + sum([a[0] for a in unknowns_y.values()])
@@ -873,7 +876,7 @@ class Beam:
         # moments taken at the left of the beam, anti-clockwise is positive
         M_R = sum(
             load[6]
-            for load in self._distributed_forces_y
+            for load in self._distributed_forces_y.values()
         ) \
             + sum(f.force * f.coord for f in self._point_loads_y()) \
             + sum([p * v[0] for p, v in unknowns_y.items()]) \
@@ -888,7 +891,7 @@ class Beam:
         # distributed for now.
         N_i = sum(
             load[1]
-            for load in self._distributed_forces_x
+            for load in self._distributed_forces_x.values()
         ) \
             + sum(
             self._effort_from_pointload(f)
@@ -901,7 +904,7 @@ class Beam:
 
         Nv_EA = sum(
                 load[2]
-                for load in self._distributed_forces_x
+                for load in self._distributed_forces_x.values()
             ) \
             + sum(
                 integrate(
@@ -925,7 +928,7 @@ class Beam:
         # positive due to difference in convention
         F_i = sum(
             load[1]
-            for load in self._distributed_forces_y
+            for load in self._distributed_forces_y.values()
         ) \
             + sum(
                 self._effort_from_pointload(f)
@@ -944,7 +947,7 @@ class Beam:
         # our sign convention
         M_i = sum(
             load[2]
-            for load in self._distributed_forces_y
+            for load in self._distributed_forces_y.values()
         ) \
             + sum(
                 integrate(self._effort_from_pointload(f), x)
@@ -968,7 +971,7 @@ class Beam:
 
         dv_EI = sum(
             load[3]
-            for load in self._distributed_forces_y
+            for load in self._distributed_forces_y.values()
         ) \
             + sum(
             integrate(self._effort_from_pointload(f), x, x)
@@ -990,7 +993,7 @@ class Beam:
 
         v_EI = sum(
             load[4]
-            for load in self._distributed_forces_y
+            for load in self._distributed_forces_y.values()
         ) \
             + sum(
             integrate(self._effort_from_pointload(f), x, x, x)
@@ -2132,15 +2135,50 @@ class Beam:
 
         return fig
 
-    def _update_loads(self):
-        self._distributed_forces_x = [
-            self._create_distributed_force(f)
-            for f in self._distributed_loads_x()
-        ]
-        self._distributed_forces_y = [
-            self._create_distributed_force(f)
-            for f in self._distributed_loads_y()
-        ]
+    def _update_distributed_loads(self, load, remove = False):
+        # Load object should only ever be a DistributedLoad/H/V object.
+        # If remove is true will aim to remove it if it is there
+        # otherwise add it in only if it is not already there.
+        # (if it is already there then the result would be the smame and 
+        # would be inefficient to do the whole thing again)
+
+        # if distributed load v
+        if isinstance(load, DistributedLoadV):
+            # if remove = False and the load isnt a key then
+            # set the load as a key and associate with the integrals needed
+            # be calling _create_distributed_force
+            if not remove and load not in self._distributed_forces_y.keys():
+                self._distributed_forces_y[load] = self._create_distributed_force(load)
+            elif remove and load in self._distributed_forces_y.keys():
+                self._distributed_forces_y.pop(load)
+
+        elif isinstance(load, DistributedLoadH):
+            if not remove and load not in self._distributed_forces_x.keys():
+                self._distributed_forces_x[load] = self._create_distributed_force(load)
+            elif remove and load in self._distributed_forces_x.keys():
+                self._distributed_forces_x.pop(load)
+        
+        elif isinstance(load, DistributedLoad):
+            force, position, angle = load
+            force = sympify(force)
+
+            force_x = force * cos(radians(angle)).evalf(6)
+            force_y = force * sin(radians(angle)).evalf(6)
+
+            if abs(round(force_y.subs(x,1), 5)) > 0 and abs(round(force_y.subs(x,0), 5)) > 0:   # This expression is bad cause the value could just be 0 at a point
+                a = DistributedLoadV(force_y, position)
+                if not remove and load not in self._distributed_forces_y.keys():
+                    self._distributed_forces_y[a] = self._create_distributed_force(a)
+                elif remove and load in self._distributed_forces_y.keys():
+                    self._distributed_forces_y.pop(a)
+
+            if abs(round(force_x.subs(x,1), 5)) > 0 and abs(round(force_x.subs(x,0), 5)) > 0:
+                b = DistributedLoadH(force_x, position)
+                if not remove and load not in self._distributed_forces_x.keys():
+                    self._distributed_forces_x[b] = self._create_distributed_force(b)
+                elif remove and load in self._distributed_forces_x.keys():
+                    self._distributed_forces_x.pop(b)
+
 
     def _create_distributed_force(
             self,
@@ -2188,7 +2226,7 @@ class Beam:
         d = Piecewise((0, x < x0), (func_list[3][0], x <= x1), (func_list[3][1], True))
         e = Piecewise((0, x < x0), (func_list[4][0], x <= x1), (func_list[4][1], True))
         f = func_list[1][1]
-
+        print(t1 - time.perf_counter())
         if isinstance(load, DistributedLoadV):
             return (
                 a,
@@ -2288,6 +2326,11 @@ class Beam:
 
     def __repr__(self):
         return f"<Beam({self._x0})>"
+
+    def __add__(self, other):
+        new_beam = deepcopy(self)
+        # add loads in beam other to new beam.
+        # new_beam.add_loads(other._loads) 
 
 
 if __name__ == "__main__":
