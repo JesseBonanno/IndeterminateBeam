@@ -1238,4 +1238,4 @@ def report(n, graph_1,graph_2,results):
         return dict(content=content, filename="Report.html")
 
 if __name__ == '__main__':
-    app.run_server(debug=True)
+    app.run_server()
