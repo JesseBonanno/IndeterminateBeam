@@ -589,19 +589,38 @@ query_content = dbc.Card(
     className="mt-3",
 )
 
-# Properties for results section
+# # Properties for results section
+# results_columns = [
+#         {"name": "", "id": "type"},
+#         {"name": "Maximum Effect", "id": "max"},
+#         {"name": "Minimum Effect", "id": "min"},
+#     ]
+
+# results_data = [
+#         {'type':'Normal Force', 'max':0, 'min':0},
+#         {'type':'Shear Force', 'max':0, 'min':0},
+#         {'type':'Bending Moment', 'max':0, 'min':0},
+#         {'type':'Deflection', 'max':0, 'min':0},
+#     ]
+
+
+# # results 2
+
 results_columns = [
-        {"name": "", "id": "type"},
-        {"name": "Maximum Effect", "id": "max"},
-        {"name": "Minimum Effect", "id": "min"},
+        {"name": "", "id": "val"},
+        {"name": 'Normal Force (kN)', "id": "NF"},
+        {"name": 'Shear Force (kN)', "id": "SF"},
+        {"name": 'Bending Moment (kN.m)', "id": "BM"},
+        {"name": 'Deflection (mm)', "id": "D"},
     ]
 
+
 results_data = [
-        {'type':'Normal Force', 'max':0, 'min':0},
-        {'type':'Shear Force', 'max':0, 'min':0},
-        {'type':'Bending Moment', 'max':0, 'min':0},
-        {'type':'Deflection', 'max':0, 'min':0},
+        {'val':'Max', 'NF':0, 'SF':0, 'BM':0, 'D':0},
+        {'val':'Min', 'NF':0, 'SF':0, 'BM':0, 'D':0}
     ]
+
+
 
 results_table = dash_table.DataTable(
     id='results-table',
@@ -1013,18 +1032,19 @@ def analyse_beam(click, beams, point_loads, point_torques, querys,
         
         if distributed_loads:
             for row in distributed_loads:
-                if abs(float(row['Start x_coordinate (m)'])) > 0 or \
-                        abs(float(row['End x_coordinate (m)'])) > 0:
-                    beam.add_loads(TrapezoidalLoad(
-                        force=(
-                            float(row['Start Load (kN/m)']),
-                            float(row['End Load (kN/m)'])
-                        ),
-                        span=(
-                            float(row['Start x_coordinate (m)']),
-                            float(row['End x_coordinate (m)'])
-                        ),
-                        angle = d_ * 90
+                if abs(float(row['Start Load (kN/m)'])) > 0 or \
+                        abs(float(row['End Load (kN/m)'])) > 0:
+                    beam.add_loads(
+                        TrapezoidalLoad(
+                            force=(
+                                float(row['Start Load (kN/m)']),
+                                float(row['End Load (kN/m)'])
+                            ),
+                            span=(
+                                float(row['Start x_coordinate (m)']),
+                                float(row['End x_coordinate (m)'])
+                            ),
+                            angle = (d_ * 90)
                         )
                     )
 
@@ -1065,12 +1085,44 @@ def analyse_beam(click, beams, point_loads, point_torques, querys,
         color = "success"
         message = f"Calculation completed in {t:.2f} seconds, at {dt}"
 
+        # results_data = [
+        #     {'type':'Normal Force (kN)', 'max':beam.get_normal_force(return_max=True), 'min':beam.get_normal_force(return_min=True)},
+        #     {'type':'Shear Force (kN)', 'max':beam.get_shear_force(return_max=True), 'min':beam.get_shear_force(return_min=True)},
+        #     {'type':'Bending Moment (kN.m)', 'max':beam.get_bending_moment(return_max=True), 'min':beam.get_bending_moment(return_min=True)},
+        #     {'type':'Deflection (mm)', 'max':beam.get_deflection(return_max=True), 'min':beam.get_deflection(return_min=True)},
+        # ]
+        
         results_data = [
-            {'type':'Normal Force (kN)', 'max':beam.get_normal_force(return_max=True), 'min':beam.get_normal_force(return_min=True)},
-            {'type':'Shear Force (kN)', 'max':beam.get_shear_force(return_max=True), 'min':beam.get_shear_force(return_min=True)},
-            {'type':'Bending Moment (kN.m)', 'max':beam.get_bending_moment(return_max=True), 'min':beam.get_bending_moment(return_min=True)},
-            {'type':'Deflection (mm)', 'max':beam.get_deflection(return_max=True), 'min':beam.get_deflection(return_min=True)},
+            {
+                'val':'Max', 
+                'NF':beam.get_normal_force(return_max=True), 
+                'SF':beam.get_shear_force(return_max=True), 
+                'BM':beam.get_bending_moment(return_max=True), 
+                'D':beam.get_deflection(return_max=True)
+            },
+            {
+                'val':'Min', 
+                'NF':beam.get_normal_force(return_min=True), 
+                'SF':beam.get_shear_force(return_min=True), 
+                'BM':beam.get_bending_moment(return_min=True), 
+                'D':beam.get_deflection(return_min=True)
+            },
         ]
+
+        if querys:
+            for row in querys:
+                x_ = row['Query coordinate (m)']
+                results_data.append(
+                    {
+                        'val': f'x = {x_} m', 
+                        'NF':beam.get_normal_force(x_)[0], 
+                        'SF':beam.get_shear_force(x_)[0], 
+                        'BM':beam.get_bending_moment(x_)[0], 
+                        'D':beam.get_deflection(x_)[0],
+                    },
+                )
+
+
 
     except BaseException:
         color = "danger"
@@ -1183,6 +1235,17 @@ def toggle_collapse(n, is_open):
 def report(n, graph_1,graph_2,results):
     date = datetime.now().strftime("%d/%m/%Y")
     if n>0:
+        table = [f"""<tr>
+                <td class="tg-baqh">{a['val']}</td>
+                <td class="tg-baqh">{a['NF']}</td>
+                <td class="tg-baqh">{a['SF']}</td>
+                <td class="tg-baqh">{a['BM']}</td>
+                <td class="tg-baqh">{a['D']}</td>
+                </tr>
+                """ for a in results]
+
+        table = ''.join(table)
+
         content = [
             to_html(fig=graph_1,full_html=False, include_plotlyjs='cdn'),
             """
@@ -1201,32 +1264,11 @@ def report(n, graph_1,graph_2,results):
             <thead>
             <tr>
                 <th class="tg-5gn2"></th>
-                <th class="tg-uqo3">Maximum Effect</th>
-                <th class="tg-uqo3">Minimum Effect</th>
-            </tr>""" + f"""
-            </thead>
-            <tbody>
-            <tr>
-                <td class="tg-baqh">Normal Force (kN)</td>
-                <td class="tg-baqh">{results[0]['max']}</td>
-                <td class="tg-baqh">{results[0]['min']}</td>
-            </tr>
-            <tr>
-                <td class="tg-baqh">Shear Force (kN)</td>
-                <td class="tg-baqh">{results[1]['max']}</td>
-                <td class="tg-baqh">{results[1]['min']}</td>
-            </tr>
-            <tr>
-                <td class="tg-baqh">Bending Moment (kN.m)</td>
-                <td class="tg-baqh">{results[2]['max']}</td>
-                <td class="tg-baqh">{results[2]['min']}</td>
-            </tr>
-            <tr>
-                <td class="tg-baqh">Deflection (mm)</td>
-                <td class="tg-baqh">{results[3]['max']}</td>
-                <td class="tg-baqh">{results[3]['min']}</td>
-            </tr>
-            </tbody>
+                <th class="tg-uqo3">Normal Force (kN)</th>
+                <th class="tg-uqo3">Shear Force (kN)</th>
+                <th class="tg-uqo3">Bending Moment (kN.m)</th>
+                <th class="tg-uqo3">Deflection (mm)</th>
+            </tr>""" + table + """</tbody>
             </table>
             """,
             to_html(fig = graph_2,full_html=False, include_plotlyjs='cdn'),

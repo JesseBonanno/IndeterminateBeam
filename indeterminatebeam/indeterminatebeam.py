@@ -2165,14 +2165,14 @@ class Beam:
             force_x = force * cos(radians(angle)).evalf(6)
             force_y = force * sin(radians(angle)).evalf(6)
 
-            if abs(round(force_y.subs(x,1), 5)) > 0 and abs(round(force_y.subs(x,0), 5)) > 0:   # This expression is bad cause the value could just be 0 at a point
+            if abs(round(force_y.subs(x,1), 5)) > 0 or abs(round(force_y.subs(x,0), 5)) > 0:   # This expression is bad cause the value could just be 0 at a point
                 a = DistributedLoadV(force_y, position)
                 if not remove and load not in self._distributed_forces_y.keys():
                     self._distributed_forces_y[a] = self._create_distributed_force(a)
                 elif remove and load in self._distributed_forces_y.keys():
                     self._distributed_forces_y.pop(a)
 
-            if abs(round(force_x.subs(x,1), 5)) > 0 and abs(round(force_x.subs(x,0), 5)) > 0:
+            if abs(round(force_x.subs(x,1), 5)) > 0 or abs(round(force_x.subs(x,0), 5)) > 0:
                 b = DistributedLoadH(force_x, position)
                 if not remove and load not in self._distributed_forces_x.keys():
                     self._distributed_forces_x[b] = self._create_distributed_force(b)
