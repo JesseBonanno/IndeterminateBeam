@@ -7,6 +7,15 @@ from sympy import lambdify, sympify, sin, cos, oo
 from sympy.abc import x
 from math import radians
 
+from loading import(
+    PointLoad,
+    PointLoadH,
+    PointLoadV,
+    PointTorque,
+    UDL,
+    TrapezoidalLoad,
+    DistributedLoad,
+)
 
 def draw_line(fig, angle, x_sup, length=-20, xoffset=0, yoffset=0,
               color='red', line_width=2, row=None, col=None):
@@ -460,10 +469,9 @@ def draw_force(fig, load, row=None, col=None):
     # Get namedtuple name to check the type of load.  (Is used as an
     # alternative to isinstance method in order to avoid importing the
     # load classes to avoid circular dependency.)
-    load_type = str(load).split('(')[0]
 
-    if load_type == 'PointTorque':
-        moment, x_sup = load
+    if isinstance(load, PointTorque):
+        moment, x_sup = load.force, load.position
         fig = draw_moment(
             fig,
             moment,
@@ -471,9 +479,8 @@ def draw_force(fig, load, row=None, col=None):
             row=row,
             col=col)
 
-    elif load_type == 'PointLoadH':
-        force, x_sup = load
-        angle = 0
+    elif isinstance(load,PointLoad):
+        force, x_sup, angle = load.force, load.position, load.angle
 
         fig = draw_arrow(
             fig,
@@ -483,59 +490,49 @@ def draw_force(fig, load, row=None, col=None):
             row=row,
             col=col)
 
-    elif load_type == 'PointLoadV':
-        force, x_sup = load
-        angle = 90
-
-        fig = draw_arrow(
-            fig,
-            angle,
-            force,
-            x_sup,
-            row=row,
-            col=col)
-
-    elif load_type == 'PointLoad':
-        force, x_sup, angle = load
-
-        fig = draw_arrow(
-            fig,
-            angle,
-            force,
-            x_sup,
-            row=row,
-            col=col)
-
-    elif load_type in ['DistributedLoadV' ,'DistributedLoadH', 'DistributedLoad']:
-        if load_type == 'DistributedLoadV':
+    elif isinstance(load, (DistributedLoad, UDL, TrapezoidalLoad)):
+        angle = load.angle
+        if angle % 90 == 0:
+            # vertical or horizontal
             color = 'mediumpurple'
-            expr, interval = load
-            angle = 90
-        elif load_type == 'DistributedLoadH':
+        if angle % 180 == 0:
+            # horizontal only
             color = 'maroon'
-            expr, interval = load
-            angle = 0
-        else:
-            color = 'darkgreen'
-            expr, interval, angle = load
+        elif angle % 90 != 0:
+            color = 'green'
 
         if sin(angle)>=0:
             angle_factor = -1
         else:
             angle_factor = 1
+
+                
+        if isinstance(load, DistributedLoad):
+            name = 'Distributed<br>Load'
+            x0, x1 = load.span
+            expr = load.expr
+            # numpy array for x positions closely spaced (allow for graphing)
+            x_vec = np.linspace(x0, x1, int(min((x1 - x0) * 50 + 1, 1e3)))
+            y_vec = np.array([round(float(expr.subs(x,t)),3) for t in x_vec])
+
+        elif isinstance(load, UDL):
+            name = 'UDL'
+            x_vec = np.array(load.span)
+            y_vec = np.array([load.force, load.force])
+        else:
+            name = 'Trapezoidal<br>Load'
+            x_vec = np.array(load.span)
+            y_vec = np.array(load.force)
+
+    
+        largest = abs(max(y_vec, key=abs))
+        y_vec = (angle_factor) * y_vec / largest
+
+
         # need to know sign for each side.
         # draw each function normalised to 1. ie the max is always 1.
         # evaluate force at left and force at right to plot
-        x0, x1 = interval
-        expr = sympify(expr)
-        # numpy array for x positions closely spaced (allow for graphing)
-        x_vec = np.linspace(x0, x1, int(min((x1 - x0) * 100 + 1, 1e4)))
-        y_lam = lambdify(x, expr, "numpy")
-        y_vec = np.array([round(y_lam(t),3) for t in x_vec])
-
-        largest = abs(max(y_vec, key=abs))
-        # normalise  , use -1 to flip direction so matches arrow direction
-        y_vec = (angle_factor) * y_vec / largest
+        
 
         # Create trace object for graph of distributed force
         trace = go.Scatter(
@@ -546,7 +543,7 @@ def draw_force(fig, load, row=None, col=None):
                 color=color,
                 width=1),
             fill='tozeroy',
-            name=load_type,
+            name=name,
             hovertemplate="",
             hoverinfo="skip")
 
@@ -599,32 +596,24 @@ def draw_load_hoverlabel(fig, load, row=None, col=None):
     # Get namedtuple name to check the type of load.  (Is used as an
     # alternative to isinstance method in order to avoid importing the
     # load classes to avoid circular dependency.)
-    load_type = str(load).split('(')[0]
 
     y_sup = 0
 
-    if load_type in ['PointLoad', 'PointLoadH', 'PointLoadV', 'PointTorque']:
-        x_sup = load[1]
+    if isinstance(load, (PointLoad, PointTorque)):
+        x_sup = load.position
         color = 'red'
-        meta = [load[0], load[1]]  # load, position
+        meta = [load.force, load.position]  # load, position
 
-        if load_type == 'PointTorque':
+        if isinstance(load, PointTorque):
             color = 'magenta'
             hovertemplate = 'x: %{meta[1]} m<br>Moment: %{meta[0]} kN.m'
             name = 'Point<br>Torque'
-        elif load_type == 'PointLoad':
-            meta.append(load[2])
+        elif isinstance(load, PointLoad):
+            meta.append(load.angle)
             hovertemplate = 'x: %{meta[1]} m<br>Force: %{meta[0]} kN\
                 <br>Angle: %{meta[2]} deg'
             name = 'Point<br>Load'
-        elif load_type == 'PointLoadV':
-            hovertemplate = 'x: %{meta[1]} m<br>Force: %{meta[0]} kN\
-                <br>Direction: Vertical'
-            name = 'Point<br>LoadV'
-        else:
-            hovertemplate = 'x: %{meta[1]} m<br>Force: %{meta[0]} kN\
-                <br>Angle: Horizontal'
-            name = 'Point<br>LoadH'
+
 
         # Define hoverlabel as a marker with 0 opacity and a hovertemplate that
         # relies on meta data field
@@ -647,29 +636,24 @@ def draw_load_hoverlabel(fig, load, row=None, col=None):
 
     # Else is distributed load type, hoverlabel needed for arrow at each side
     # of function
-    else:
-        if load_type == 'DistributedLoadV':
+    elif isinstance(load, (DistributedLoad, UDL, TrapezoidalLoad)):
+        if load.angle % 90 == 0:
+            # vertical or horizontal
             color = 'mediumpurple'
-            expr, interval = load
-            angle = 90
-        elif load_type == 'DistributedLoadH':
+        if load.angle % 180 == 0:
+            # horizontal only
             color = 'maroon'
-            expr, interval = load
-            angle = 0
-        else:
-            color = 'darkgreen'
-            expr, interval, angle = load
+        elif load.angle % 90 != 0:
+            color = 'green'
 
-        x0, x1 = interval
-        expr = sympify(expr)
-        # numpy array for x positions closely spaced (allow for graphing)
-        
-        y_lam = lambdify(x, expr, "numpy")
+        x0, x1 = load.span
+        expr = load.expr
+        angle = load.angle
 
         name = 'Distributed<br>Load'
         y_sup = 1
 
-        meta = [(x0, round(y_lam(x0),3), angle), (x1, round(y_lam(x1),3), angle)]
+        meta = [(x0, round(float(expr.subs(x,x0)),3), angle), (x1, round(float(expr.subs(x,x1)),3), angle)]
         hovertemplate = 'x: %{meta[0]} m<br>Force: %{meta[1]} kN/m<br>Angle: %{meta[2]} deg'
 
         for x_,y_,a_ in meta:

@@ -21,6 +21,7 @@ from sympy import (integrate, lambdify, Piecewise, sympify, symbols,
                    linsolve, sin, cos, oo, SingularityFunction)
 from sympy.abc import x
 from math import radians
+
 from data_validation import (assert_number, assert_positive_number,
                              assert_strictly_positive_number, assert_length)
 from plotly_drawing_aid import (
@@ -29,11 +30,19 @@ from plotly_drawing_aid import (
     draw_reaction_hoverlabel, draw_support_hoverlabel, draw_support_rollers,
     draw_support_spring, draw_support
     )
+
+from loading import (
+    PointTorque,
+    PointLoad,
+    UDL,
+    TrapezoidalLoad,
+    DistributedLoad,
+)
+
 from plotly.subplots import make_subplots
 import plotly.graph_objects as go
 
 import time
-
 
 class Support:
     """
@@ -141,220 +150,6 @@ class Support:
         if self._id:
             return f"<support, id = {self._id}>"
         return "<Support>"
-
-class PointTorque:
-    """Point clockwise torque, described by a tuple of floats:
-    (torque, coord).
-
-    Parameters:
-    -----------
-    torque: float
-        Torque in kN.m
-    coord: float
-        x coordinate of torque on beam
-
-    Examples
-    --------
-    # 30 kN·m (clockwise) torque at x=4 m
-    >>> motor_torque = PointTorque(30, 4)
-    """
-
-    
-    def __init__(self, torque = 0, coord=0):
-        assert_number(torque, 'torque')
-        assert_positive_number(coord, 'coordinate')
-        
-        self._x = 0
-        self._y = torque * SingularityFunction(x, coord, -1)
-
-class PointLoad:
-    """Point load described by a tuple of floats: (force, coord, angle).
-
-    Parameters:
-    -----------
-    Force: float
-        Force in kN
-    coord: float
-        x coordinate of load on beam
-    angle: float
-        angle of point load where:
-        - 0 degrees is purely horizontal +ve
-        - 90 degrees is purely vertical +ve
-        - 180 degrees is purely horizontal -ve of force sign specified.
-
-
-    Examples
-    --------
-    # 10 kN towards the right at x=9 m
-    >>> external_force = PointLoad(10, 9, 90)
-    # 30 kN downwards at x=3 m
-    >>> external_force = PointLoad(-30, 3, 0)
-    >>> external_force
-    PointLoad(force=-30, coord=3, angle=0)
-    """
-    
-    def __init__(self, force = 0, coord=0, angle=0):
-        assert_number(force, 'force')
-        assert_positive_number(coord, 'coordinate')
-        assert_number(angle, 'angle')
-
-        force_x = force * cos(radians(angle)).evalf(8)
-        force_y = force * sin(radians(angle)).evalf(8)
-
-        if abs(round(force_x,5)) > 0:
-            self._x = force_x * SingularityFunction(x, coord, -1)
-        else: 
-            self._x = 0
-        
-        if abs(round(force_y,5)) > 0:
-            self._y = force_y * SingularityFunction(x, coord, -1)
-        else: 
-            self._y = 0
-
-class PointLoadV(PointLoad):
-    def __init__(self, force = 0, coord = 0):
-        super().__init__(force,coord,angle=90)
-
-class PointLoadH(PointLoad):
-    def __init__(self, force = 0, coord = 0):
-        super().__init__(force,coord,angle=0)
-
-
-class DistributedLoad:
-    """Distributed load, described by its functional form, application 
-    interval and the angle of the load relative to the beam.
-
-    Parameters:
-    -----------
-    expr: sympy expression
-        Sympy expression of the distributed load function expressed
-        using variable x which represents the beam x-coordinate.
-        Requires quotation marks around expression.
-    span: tuple of floats
-        A tuple containing the starting and ending coordinate that
-         the function is applied to.
-    angle: float
-        angle of point load where:
-        - 0 degrees is purely horizontal +ve
-        - 90 degrees is purely vertical +ve
-        - 180 degrees is purely horizontal -ve of force sign specified.
-    Examples
-    --------
-    # Linearly growing load for 0<x<2 m
-    >>> snow_load = DistributedLoad("10*x+5", (0, 2),90)
-    """
-
-    def __init__(self, expr, span =(0, 0), angle = 0):
-        try:
-            expr = sympify(expr)
-        except:
-            print("Can not convert expression to sympy function. \
-            Function should only contain variable x, should be \
-            encapsulated by quotations, and should have * between x \
-            and coefficients i.e 2 * x rather than 2x")
-        
-        # Validate span input
-        assert_length(span, 2, 'span')
-        assert_positive_number(span[0], 'span start')
-        assert_strictly_positive_number(span[1]-span[0] 'span start minus span end')
-
-        # validate angle input
-        assert_number(angle, 'angle')
-
-        force_x = cos(radians(angle)).evalf(10)
-        force_y = sin(radians(angle)).evalf(10)
-
-        if abs(round(force_x,8)) > 0:
-            self._x = force_x * expr
-        else: 
-            self._x = 0
-        
-        if abs(round(force_y,8)) > 0:
-            self._y = force_y * expr
-        else: 
-            self._y = 0
-
-class DistributedLoadV(DistributedLoad):
-    def __init__(self, expr = 0, span = (0,0)):
-        super().__init__(expr, span, angle=90)
-
-class DistributedLoadH(DistributedLoad):
-    def __init__(self, expr = 0, span = (0,0)):
-        super().__init__(expr, span, angle=0)
-
-class UDL:
-    
-    def __init__(self, force = 0, span =(0, 0), angle = 0):
-        
-        # Validate span input
-        assert_length(span, 2, 'span')
-        assert_positive_number(span[0], 'span start')
-        assert_strictly_positive_number(span[1]-span[0] 'span start minus span end')
-
-        # validate angle input
-        assert_number(angle, 'angle')
-
-        force_x = force * cos(radians(angle)).evalf(8)
-        force_y = force * sin(radians(angle)).evalf(8)
-
-        if abs(round(force_x,5)) > 0:
-            self._x = force_x * (
-                SingularityFunction(x, span[0], 0) - SingularityFunction(x, span[1], 0)
-                )
-        else: 
-            self._x = 0
-        
-        if abs(round(force_y,5)) > 0:
-            self._y = force_y * (
-                SingularityFunction(x, span[0], 0) - SingularityFunction(x, span[1], 0)
-                )
-        else: 
-            self._y = 0
-
-class TrapezoidalLoad:
-
-    def __init__(self, force = (0,0), span =(0, 0), angle = 0):
-        # Validate force input
-        assert_length(force, 2, 'force')
-
-        # check if UDL (not sure if this code will work properly)
-        if force[0] == force [1]:
-            return UDL(force[0], span, angle)
-
-        # Validate span input
-        assert_length(span, 2, 'span')
-        assert_positive_number(span[0], 'span start')
-        assert_strictly_positive_number(span[1]-span[0] 'span start minus span end')
-
-        # validate angle input
-        assert_number(angle, 'angle')
-
-        #turn trapezoid into a triangle + rectangle
-        UDL_component = UDL(force[0], span, angle)
-
-        # express values for triangular load distribution
-        xa, xb = span[0], span[1]
-        a, b = 0, force[1] - force[0]
-        slope = b / (span[1] - span[0])
-
-        force_x = cos(radians(angle)).evalf(10)
-        force_y = sin(radians(angle)).evalf(10)
-
-        triangular_component = sum([
-            + slope * SingularityFunction(x, xa, 1),
-            - b * SingularityFunction(x, xb, 0),
-            - slope * SingularityFunction(x, xb, 1),
-        ])
-
-        if abs(round(force_x,8)) > 0:
-            self._x = UDL_component._x + force_x * triangular_component
-        else: 
-            self._x = 0
-        
-        if abs(round(force_y,8)) > 0:
-            self._y = UDL_component._y + force_y * triangular_component
-        else: 
-            self._y = 0
 
 
 class Beam:
@@ -477,15 +272,15 @@ class Beam:
         # Note: Have ignored distributedLoadH in this version.
         for load in loads:
             if isinstance(load, (DistributedLoad, UDL, TrapezoidalLoad)):
-                left, right = load
+                left, right = load.span
 
                 if self._x0 > left or right > self._x1:
                     raise ValueError(
-                        f"Coordinate {load[1]} for {str(load)} is not a point on beam."
+                        f"Coordinate {load.span} for {str(load)} is not a point on beam."
                     )
 
             elif isinstance(load,(PointTorque, PointLoad)):
-                coordinate = load[1]
+                coordinate = load.position
                 
                 if self._x0 > coordinate or coordinate > self._x1:
                     raise ValueError(
@@ -640,27 +435,46 @@ class Beam:
     def analyse(self):
         """Solve the beam structure for reaction and internal forces  """
 
-        x0, x1 = self._x0, self._x1
+        x1 = self._x1
 
-        
-        unknowns_x = {a._position: [
-            symbols("x_" + str(a._position)),
-            a._stiffness[0]
+        # initialised with position and stiffness.
+
+        self._supports = sorted(self._supports, key = lambda item: item._position)
+
+        unknowns = {}
+        unknowns['x'] = [
+            {
+                'position':a._position,
+                'stiffness':a._stiffness[0],
+                'force': symbols("x_" + str(a._position)) * SingularityFunction(x, a._position, 0),
+                'variable' : symbols("x_" + str(a._position))
+             } for a in self._supports if a._stiffness[0] != 0
         ]
-            for a in self._supports if a._stiffness[0] != 0}
-        unknowns_y = {a._position: [
-            symbols("y_" + str(a._position)), a._stiffness[1]]
-            for a in self._supports if a._stiffness[1] != 0}
-        unknowns_m = {a._position: [symbols(
-            "m_" + str(a._position)), a._stiffness[2]]
-            for a in self._supports if a._stiffness[2] != 0}
+
+        unknowns['y'] = [
+            {
+                'position':a._position, 
+                'stiffness':a._stiffness[1],
+                'force':symbols("y_" + str(a._position)) * SingularityFunction(x, a._position, 0),
+                'variable' : symbols("y_" + str(a._position))
+             } for a in self._supports if a._stiffness[1] != 0
+        ]
+
+        unknowns['m'] = [
+            {
+                'position':a._position,
+                'torque':symbols("m_" + str(a._position)) * SingularityFunction(x, a._position, 0),
+                'variable' : symbols("m_" + str(a._position))
+            } for a in self._supports if a._stiffness[2] != 0
+        ]
 
         # grab the set of all the sympy unknowns for y and m and change
         # to a list, do same for x unknowns
-        unknowns_ym = [a[0] for a in unknowns_y.values()] \
-            + [a[0] for a in unknowns_m.values()]
+        unknowns_ym = [a['variable'] for a in unknowns['y']] \
+            + [a['variable'] for a in unknowns['m']]
 
-        unknowns_xx = [a[0] for a in unknowns_x.values()]
+        unknowns_xx = [a['variable'] for a in unknowns['x']]
+
 
         # Assert that there are enough supports. Even though it logically
         # works to have no x support if you have no x loading, it works
@@ -677,77 +491,39 @@ class Beam:
                 'You need at least two y or m restraints, even if there \
                 are no y or m forces')
 
-        # locations where x reaction is and order, for indeterminate axial
-        # determaintion
-        x_0 = [a for a in unknowns_x.keys()]
-        x_0.sort()
+
 
         # external reaction equations
-        F_Rx = sum([load._x for load in self._loads]) \
-            + sum([a[0] for a in unknowns_x.values()])
 
-        F_Ry = sum([load._x for load in self._loads]) \
-            + sum([a[0] for a in unknowns_y.values()])
+        # should integrate from end of beam or sumfin ?
+        F_Rx = sum([load._x1.subs(x,x1) for load in self._loads]) \
+            + sum([a['variable'] for a in unknowns['x']])
+
+        F_Ry = sum([load._y1.subs(x,x1) for load in self._loads]) \
+            + sum([a['variable'] for a in unknowns['y']])
 
         # moments taken at the left of the beam, anti-clockwise is positive
-        M_R = sum(integrate(load._y * x, (x, x0, x1)) for load in self._loads) \
-            + sum([a[0] for a in unknowns_m.values()])
+        M_R = sum(load._m0 for load in self._loads) \
+            + sum([a['variable'] for a in unknowns['m']])
 
         # internal beam equations
         C1, C2 = symbols('C1'), symbols('C2')
-        unknowns_ym = unknowns_ym + [C1] + [C2]
+        unknowns_ym += [C1, C2]
 
         # normal forces is same concept as shear forces only no
         # distributed for now.
-        N_i = sum(
-            load[1]
-            for load in self._distributed_forces_x.values()
-        ) \
-            + sum(
-            self._effort_from_pointload(f)
-            for f in self._point_loads_x()
-        ) \
-            + sum(
-                self._effort_from_pointload(PointLoadH(v[0], p))
-                for p, v in unknowns_x.items()
-        )
+        N_i = sum(load._x1 for load in self._loads) \
+            + sum([a['force'] for a in unknowns['x']])
 
-        Nv_EA = sum(
-                load[2]
-                for load in self._distributed_forces_x.values()
-            ) \
-            + sum(
-                integrate(
-                    self._effort_from_pointload(f),
-                    x
-                )
-                for f in self._point_loads_x()
-            ) \
-            + sum(
-                integrate(
-                    self._effort_from_pointload(
-                        PointLoadH(v[0], p)),
-                        x
-                )
-                for p, v in unknowns_x.items()
-            )
+
+        Nv_EA = integrate(N_i, x)
 
         # shear forces, an internal force acting down would be considered
         # positive by adopted convention hence if the sum of forces on
         # the beam are all positive, our internal force would also be
         # positive due to difference in convention
-        F_i = sum(
-            load[1]
-            for load in self._distributed_forces_y.values()
-        ) \
-            + sum(
-                self._effort_from_pointload(f)
-                for f in self._point_loads_y()
-        ) \
-            + sum(
-                self._effort_from_pointload(PointLoadV(v[0], p))
-                for p, v in unknowns_y.items()
-        )
+        F_i = sum(load._y1 for load in self._loads) \
+            + sum([a['force'] for a in unknowns['y']])
 
         # bending moments at internal point means we are now looking left
         # along the beam when we take our moments (vs when we did external
@@ -755,106 +531,50 @@ class Beam:
         # is adopted as positive internally. Hence we need to consider a
         # postive for our shear forces and negative for our moments by
         # our sign convention
-        M_i = sum(
-            load[2]
-            for load in self._distributed_forces_y.values()
-        ) \
-            + sum(
-                integrate(self._effort_from_pointload(f), x)
-                for f in self._point_loads_y()
-        ) \
-            + sum(
-                integrate(self._effort_from_pointload(PointLoadV(v[0], p)), x)
-                for p, v in unknowns_y.items()
-        ) \
-            - sum(
-                self._effort_from_pointload(PointTorque(v[0], p))
-                for p, v in unknowns_m.items()
-        ) \
-            - sum(
-                self._effort_from_pointload(f)
-                for f in self._point_torques()
-        )
-
+        M_i = integrate(F_i, x) \
+            - sum([a['torque'] for a in unknowns['m']])
+        
         # with respect to x, + constants but the constants are the M at fixed
         # supports
 
-        dv_EI = sum(
-            load[3]
-            for load in self._distributed_forces_y.values()
-        ) \
-            + sum(
-            integrate(self._effort_from_pointload(f), x, x)
-            for f in self._point_loads_y()
-        ) \
-            + sum(
-            integrate(self._effort_from_pointload(PointLoadV(v[0], p)), x, x)
-            for p, v in unknowns_y.items()
-        ) \
-            - sum(
-            integrate(self._effort_from_pointload(PointTorque(v[0], p)), x)
-            for p, v in unknowns_m.items()
-        ) \
-            - sum(
-            integrate(self._effort_from_pointload(f), x)
-            for f in self._point_torques()
-        ) \
-            + C1
+        dv_EI = integrate(M_i, x) + C1
 
-        v_EI = sum(
-            load[4]
-            for load in self._distributed_forces_y.values()
-        ) \
-            + sum(
-            integrate(self._effort_from_pointload(f), x, x, x)
-            for f in self._point_loads_y()
-        ) \
-            + sum(
-            integrate(self._effort_from_pointload(PointLoadV(v[0], p)), x, x, x)
-            for p, v in unknowns_y.items()
-        ) \
-            - sum(
-            integrate(self._effort_from_pointload(PointTorque(v[0], p)), x, x)
-            for p, v in unknowns_m.items()
-        ) \
-            - sum(
-            integrate(self._effort_from_pointload(f), x, x)
-            for f in self._point_torques()
-        ) \
-            + C1 * x + C2
+        v_EI = integrate(dv_EI, x) +  C2
 
         # equations , create a lsit fo equations
         equations_ym = [F_Ry, M_R]
 
         # at location that moment is restaint, the slope is known (to be 0,
         # since dont deal for rotational springs)
-        for position in unknowns_m.keys():
-            equations_ym.append(dv_EI.subs(x, position))
+        for reaction in unknowns['m']:
+                equations_ym.append(dv_EI.subs(x, reaction['position']))
 
         # at location that y support is restaint the deflection is known (to be
         # F/k)
-        for position in unknowns_y.keys():
-            equations_ym.append(
-                (v_EI.subs(x, position) * 10 ** 12 / (self._E * self._I))
-                + (unknowns_y[position][0] / unknowns_y[position][1])
-            )
+        for reaction in unknowns['y']:
+                equations_ym.append(
+                    (v_EI.subs(x, reaction['position']) * 10 ** 12 / (self._E * self._I))
+                    + reaction['force'] / reaction['stiffness']
+                )
 
         # equation for normal forces, only for indeterminate in x
         equations_xx = [F_Rx]
 
         # the extension of the beam will be equal to the spring
         # displacement on right minus spring displacment on left
-        start_x = x_0[0]
-        if len(x_0) > 1:
+
+
+        if len(unknowns_xx) > 1:
             # dont consider the starting point? only want to look between
             # supports and not at cantilever sections i think
-            for position in x_0[1:]:
+            start = unknowns['x'][0]
+            for end in unknowns['x'][1:]:
                 equations_xx.append(
-                    (Nv_EA.subs(x, position) - Nv_EA.subs(x, start_x))
+                    (Nv_EA.subs(x, end['position']) - Nv_EA.subs(x, start['position']))
                     * 10**3 / (self._E * self._A)
-                    + unknowns_x[start_x][0] / unknowns_x[start_x][1]
+                    + start['force'] / start['stiffness']
                     # represents elongation displacment on right
-                    - unknowns_x[position][0] / unknowns_x[position][1]
+                    - end['force'] / end['stiffness']
                 )
 
         # compute analysis with linsolve
@@ -862,13 +582,13 @@ class Beam:
         solutions_xx = list(linsolve(equations_xx, unknowns_xx))[0]
 
         solutions = [a for a in solutions_ym + solutions_xx]
-
         solution_dict = dict(zip(unknowns_ym + unknowns_xx, solutions))
 
         self._reactions = {a._position: [0, 0, 0] for a in self._supports}
 
         # substitue in value instead of variable in functions
         for var, ans in solution_dict.items():
+            ans = float(ans)
             v_EI = v_EI.subs(var, ans)  # complete deflection equation
             M_i = M_i.subs(var, ans)  # complete moment equation
             F_i = F_i.subs(var, ans)  # complete shear force equation
@@ -898,10 +618,10 @@ class Beam:
         # Nv_EI represents the beam elongation, to make displacement need to add initial
         # Comparatively v_EI is already the beam displacement and has a constant in it
         # (C2) that considers any intial displacement
-        if unknowns_x[start_x][1] == oo:
+        if unknowns['x'][0]['stiffness'] == oo:
             initial_displacement_x = 0
         else:
-            initial_displacement_x = float(solutions_xx[0]  / unknowns_x[start_x][1])
+            initial_displacement_x = float(solutions_xx[0]  / unknowns['x'][0]['stiffness'])
         # in meters
         self._axial_deflection= Nv_EA * 10**3 / (self._E * self._A) \
             + initial_displacement_x / 10 ** 3 
@@ -993,19 +713,19 @@ class Beam:
         """
 
         if isinstance(sym_func, list):
-            sym_func = sum(sym_func)
-        func = lambdify(x, sym_func, "numpy")
+            func = sum(sym_func)
+        #func = lambdify(x, sym_func, "numpy")
 
         if 1 not in (return_absmax, return_max, return_min):
             if type(x_coord) == tuple:
-                return [round(float(func(x_)), 3) for x_ in x_coord]
+                return [round(float(func.subs(x,x_)), 3) for x_ in x_coord]
             else:
-                return round(float(func(x_coord)), 3)
+                return round(float(func.subs(x,x_coord)), 3)
 
         # numpy array for x positions closely spaced (allow for graphing)
         # i think lambdify is needed to let the function work with numpy
-        x_vec = np.linspace(self._x0, self._x1, int(1000))
-        y_vec = np.array([func(t) for t in x_vec])
+        x_vec = np.linspace(self._x0, self._x1, int(100))
+        y_vec = np.array([float(func.subs(x,t)) for t in x_vec])
         min_ = float(y_vec.min())
         max_ = float(y_vec.max())
 
@@ -1853,13 +1573,13 @@ class Beam:
             Returns a handle to a figure with the deflection diagram.
         """
         # numpy array for x positions closely spaced (allow for graphing)
-        x_vec = np.linspace(self._x0, self._x1, int(1000))
+        x_vec = np.linspace(self._x0, self._x1, int(100))
+
         # transform sympy expressions to lambda functions which can be used to
-        # calculate numerical values very fast (with numpy)
-        y_lam = lambdify(x, sym_func, "numpy")
-        y_vec = np.array([y_lam(t) for t in x_vec])
-        # np.array for y values created
-        # np.array for y values created
+        # calculate numerical values very fast (with numpy).
+        # Unfortunetly, for Singularity functions currently can't use lambdify.
+        y_vec = np.array([float(sym_func.subs(x,t)) for t in x_vec])
+
         fill = 'tozeroy'
 
         if switch_axes:
@@ -1944,187 +1664,6 @@ class Beam:
 
         return fig
 
-    def _update_distributed_loads(self, load, remove = False):
-        # Load object should only ever be a DistributedLoad/H/V object.
-        # If remove is true will aim to remove it if it is there
-        # otherwise add it in only if it is not already there.
-        # (if it is already there then the result would be the smame and 
-        # would be inefficient to do the whole thing again)
-
-        # if distributed load v
-        if isinstance(load, DistributedLoadV):
-            # if remove = False and the load isnt a key then
-            # set the load as a key and associate with the integrals needed
-            # be calling _create_distributed_force
-            if not remove and load not in self._distributed_forces_y.keys():
-                self._distributed_forces_y[load] = self._create_distributed_force(load)
-            elif remove and load in self._distributed_forces_y.keys():
-                self._distributed_forces_y.pop(load)
-
-        elif isinstance(load, DistributedLoadH):
-            if not remove and load not in self._distributed_forces_x.keys():
-                self._distributed_forces_x[load] = self._create_distributed_force(load)
-            elif remove and load in self._distributed_forces_x.keys():
-                self._distributed_forces_x.pop(load)
-        
-        elif isinstance(load, DistributedLoad):
-            force, position, angle = load
-            force = sympify(force)
-
-            force_x = force * cos(radians(angle)).evalf(6)
-            force_y = force * sin(radians(angle)).evalf(6)
-
-            if abs(round(force_y.subs(x,1), 5)) > 0 or abs(round(force_y.subs(x,0), 5)) > 0:   # This expression is bad cause the value could just be 0 at a point
-                a = DistributedLoadV(force_y, position)
-                if not remove and load not in self._distributed_forces_y.keys():
-                    self._distributed_forces_y[a] = self._create_distributed_force(a)
-                elif remove and load in self._distributed_forces_y.keys():
-                    self._distributed_forces_y.pop(a)
-
-            if abs(round(force_x.subs(x,1), 5)) > 0 or abs(round(force_x.subs(x,0), 5)) > 0:
-                b = DistributedLoadH(force_x, position)
-                if not remove and load not in self._distributed_forces_x.keys():
-                    self._distributed_forces_x[b] = self._create_distributed_force(b)
-                elif remove and load in self._distributed_forces_x.keys():
-                    self._distributed_forces_x.pop(b)
-
-    def _create_distributed_force(
-            self,
-            load: DistributedLoadH or DistributedLoadV):
-        """
-        Create a sympy.Piecewise object representing the provided 
-        distributed load.
-
-        :param expr: string with a valid sympy expression.
-        :param interval: tuple (x0, x1) containing the extremes of the 
-        interval on which the load is applied.
-        :param shift: when set to False, the x-coordinate in the 
-        expression is referred to the left end of the beam, instead 
-        of the left end of the provided interval.
-        :return: sympy.Piecewise object with the value of the 
-        distributed load.
-        """
-        expr, interval = load
-        x0, x1 = interval
-        expr = sympify(expr)
-
-        # a list to contain an expression for a distributed laod and
-        # the values of the expression at either end
-
-        t1 = time.perf_counter()
-
-        func_list = [[expr, 0]]
-        for a in range(1,5):
-            # integrate main function and solve to equal 0 at left
-            func = integrate(func_list[-1][0], x)
-            c1 = func.subs(x, x0)
-            func -= c1
-
-            # integrate second function
-            func_2 = integrate(func_list[-1][1], x)
-            c2 = func.subs(x, x1)
-            func_2 += c2 - func_2.subs(x, x1) 
-
-            func_list.append([func, func_2])
-
-
-        a = Piecewise((0, x < x0), (0, x > x1), (func_list[0][0], True))
-        b = Piecewise((0, x < x0), (func_list[1][0], x <= x1), (func_list[1][1], True))
-        c = Piecewise((0, x < x0), (func_list[2][0], x <= x1), (func_list[2][1], True))
-        d = Piecewise((0, x < x0), (func_list[3][0], x <= x1), (func_list[3][1], True))
-        e = Piecewise((0, x < x0), (func_list[4][0], x <= x1), (func_list[4][1], True))
-        f = func_list[1][1]
-        print(t1 - time.perf_counter())
-        if isinstance(load, DistributedLoadV):
-            return (
-                a,
-                b,
-                c,
-                d,
-                e,
-                f,
-                integrate(expr * x, (x, x0, x1)),
-            )
-
-        elif isinstance(load, DistributedLoadH):
-            return (
-                a,
-                b,
-                c,
-                0,
-                0,
-                f,
-                0,
-            )
-                
-    def _effort_from_pointload(
-            self, load: PointLoadH or PointLoadV or PointTorque):
-        """
-        Create a sympy.Piecewise object representing the shear force 
-        caused by a point load.
-
-        :param value: float or string with the numerical value of the 
-        point load.
-        :param coord: x-coordinate on which the point load is applied.
-        :return: sympy.Piecewise object with the value of the shear 
-        force produced by the provided point load.
-        """
-        value, coord = load
-        return Piecewise((0, x < coord), (value, True))
-
-    # def _point_loads_x(self):
-    #     for f in self._loads:
-    #         if isinstance(f, PointLoadH):
-    #             yield f
-    #         elif isinstance(f, PointLoad):
-    #             force, position, angle = f
-    #             # when angle = 0 then force is 1
-    #             force_x = sympify(force * cos(radians(angle))).evalf(10)
-
-    #             if abs(round(force_x, 3)) > 0:
-    #                 yield PointLoadH(force_x, position)
-
-    # def _point_loads_y(self):
-    #     for f in self._loads:
-    #         if isinstance(f, PointLoadV):
-    #             yield f
-    #         elif isinstance(f, PointLoad):
-    #             force, position, angle = f
-    #             # when angle = 90 then force is 1
-    #             force_y = sympify(force * sin(radians(angle))).evalf(10)
-
-    #             if abs(round(force_y, 3)) > 0:
-    #                 yield PointLoadV(force_y, position)
-
-    # def _distributed_loads_x(self):
-    #     for f in self._loads:
-    #         if isinstance(f, DistributedLoadH):
-    #             yield f
-    #         elif isinstance(f, DistributedLoad):
-    #             force, position, angle = f
-
-    #             force = sympify(force)
-    #             force_x = force * cos(radians(angle)).evalf(10)
-    #             if abs(round(force_x.subs(x,1), 5)) > 0:
-    #                 yield DistributedLoadH(force_x, position)
-
-    # def _distributed_loads_y(self):
-    #     for f in self._loads:
-    #         if isinstance(f, DistributedLoadV):
-    #             yield f
-    #         elif isinstance(f, DistributedLoad):
-    #             force, position, angle = f
-
-    #             force = sympify(force)
-    #             force_y = force * sin(radians(angle)).evalf(10)
-    #             if abs(round(force_y.subs(x,1), 5)) > 0:
-    #                 yield DistributedLoadV(force_y, position)
-
-    # def _point_torques(self):
-    #     for f in self._loads:
-    #         if isinstance(f, PointTorque):
-    #             yield f
-
     def __str__(self):
         return f"""--------------------------------
         <Beam>
@@ -2141,28 +1680,12 @@ class Beam:
 
 
 if __name__ == "__main__":
-    t1 = time.perf_counter()
-    beam = Beam(7)                          # Initialize a Beam object of length 9m with E and I as defaults
-    beam_2 = Beam(9,E=2000, I =100000)      # Initializa a Beam specifying some beam parameters
+    a = PointLoad(5,1,90)
+    b = UDL(4,(0,2))
 
-    a = Support(5,(1,1,0))                  # Defines a pin support at location x = 5m  
-    b = Support(0,(0,1,0))                  # Defines a roller support at location x = 0m
-    c = Support(7,(1,1,1))                  # Defines a fixed support at location x = 7m
-    beam.add_supports(a,b,c)    
-
-    load_1 = PointLoadV(1,2)                # Defines a point load of 1kn acting up, at location x = 2m   # Defines a 2kN UDL from location x = 1m to x = 4m 
-    load_3 = PointTorque(2, 3.5)              # Defines a 2kN.m point torque at location x = 3.5m
-    load_2 = TrapezoidalLoad((0,5),(0,5),90)
-    load_4 = TrapezoidalLoad((5,5),(1,4),90)
-    load_5 = DistributedLoad("2 * x + 5",(0,5),90)
-
-    load_6 = TrapezoidalLoad((1,2),(1,2),45)
-    load_7 = TrapezoidalLoadV((2,2),(2,3))
-    load_8 = TrapezoidalLoadH((2,3),(2,3))
-    load_9 = DistributedLoad("2 * x + 5",(0,5),45)
-    load_10 = DistributedLoadV("2 * x * x + 5",(0,5))
-    load_11 = DistributedLoadH("2 * x + 5",(0,5))
-    
-    beam.add_loads(load_1,load_3, load_2, load_4, load_5,load_6, load_7, load_8, load_9, load_10, load_11)           # Assign the support objects to a beam object created earlier
-
+    beam = Beam(5)
+    beam.add_loads(a,b)
+    beam.add_supports(Support())
     beam.analyse()
+
+    beam.plot_beam_external()
