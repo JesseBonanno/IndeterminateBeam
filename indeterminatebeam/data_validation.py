@@ -25,3 +25,9 @@ def assert_number(n, name):
     if type(n) not in [int, float]:
         raise ValueError(
             f"The value for '{name}' should be an integer or a float, not a {type(n)}.")
+
+def assert_length(var, num, name):
+    """Assert that a tuple or list is of a specific length."""
+    if len(var) != num:
+        raise ValueError(
+            f"The length of '{name}' should be {num} not {len(var)}.")

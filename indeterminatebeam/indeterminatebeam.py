@@ -18,12 +18,12 @@ from copy import deepcopy
 import numpy as np
 import os
 from sympy import (integrate, lambdify, Piecewise, sympify, symbols, 
-                   linsolve, sin, cos, oo)
+                   linsolve, sin, cos, oo, SingularityFunction)
 from sympy.abc import x
 from math import radians
-from indeterminatebeam.data_validation import (assert_number, assert_positive_number,
-                             assert_strictly_positive_number)
-from indeterminatebeam.plotly_drawing_aid import (
+from data_validation import (assert_number, assert_positive_number,
+                             assert_strictly_positive_number, assert_length)
+from plotly_drawing_aid import (
     draw_line, draw_arrowhead, draw_arrow, draw_support_triangle,
     draw_support_rectangle, draw_moment, draw_force, draw_load_hoverlabel,
     draw_reaction_hoverlabel, draw_support_hoverlabel, draw_support_rollers,
@@ -142,8 +142,32 @@ class Support:
             return f"<support, id = {self._id}>"
         return "<Support>"
 
+class PointTorque:
+    """Point clockwise torque, described by a tuple of floats:
+    (torque, coord).
 
-class PointLoad(namedtuple("PointLoad", "force, coord, angle")):
+    Parameters:
+    -----------
+    torque: float
+        Torque in kN.m
+    coord: float
+        x coordinate of torque on beam
+
+    Examples
+    --------
+    # 30 kN·m (clockwise) torque at x=4 m
+    >>> motor_torque = PointTorque(30, 4)
+    """
+
+    
+    def __init__(self, torque = 0, coord=0):
+        assert_number(torque, 'torque')
+        assert_positive_number(coord, 'coordinate')
+        
+        self._x = 0
+        self._y = torque * SingularityFunction(x, coord, -1)
+
+class PointLoad:
     """Point load described by a tuple of floats: (force, coord, angle).
 
     Parameters:
@@ -168,47 +192,35 @@ class PointLoad(namedtuple("PointLoad", "force, coord, angle")):
     >>> external_force
     PointLoad(force=-30, coord=3, angle=0)
     """
+    
+    def __init__(self, force = 0, coord=0, angle=0):
+        assert_number(force, 'force')
+        assert_positive_number(coord, 'coordinate')
+        assert_number(angle, 'angle')
 
-class PointLoadV(namedtuple("PointLoadV", "force, coord")):
-    """Vertical point load described by a tuple of floats:
-    (force, coord).
+        force_x = force * cos(radians(angle)).evalf(8)
+        force_y = force * sin(radians(angle)).evalf(8)
 
-    Parameters:
-    -----------
-    force: float
-        Force in kN
-    coord: float
-        x coordinate of load on beam
+        if abs(round(force_x,5)) > 0:
+            self._x = force_x * SingularityFunction(x, coord, -1)
+        else: 
+            self._x = 0
+        
+        if abs(round(force_y,5)) > 0:
+            self._y = force_y * SingularityFunction(x, coord, -1)
+        else: 
+            self._y = 0
 
-    Examples
-    --------
-    # 30 kN downwards at x=3 m
-    >>> external_force = PointLoadV(-30, 3)
-    >>> external_force
-    PointLoadV(force=-30, coord=3)
-    """
+class PointLoadV(PointLoad):
+    def __init__(self, force = 0, coord = 0):
+        super().__init__(force,coord,angle=90)
 
-class PointLoadH(namedtuple("PointLoadH", "force, coord")):
-    """Horizontal point load described by a tuple of floats:
-    (force, coord).
-
-    Parameters:
-    -----------
-    Force: float
-        Force in kN
-    coord: float
-        x coordinate of load on beam
+class PointLoadH(PointLoad):
+    def __init__(self, force = 0, coord = 0):
+        super().__init__(force,coord,angle=0)
 
 
-    Examples
-    --------
-    # 10 kN towards the right at x=9 m
-    >>> external_force = PointLoadH(10, 9)
-    >>> external_force
-    PointLoadH(force=10, coord=9)
-    """
-
-class DistributedLoad(namedtuple("DistributedLoadV", "expr, span, angle")):
+class DistributedLoad:
     """Distributed load, described by its functional form, application 
     interval and the angle of the load relative to the beam.
 
@@ -226,277 +238,124 @@ class DistributedLoad(namedtuple("DistributedLoadV", "expr, span, angle")):
         - 0 degrees is purely horizontal +ve
         - 90 degrees is purely vertical +ve
         - 180 degrees is purely horizontal -ve of force sign specified.
-
-
-
-
     Examples
     --------
     # Linearly growing load for 0<x<2 m
     >>> snow_load = DistributedLoad("10*x+5", (0, 2),90)
     """
 
-class DistributedLoadV(namedtuple("DistributedLoadV", "expr, span")):
-    """Distributed vertical load, described by its functional form
-    and application interval.
+    def __init__(self, expr, span =(0, 0), angle = 0):
+        try:
+            expr = sympify(expr)
+        except:
+            print("Can not convert expression to sympy function. \
+            Function should only contain variable x, should be \
+            encapsulated by quotations, and should have * between x \
+            and coefficients i.e 2 * x rather than 2x")
+        
+        # Validate span input
+        assert_length(span, 2, 'span')
+        assert_positive_number(span[0], 'span start')
+        assert_strictly_positive_number(span[1]-span[0] 'span start minus span end')
 
-    Parameters:
-    -----------
-    expr: sympy expression
-        Sympy expression of the distributed load function expressed
-        using variable x which represents the beam x-coordinate.
-        Requires quotation marks around expression.
-    span: tuple of floats
-        A tuple containing the starting and ending coordinate that
-         the function is applied to.
+        # validate angle input
+        assert_number(angle, 'angle')
 
+        force_x = cos(radians(angle)).evalf(10)
+        force_y = sin(radians(angle)).evalf(10)
 
-    Examples
-    --------
-    # Linearly growing load for 0<x<2 m
-    >>> snow_load = DistributedLoadV("10*x+5", (0, 2))
-    # Linearly growing load starting at 5kN/m at 1m coordinate and
-    # ending at 15kn/m at 2m coordinate
-    >>> trapezoidal_load = DistributedLoadV("-5 + 10 * x", (1,2))
-    # Uniformly distributed load of 10 kn/m from 1m to 3m coordinate
-    >>> UDL = DistributedLoadV(10, (1,3))
-    """
+        if abs(round(force_x,8)) > 0:
+            self._x = force_x * expr
+        else: 
+            self._x = 0
+        
+        if abs(round(force_y,8)) > 0:
+            self._y = force_y * expr
+        else: 
+            self._y = 0
 
-class DistributedLoadH(namedtuple("DistributedLoadH", "expr, span")):
-    """Distributed horizontal load, described by its functional form
-    and application interval.
+class DistributedLoadV(DistributedLoad):
+    def __init__(self, expr = 0, span = (0,0)):
+        super().__init__(expr, span, angle=90)
 
-    Parameters:
-    -----------
-    expr: sympy expression
-        Sympy expression of the distributed load function expressed
-        using variable x which represents the beam x-coordinate.
-        Requires quotation marks around expression.
-    span: tuple of floats
-        A tuple containing the starting and ending coordinate that
-         the function is applied to.
+class DistributedLoadH(DistributedLoad):
+    def __init__(self, expr = 0, span = (0,0)):
+        super().__init__(expr, span, angle=0)
 
-    Note: Use case would be weight for a vertical beam.
-
-    Examples
-    --------
-    # Linearly growing load for 0<x<2 m
-    >>> snow_load = DistributedLoadH("10*x+5", (0, 2))
-    # Linearly growing load starting at 5kN/m at 1m coordinate and
-    # ending at 15kn/m at 2m coordinate
-    >>> trapezoidal_load = DistributedLoadH("-5 + 10 * x", (1,2))
-    # Uniformly distributed load of 10 kn/m from 1m to 3m coordinate
-    >>> UDL = DistributedLoadH(10, (1,3))
-    """
-
-def TrapezoidalLoad(force=(0, 0), span=(0, 0), angle=0):
-    """Wrapper for the DistributedLoad class, used to express a
-    trapezoidal load distribution.
-
-    Parameters
-    ------------
-        force : tuple of two floats
-            Describes the starting force value and ending force
-            value (kN/m)
-        span : tuple of two floats
-            Describes the starting coordinate value and ending
-            coordinate value (m)
-        angle: float
-            angle of point load where:
-            - 0 degrees is purely horizontal +ve
-            - 90 degrees is purely vertical +ve
-            - 180 degrees is purely horizontal -ve of force sign specified.
-
-    Examples
-    --------
-    # Linearly growing load starting at 5kN/m ending at 15kn/m
-    >>> trapezoidal_load = TrapezoidalLoad((5,15), (1,2), 90)
-    # Equivalent expression created using DistributedLoad
-    >>> trapezoidal_load = DistributedLoad("-5 + 10 * x", (1,2),90)
-    """
-
-    # Data validation
-    if len(force) != 2 or len(span) != 2:
-        raise TypeError(
-            "A tuple of length 2 is required for both the force \
-            and span arguments"
-        )
-
-    start_load, end_load = force
-    start_coordinate, end_coordinate = span
-
-    assert_number(start_load, "force[0] (The starting force)")
-    assert_number(end_load, "force[1] (The ending force)")
-
-    assert_positive_number(
-        start_coordinate,
-        "span[0] (The starting coordinate) "
-    )
-    assert_strictly_positive_number(end_coordinate, "span[1] (The ending coordinate)")
-
-    if start_coordinate >= end_coordinate:
-        raise ValueError(
-            "start coordinate should be less than end coordinate"
-        )
+class UDL:
     
-    # Assemble trapzoidal load as a DistributedLoadV load
+    def __init__(self, force = 0, span =(0, 0), angle = 0):
+        
+        # Validate span input
+        assert_length(span, 2, 'span')
+        assert_positive_number(span[0], 'span start')
+        assert_strictly_positive_number(span[1]-span[0] 'span start minus span end')
 
-    # Case 1 - UDL i.e load is constant
-    if end_load == start_load:
-        return DistributedLoad(
-            start_load,
-            (start_coordinate, end_coordinate),
-            angle
-        )
+        # validate angle input
+        assert_number(angle, 'angle')
 
-    # Case 2 - Load is not constant and has a non-zero slope
-    else:
-        a = (end_load - start_load) / (end_coordinate - start_coordinate)
-        b = start_load - start_coordinate * a
+        force_x = force * cos(radians(angle)).evalf(8)
+        force_y = force * sin(radians(angle)).evalf(8)
 
-        return DistributedLoad(
-            f"{a}*x+{b}", (start_coordinate, end_coordinate), angle)
+        if abs(round(force_x,5)) > 0:
+            self._x = force_x * (
+                SingularityFunction(x, span[0], 0) - SingularityFunction(x, span[1], 0)
+                )
+        else: 
+            self._x = 0
+        
+        if abs(round(force_y,5)) > 0:
+            self._y = force_y * (
+                SingularityFunction(x, span[0], 0) - SingularityFunction(x, span[1], 0)
+                )
+        else: 
+            self._y = 0
 
-def TrapezoidalLoadV(force=(0, 0), span=(0, 0)):
-    """Wrapper for the DistributedLoadV class, used to express a
-    trapezoidal load distribution.
+class TrapezoidalLoad:
 
-    Parameters
-    ------------
-        force : tuple of two floats
-            Describes the starting force value and ending force
-            value (kN/m)
-        span : tuple of two floats
-            Describes the starting coordinate value and ending
-            coordinate value (m)
+    def __init__(self, force = (0,0), span =(0, 0), angle = 0):
+        # Validate force input
+        assert_length(force, 2, 'force')
 
-    Examples
-    --------
-    # Linearly growing load starting at 5kN/m ending at 15kn/m
-    >>> trapezoidal_load = TrapezoidalLoadV((5,15), (1,2))
-    # Equivalent expression created using DistributedLoadV
-    >>> trapezoidal_load = DistributedLoadV("-5 + 10 * x", (1,2))
-    """
+        # check if UDL (not sure if this code will work properly)
+        if force[0] == force [1]:
+            return UDL(force[0], span, angle)
 
-    # Data validation
-    if len(force) != 2 or len(span) != 2:
-        raise TypeError(
-            "A tuple of length 2 is required for both the force \
-            and span arguments"
-        )
+        # Validate span input
+        assert_length(span, 2, 'span')
+        assert_positive_number(span[0], 'span start')
+        assert_strictly_positive_number(span[1]-span[0] 'span start minus span end')
 
-    start_load, end_load = force
-    start_coordinate, end_coordinate = span
+        # validate angle input
+        assert_number(angle, 'angle')
 
-    assert_number(start_load, "force[0] (The starting force)")
-    assert_number(end_load, "force[1] (The ending force)")
+        #turn trapezoid into a triangle + rectangle
+        UDL_component = UDL(force[0], span, angle)
 
-    assert_positive_number(
-        start_coordinate,
-        "span[0] (The starting coordinate) "
-    )
-    assert_strictly_positive_number(end_coordinate, "span[1] (The ending coordinate)")
+        # express values for triangular load distribution
+        xa, xb = span[0], span[1]
+        a, b = 0, force[1] - force[0]
+        slope = b / (span[1] - span[0])
 
-    if start_coordinate >= end_coordinate:
-        raise ValueError(
-            "start coordinate should be less than end coordinate"
-        )
-    
-    # Assemble trapzoidal load as a DistributedLoadV load
+        force_x = cos(radians(angle)).evalf(10)
+        force_y = sin(radians(angle)).evalf(10)
 
-    # Case 1 - UDL i.e load is constant
-    if end_load == start_load:
-        return DistributedLoadV(
-            start_load,
-            (start_coordinate, end_coordinate)
-        )
+        triangular_component = sum([
+            + slope * SingularityFunction(x, xa, 1),
+            - b * SingularityFunction(x, xb, 0),
+            - slope * SingularityFunction(x, xb, 1),
+        ])
 
-    # Case 2 - Load is not constant and has a non-zero slope
-    else:
-        a = (end_load - start_load) / (end_coordinate - start_coordinate)
-        b = start_load - start_coordinate * a
+        if abs(round(force_x,8)) > 0:
+            self._x = UDL_component._x + force_x * triangular_component
+        else: 
+            self._x = 0
+        
+        if abs(round(force_y,8)) > 0:
+            self._y = UDL_component._y + force_y * triangular_component
+        else: 
+            self._y = 0
 
-        return DistributedLoadV(
-            f"{a}*x+{b}", (start_coordinate, end_coordinate))
-
-def TrapezoidalLoadH(force=(0, 0), span=(0, 0)):
-    """Wrapper for the DistributedLoadH class, used to express a
-    trapezoidal load distribution.
-
-    Parameters
-    ------------
-        force : tuple of two floats
-            Describes the starting force value and ending force
-            value (kN/m)
-        span : tuple of two floats
-            Describes the starting coordinate value and ending
-            coordinate value (m)
-
-    Examples
-    --------
-    # Linearly growing load starting at 5kN/m ending at 15kn/m
-    >>> trapezoidal_load = TrapezoidalLoadH((5,15), (1,2))
-    # Equivalent expression created using DistributedLoadH
-    >>> trapezoidal_load = DistributedLoadH("-5 + 10 * x", (1,2))
-    """
-
-    # Data validation
-    if len(force) != 2 or len(span) != 2:
-        raise TypeError(
-            "A tuple of length 2 is required for both the force \
-            and span arguments"
-        )
-
-    start_load, end_load = force
-    start_coordinate, end_coordinate = span
-
-    assert_number(start_load, "force[0] (The starting force)")
-    assert_number(end_load, "force[1] (The ending force)")
-
-    assert_positive_number(
-        start_coordinate,
-        "span[0] (The starting coordinate) "
-    )
-    assert_strictly_positive_number(end_coordinate, "span[1] (The ending coordinate)")
-
-    if start_coordinate >= end_coordinate:
-        raise ValueError(
-            "start coordinate should be less than end coordinate"
-        )
-    
-    # Assemble trapzoidal load as a DistributedLoadV load
-
-    # Case 1 - UDL i.e load is constant
-    if end_load == start_load:
-        return DistributedLoadH(
-            start_load,
-            (start_coordinate, end_coordinate)
-        )
-
-    # Case 2 - Load is not constant and has a non-zero slope
-    else:
-        a = (end_load - start_load) / (end_coordinate - start_coordinate)
-        b = start_load - start_coordinate * a
-
-        return DistributedLoadH(
-            f"{a}*x+{b}", (start_coordinate, end_coordinate))
-
-class PointTorque(namedtuple("PointTorque", "torque, coord")):
-    """Point clockwise torque, described by a tuple of floats:
-    (torque, coord).
-
-    Parameters:
-    -----------
-    torque: float
-        Torque in kN.m
-    coord: float
-        x coordinate of torque on beam
-
-    Examples
-    --------
-    # 30 kN·m (clockwise) torque at x=4 m
-    >>> motor_torque = PointTorque(30, 4)
-    """
 
 class Beam:
     """
@@ -617,54 +476,23 @@ class Beam:
         # If load valid then add to self._loads.
         # Note: Have ignored distributedLoadH in this version.
         for load in loads:
-            if isinstance(
-                load, (
-                    PointLoad,
-                    PointLoadH,
-                    PointLoadV,
-                    PointTorque,
-                    DistributedLoadV,
-                    DistributedLoadH,
-                    DistributedLoad,
-                )
-            ):
-                if isinstance(load, (DistributedLoadV,DistributedLoadH,DistributedLoad)):
-                    left = min(load[1])
-                    right = max(load[1])
-                    assert_positive_number(left, "span left")
-                    assert_positive_number(right, "span right")
+            if isinstance(load, (DistributedLoad, UDL, TrapezoidalLoad)):
+                left, right = load
 
-                    if self._x0 > left or right > self._x1:
-                        raise ValueError(
-                            f"Coordinate {load[1]} for {str(load)} is not a point on beam."
-                        )
+                if self._x0 > left or right > self._x1:
+                    raise ValueError(
+                        f"Coordinate {load[1]} for {str(load)} is not a point on beam."
+                    )
 
-                    elif len(load[1]) != 2:
-                        raise ValueError(
-                            f"Coordinates for {str(load)} span should only have two numbers entered.")
+            elif isinstance(load,(PointTorque, PointLoad)):
+                coordinate = load[1]
+                
+                if self._x0 > coordinate or coordinate > self._x1:
+                    raise ValueError(
+                        f"Coordinate {coordinate} for {str(load)} is not a point on beam.")
 
-                    else:
-                        self._loads.append(load)
-                        self._update_distributed_loads(load)
+            self._loads.append(load)
 
-                elif isinstance(
-                    load,
-                    (PointTorque, PointLoadV, PointLoadH, PointLoad)
-                ):
-                    assert_number(load[0], 'force')
-                    assert_positive_number(load[1], 'x coordinate')
-
-                    if self._x0 > load[1] or load[1] > self._x1:
-                        raise ValueError(
-                            f"Coordinate {load[1]} for {str(load)} is not a point on beam.")
-
-                    if isinstance(load, PointLoad):
-                        assert_number(load[2], 'angle')
-
-                    if abs(round(load[0], 10)) > 0:
-                        self._loads.append(load)
-
-        #self._update_loads()
 
     def remove_loads(self, *loads, remove_all=False):
         """Remove an arbitrary list of (point- or distributed) loads
@@ -683,8 +511,6 @@ class Beam:
         # if remove all set, reintialize parameters
         if remove_all:
             self._loads = []
-            self._distributed_forces_x = {}
-            self._distributed_forces_y = {}
             return None
 
         # if individual loads check if associated with beam and if so
@@ -699,8 +525,6 @@ class Beam:
         for load in loads:
             if load in self._loads:
                 self._loads.remove(load)
-                if isinstance(load,(DistributedLoad,DistributedLoadH,DistributedLoadV)):
-                    self._update_distributed_loads(load, remove = True)
 
     def add_supports(self, *supports):
         """Apply an arbitrary list of supports (Support objects) to the
@@ -818,7 +642,7 @@ class Beam:
 
         x0, x1 = self._x0, self._x1
 
-        # create unknown sympy variables
+        
         unknowns_x = {a._position: [
             symbols("x_" + str(a._position)),
             a._stiffness[0]
@@ -859,28 +683,14 @@ class Beam:
         x_0.sort()
 
         # external reaction equations
-        F_Rx = sum(
-            load[5]
-            for load in self._distributed_forces_x.values()
-        ) \
-            + sum(f.force for f in self._point_loads_x()) \
+        F_Rx = sum([load._x for load in self._loads]) \
             + sum([a[0] for a in unknowns_x.values()])
 
-        F_Ry = sum(
-            load[5]
-            for load in self._distributed_forces_y.values()
-        ) \
-            + sum(f.force for f in self._point_loads_y()) \
+        F_Ry = sum([load._x for load in self._loads]) \
             + sum([a[0] for a in unknowns_y.values()])
 
         # moments taken at the left of the beam, anti-clockwise is positive
-        M_R = sum(
-            load[6]
-            for load in self._distributed_forces_y.values()
-        ) \
-            + sum(f.force * f.coord for f in self._point_loads_y()) \
-            + sum([p * v[0] for p, v in unknowns_y.items()]) \
-            + sum(f.torque for f in self._point_torques()) \
+        M_R = sum(integrate(load._y * x, (x, x0, x1)) for load in self._loads) \
             + sum([a[0] for a in unknowns_m.values()])
 
         # internal beam equations
@@ -1947,7 +1757,6 @@ class Beam:
 
         return fig
 
-
     def plot_axial_deflection(self, reverse_x=False, reverse_y=False, switch_axes=False,
                               fig=None, row=None, col=None):
         """Returns a plot of the beam axial deflection as a function 
@@ -2179,7 +1988,6 @@ class Beam:
                 elif remove and load in self._distributed_forces_x.keys():
                     self._distributed_forces_x.pop(b)
 
-
     def _create_distributed_force(
             self,
             load: DistributedLoadH or DistributedLoadV):
@@ -2249,7 +2057,6 @@ class Beam:
                 0,
             )
                 
-
     def _effort_from_pointload(
             self, load: PointLoadH or PointLoadV or PointTorque):
         """
@@ -2265,58 +2072,58 @@ class Beam:
         value, coord = load
         return Piecewise((0, x < coord), (value, True))
 
-    def _point_loads_x(self):
-        for f in self._loads:
-            if isinstance(f, PointLoadH):
-                yield f
-            elif isinstance(f, PointLoad):
-                force, position, angle = f
-                # when angle = 0 then force is 1
-                force_x = sympify(force * cos(radians(angle))).evalf(10)
+    # def _point_loads_x(self):
+    #     for f in self._loads:
+    #         if isinstance(f, PointLoadH):
+    #             yield f
+    #         elif isinstance(f, PointLoad):
+    #             force, position, angle = f
+    #             # when angle = 0 then force is 1
+    #             force_x = sympify(force * cos(radians(angle))).evalf(10)
 
-                if abs(round(force_x, 3)) > 0:
-                    yield PointLoadH(force_x, position)
+    #             if abs(round(force_x, 3)) > 0:
+    #                 yield PointLoadH(force_x, position)
 
-    def _point_loads_y(self):
-        for f in self._loads:
-            if isinstance(f, PointLoadV):
-                yield f
-            elif isinstance(f, PointLoad):
-                force, position, angle = f
-                # when angle = 90 then force is 1
-                force_y = sympify(force * sin(radians(angle))).evalf(10)
+    # def _point_loads_y(self):
+    #     for f in self._loads:
+    #         if isinstance(f, PointLoadV):
+    #             yield f
+    #         elif isinstance(f, PointLoad):
+    #             force, position, angle = f
+    #             # when angle = 90 then force is 1
+    #             force_y = sympify(force * sin(radians(angle))).evalf(10)
 
-                if abs(round(force_y, 3)) > 0:
-                    yield PointLoadV(force_y, position)
+    #             if abs(round(force_y, 3)) > 0:
+    #                 yield PointLoadV(force_y, position)
 
-    def _distributed_loads_x(self):
-        for f in self._loads:
-            if isinstance(f, DistributedLoadH):
-                yield f
-            elif isinstance(f, DistributedLoad):
-                force, position, angle = f
+    # def _distributed_loads_x(self):
+    #     for f in self._loads:
+    #         if isinstance(f, DistributedLoadH):
+    #             yield f
+    #         elif isinstance(f, DistributedLoad):
+    #             force, position, angle = f
 
-                force = sympify(force)
-                force_x = force * cos(radians(angle)).evalf(10)
-                if abs(round(force_x.subs(x,1), 5)) > 0:
-                    yield DistributedLoadH(force_x, position)
+    #             force = sympify(force)
+    #             force_x = force * cos(radians(angle)).evalf(10)
+    #             if abs(round(force_x.subs(x,1), 5)) > 0:
+    #                 yield DistributedLoadH(force_x, position)
 
-    def _distributed_loads_y(self):
-        for f in self._loads:
-            if isinstance(f, DistributedLoadV):
-                yield f
-            elif isinstance(f, DistributedLoad):
-                force, position, angle = f
+    # def _distributed_loads_y(self):
+    #     for f in self._loads:
+    #         if isinstance(f, DistributedLoadV):
+    #             yield f
+    #         elif isinstance(f, DistributedLoad):
+    #             force, position, angle = f
 
-                force = sympify(force)
-                force_y = force * sin(radians(angle)).evalf(10)
-                if abs(round(force_y.subs(x,1), 5)) > 0:
-                    yield DistributedLoadV(force_y, position)
+    #             force = sympify(force)
+    #             force_y = force * sin(radians(angle)).evalf(10)
+    #             if abs(round(force_y.subs(x,1), 5)) > 0:
+    #                 yield DistributedLoadV(force_y, position)
 
-    def _point_torques(self):
-        for f in self._loads:
-            if isinstance(f, PointTorque):
-                yield f
+    # def _point_torques(self):
+    #     for f in self._loads:
+    #         if isinstance(f, PointTorque):
+    #             yield f
 
     def __str__(self):
         return f"""--------------------------------
