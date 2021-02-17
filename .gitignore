@@ -16,3 +16,5 @@ indeterminatebeam/app_*
 indeterminatebeam/TODO.txt
 
 venv
+
+tests/*.txt

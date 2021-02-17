@@ -4,6 +4,10 @@ sys.path.insert(0, os.path.abspath('../'))
 from indeterminatebeam.indeterminatebeam import (
     Support, 
     Beam, 
+    oo
+)
+
+from indeterminatebeam.loading import (
     PointTorque,
     PointLoad,
     PointLoadV, 
@@ -14,7 +18,6 @@ from indeterminatebeam.indeterminatebeam import (
     TrapezoidalLoad,
     TrapezoidalLoadV,
     TrapezoidalLoadH,
-    oo
 )
 import unittest
 import time
@@ -37,14 +40,14 @@ class BeamTestCase(unittest.TestCase):
         b = PointLoadV(-15,1)
         c = PointLoadH(-15,1)
         d = PointTorque(-15,1)
-        e = DistributedLoad(5,(0,1),45)
-        f = DistributedLoadV(5,(0,1))
-        g = DistributedLoadH(5,(0,1))
+        # e = DistributedLoad(5,(0,1),45)
+        # f = DistributedLoadV(5,(0,1))
+        # g = DistributedLoadH(5,(0,1))
         h = TrapezoidalLoad((0,1),(0,1),45)
         i = TrapezoidalLoadV((0,1),(0,1))
         j = TrapezoidalLoadH((0,1),(0,1))
 
-        beam.add_loads(a,b,c,d,e,f,g,h,i,j)
+        beam.add_loads(a,b,c,d,h,i,j)
         beam.add_supports(
             Support(),
             Support(5,(1,1,0))
@@ -53,14 +56,6 @@ class BeamTestCase(unittest.TestCase):
 
         fig = beam.plot_beam_external()
         fig = beam.plot_beam_internal()
-
-        fig = beam.plot_beam_diagram()
-        fig = beam.plot_reaction_force()
-
-        fig = beam.plot_normal_force()
-        fig = beam.plot_shear_force()
-        fig = beam.plot_bending_moment()
-        fig = beam.plot_deflection()
 
         self.store_speeds.append(t1-time.perf_counter())
 
@@ -80,7 +75,7 @@ class BeamTestCase(unittest.TestCase):
         i = TrapezoidalLoadV((0,1),(0,1))
         j = TrapezoidalLoadH((0,1),(0,1))
 
-        beam.add_loads(a,b,c,d,e,f,g,h,i,j)
+        beam.add_loads(a,b,c,d,h,i,j)
         beam.add_supports(
             Support(),
         )
@@ -89,14 +84,6 @@ class BeamTestCase(unittest.TestCase):
 
         fig = beam.plot_beam_external()
         fig = beam.plot_beam_internal()
-
-        fig = beam.plot_beam_diagram()
-        fig = beam.plot_reaction_force()
-
-        fig = beam.plot_normal_force()
-        fig = beam.plot_shear_force()
-        fig = beam.plot_bending_moment()
-        fig = beam.plot_deflection()
 
         self.store_speeds.append(t1-time.perf_counter())
 

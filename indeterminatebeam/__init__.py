@@ -1,1 +1,9 @@
-from indeterminatebeam.indeterminatebeam import Support, Beam, PointLoad, PointLoadV, PointLoadH, DistributedLoad, DistributedLoadV, DistributedLoadH, PointTorque, TrapezoidalLoad, TrapezoidalLoadV, TrapezoidalLoadH
+from indeterminatebeam.indeterminatebeam import (
+    Support, 
+    Beam,     
+    PointTorque,
+    PointLoad,
+    UDL,
+    TrapezoidalLoad,
+    DistributedLoad,
+)

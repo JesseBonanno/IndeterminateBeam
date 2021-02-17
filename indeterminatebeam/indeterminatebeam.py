@@ -22,16 +22,16 @@ from sympy import (integrate, lambdify, Piecewise, sympify, symbols,
 from sympy.abc import x
 from math import radians
 
-from data_validation import (assert_number, assert_positive_number,
+from indeterminatebeam.data_validation import (assert_number, assert_positive_number,
                              assert_strictly_positive_number, assert_length)
-from plotly_drawing_aid import (
+from indeterminatebeam.plotly_drawing_aid import (
     draw_line, draw_arrowhead, draw_arrow, draw_support_triangle,
     draw_support_rectangle, draw_moment, draw_force, draw_load_hoverlabel,
     draw_reaction_hoverlabel, draw_support_hoverlabel, draw_support_rollers,
     draw_support_spring, draw_support
     )
 
-from loading import (
+from indeterminatebeam.loading import (
     PointTorque,
     PointLoad,
     UDL,
@@ -1240,14 +1240,14 @@ class Beam:
                     if abs(x_) > 0:
                         fig = draw_force(
                             fig,
-                            PointLoadH(x_, position),
+                            PointLoad(x_, position,0),
                             row=row,
                             col=col
                         )
                     if abs(y_) > 0:
                         fig = draw_force(
                             fig,
-                            PointLoadV(y_, position),
+                            PointLoad(y_, position,90),
                             row=row,
                             col=col)
                     if abs(m_) > 0:
@@ -1265,9 +1265,9 @@ class Beam:
                     )
 
                     if abs(x_) > 0:
-                        fig = draw_force(fig, PointLoadH(x_, position))
+                        fig = draw_force(fig, PointLoad(x_, position,0))
                     if abs(y_) > 0:
-                        fig = draw_force(fig, PointLoadV(y_, position))
+                        fig = draw_force(fig, PointLoad(y_, position,90))
                     if abs(m_) > 0:
                         fig = draw_force(fig, PointTorque(m_, position))
 

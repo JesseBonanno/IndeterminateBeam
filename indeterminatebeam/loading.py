@@ -1,12 +1,14 @@
 from sympy.abc import x
 from sympy import oo, integrate, SingularityFunction, sympify, cos, sin
 
-from data_validation import (
+from indeterminatebeam.data_validation import (
     assert_length, 
     assert_number, 
     assert_positive_number, 
     assert_strictly_positive_number
 )
+
+import time
 
 from math import radians
 
@@ -192,7 +194,11 @@ class TrapezoidalLoad(Load):
             self._y0 = 0
 
         self._integrate_load()
-        self._m0 = integrate(self._y0 * x, (x, 0, span[1]))
+        self._m0 = integrate(
+            slope * SingularityFunction(x, xa, 1) * x * force_y +
+            UDL_component * x, 
+            (x, span[0], span[1])
+        )
 
         self.expr = expr
         self.span = span
@@ -269,6 +275,25 @@ class PointLoadV(PointLoad):
 class PointLoadH(PointLoad):
     def __init__(self, force = 0, coord = 0):
         super().__init__(force,coord,angle=0)
+
+
+class UDLV(UDL):
+    def __init__(self, force = 0, span = (0,0)):
+        super().__init__(force,span,angle=90)
+
+class UDLH(UDL):
+    def __init__(self, force = 0, span = (0,0)):
+        super().__init__(force, span, angle=0)
+
+
+class TrapezoidalLoadV(TrapezoidalLoad):
+    def __init__(self, force = (0,0), span =(0, 0)):
+        super().__init__(force, span, angle=90)
+
+class TrapezoidalLoadH(TrapezoidalLoad):
+    def __init__(self, force = (0,0), span =(0, 0)):
+        super().__init__(force, span, angle=0)
+
 
 class DistributedLoadV(DistributedLoad):
     def __init__(self, expr = 0, span = (0,0)):

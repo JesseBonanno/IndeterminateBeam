@@ -7,7 +7,7 @@ from sympy import lambdify, sympify, sin, cos, oo
 from sympy.abc import x
 from math import radians
 
-from loading import(
+from indeterminatebeam.loading import(
     PointLoad,
     PointLoadH,
     PointLoadV,
