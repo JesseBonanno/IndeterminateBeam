@@ -9,7 +9,12 @@ from dash.dependencies import Input, Output, State
 import dash_table
 from dash_table.Format import Format, Scheme, Sign, Symbol
 from indeterminatebeam.indeterminatebeam import (
-    Beam, Support, PointLoad, PointTorque, DistributedLoadV, TrapezoidalLoad
+    Beam, Support
+)
+from indeterminatebeam.loading import (
+    PointLoad,
+    TrapezoidalLoad,
+    PointTorque
 )
 from datetime import datetime
 import time
@@ -970,120 +975,119 @@ def analyse_beam(click, beams, point_loads, point_torques, querys,
     if input_json == prev_input:
         raise PreventUpdate
 
-    try:
-        t1 = time.perf_counter()
+    t1 = time.perf_counter()
 
-        if positive_y_direction == 'up':
-            d_ = 1
-        else:
-            d_ = -1
+    if positive_y_direction == 'up':
+        d_ = 1
+    else:
+        d_ = -1
 
-        for row in beams:
-            beam = Beam(*(float(a) for a in row.values()))
+    for row in beams:
+        beam = Beam(*(float(a) for a in row.values()))
 
-        if supports:
-            for row in supports:
-                if row['X'] in ['r', 'R']:
-                    DOF_x = 1
-                    kx = 0
-                elif row['X'] in ['f', 'F']:
-                    DOF_x = 0
-                    kx = 0
-                elif float(row['X']) > 0:
-                    DOF_x = 0
-                    kx = float(row['X'])
-                else:
-                    raise ValueError(
-                        'input incorrect for x restraint of support')
+    if supports:
+        for row in supports:
+            if row['X'] in ['r', 'R']:
+                DOF_x = 1
+                kx = 0
+            elif row['X'] in ['f', 'F']:
+                DOF_x = 0
+                kx = 0
+            elif float(row['X']) > 0:
+                DOF_x = 0
+                kx = float(row['X'])
+            else:
+                raise ValueError(
+                    'input incorrect for x restraint of support')
 
-                if row['Y'] in ['r', 'R']:
-                    DOF_y = 1
-                    ky = 0
-                elif row['Y'] in ['f', 'F']:
-                    DOF_y = 0
-                    ky = 0
-                elif float(row['Y']) > 0:
-                    DOF_y = 0
-                    ky = float(row['Y'])
-                else:
-                    raise ValueError(
-                        'input incorrect for y restraint of support')
+            if row['Y'] in ['r', 'R']:
+                DOF_y = 1
+                ky = 0
+            elif row['Y'] in ['f', 'F']:
+                DOF_y = 0
+                ky = 0
+            elif float(row['Y']) > 0:
+                DOF_y = 0
+                ky = float(row['Y'])
+            else:
+                raise ValueError(
+                    'input incorrect for y restraint of support')
 
-                if row['M'] in ['r', 'R']:
-                    DOF_m = 1
-                elif row['M'] in ['f', 'F']:
-                    DOF_m = 0
-                else:
-                    raise ValueError(
-                        'input incorrect for m restraint of support')
+            if row['M'] in ['r', 'R']:
+                DOF_m = 1
+            elif row['M'] in ['f', 'F']:
+                DOF_m = 0
+            else:
+                raise ValueError(
+                    'input incorrect for m restraint of support')
 
-                beam.add_supports(Support(
-                    float(row['Coordinate (m)']),
-                    (
-                        DOF_x,
-                        DOF_y,
-                        DOF_m
-                    ),
-                    ky=ky,
-                    kx=kx,
-                )
-                )
-        # TO DO: add capitals
-        
-        if distributed_loads:
-            for row in distributed_loads:
-                if abs(float(row['Start Load (kN/m)'])) > 0 or \
-                        abs(float(row['End Load (kN/m)'])) > 0:
-                    beam.add_loads(
-                        TrapezoidalLoad(
-                            force=(
-                                float(row['Start Load (kN/m)']),
-                                float(row['End Load (kN/m)'])
-                            ),
-                            span=(
-                                float(row['Start x_coordinate (m)']),
-                                float(row['End x_coordinate (m)'])
-                            ),
-                            angle = (d_ * 90)
-                        )
+            beam.add_supports(Support(
+                float(row['Coordinate (m)']),
+                (
+                    DOF_x,
+                    DOF_y,
+                    DOF_m
+                ),
+                ky=ky,
+                kx=kx,
+            )
+            )
+    # TO DO: add capitals
+    
+    if distributed_loads:
+        for row in distributed_loads:
+            if abs(float(row['Start Load (kN/m)'])) > 0 or \
+                    abs(float(row['End Load (kN/m)'])) > 0:
+                beam.add_loads(
+                    TrapezoidalLoad(
+                        force=(
+                            float(row['Start Load (kN/m)']),
+                            float(row['End Load (kN/m)'])
+                        ),
+                        span=(
+                            float(row['Start x_coordinate (m)']),
+                            float(row['End x_coordinate (m)'])
+                        ),
+                        angle = (d_ * 90)
                     )
-
-        if point_loads:
-            for row in point_loads:
-                beam.add_loads(PointLoad(
-                    float(row['Force (kN)']),
-                    float(row['Coordinate (m)']),
-                    d_ * float(row['Angle (deg)'])
-                )
                 )
 
-        if point_torques:
-            for row in point_torques:
-                beam.add_loads(PointTorque(
-                    float(row['Torque (kN.m)']),
-                    float(row['Coordinate (m)']),
-                )
-                )
+    if point_loads:
+        for row in point_loads:
+            beam.add_loads(PointLoad(
+                float(row['Force (kN)']),
+                float(row['Coordinate (m)']),
+                d_ * float(row['Angle (deg)'])
+            )
+            )
 
-        beam.analyse()
+    if point_torques:
+        for row in point_torques:
+            beam.add_loads(PointTorque(
+                float(row['Torque (kN.m)']),
+                float(row['Coordinate (m)']),
+            )
+        )
 
-        if querys:
-            for row in querys:
-                beam.add_query_points(
-                    float(row['Query coordinate (m)']),
-                )
+    beam.analyse()
 
-        graph_1 = beam.plot_beam_external()
+    if querys:
+        for row in querys:
+            beam.add_query_points(
+                float(row['Query coordinate (m)']),
+            )
 
-        graph_2 = beam.plot_beam_internal()
+    graph_1 = beam.plot_beam_external()
+
+    graph_2 = beam.plot_beam_internal()
 
 
-        t2 = time.perf_counter()
-        t = t2 - t1
-        dt = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
+    t2 = time.perf_counter()
+    t = t2 - t1
+    dt = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
 
-        color = "success"
-        message = f"Calculation completed in {t:.2f} seconds, at {dt}"
+    color = "success"
+    message = f"Calculation completed in {t:.2f} seconds, at {dt}"
 
         # results_data = [
         #     {'type':'Normal Force (kN)', 'max':beam.get_normal_force(return_max=True), 'min':beam.get_normal_force(return_min=True)},
@@ -1091,50 +1095,50 @@ def analyse_beam(click, beams, point_loads, point_torques, querys,
         #     {'type':'Bending Moment (kN.m)', 'max':beam.get_bending_moment(return_max=True), 'min':beam.get_bending_moment(return_min=True)},
         #     {'type':'Deflection (mm)', 'max':beam.get_deflection(return_max=True), 'min':beam.get_deflection(return_min=True)},
         # ]
-        
-        results_data = [
-            {
-                'val':'Max', 
-                'NF':beam.get_normal_force(return_max=True), 
-                'SF':beam.get_shear_force(return_max=True), 
-                'BM':beam.get_bending_moment(return_max=True), 
-                'D':beam.get_deflection(return_max=True)
-            },
-            {
-                'val':'Min', 
-                'NF':beam.get_normal_force(return_min=True), 
-                'SF':beam.get_shear_force(return_min=True), 
-                'BM':beam.get_bending_moment(return_min=True), 
-                'D':beam.get_deflection(return_min=True)
-            },
-        ]
+    
+    results_data = [
+        {
+            'val':'Max', 
+            'NF':beam.get_normal_force(return_max=True), 
+            'SF':beam.get_shear_force(return_max=True), 
+            'BM':beam.get_bending_moment(return_max=True), 
+            'D':beam.get_deflection(return_max=True)
+        },
+        {
+            'val':'Min', 
+            'NF':beam.get_normal_force(return_min=True), 
+            'SF':beam.get_shear_force(return_min=True), 
+            'BM':beam.get_bending_moment(return_min=True), 
+            'D':beam.get_deflection(return_min=True)
+        },
+    ]
 
-        if querys:
-            for row in querys:
-                x_ = row['Query coordinate (m)']
-                results_data.append(
-                    {
-                        'val': f'x = {x_} m', 
-                        'NF':beam.get_normal_force(x_)[0], 
-                        'SF':beam.get_shear_force(x_)[0], 
-                        'BM':beam.get_bending_moment(x_)[0], 
-                        'D':beam.get_deflection(x_)[0],
-                    },
-                )
+    if querys:
+        for row in querys:
+            x_ = row['Query coordinate (m)']
+            results_data.append(
+                {
+                    'val': f'x = {x_} m', 
+                    'NF':beam.get_normal_force(x_)[0], 
+                    'SF':beam.get_shear_force(x_)[0], 
+                    'BM':beam.get_bending_moment(x_)[0], 
+                    'D':beam.get_deflection(x_)[0],
+                },
+            )
 
 
 
-    except BaseException:
-        color = "danger"
-        e = sys.exc_info()[1]
-        message = f"Error with calculation. Please check inputs. \
-            The following error was observed: {e}"
-        results_data = [
-            {'type':'Normal Force', 'max':0, 'min':0},
-            {'type':'Shear Force', 'max':0, 'min':0},
-            {'type':'Bending Moment', 'max':0, 'min':0},
-            {'type':'Deflection', 'max':0, 'min':0},
-        ]
+    # except BaseException:
+    #     color = "danger"
+    #     e = sys.exc_info()[1]
+    #     message = f"Error with calculation. Please check inputs. \
+    #         The following error was observed: {e}"
+    #     results_data = [
+    #         {'type':'Normal Force', 'max':0, 'min':0},
+    #         {'type':'Shear Force', 'max':0, 'min':0},
+    #         {'type':'Bending Moment', 'max':0, 'min':0},
+    #         {'type':'Deflection', 'max':0, 'min':0},
+    #     ]
     if click == 0:
         color = "danger"
         message = "No analysis has been run."
@@ -1280,4 +1284,4 @@ def report(n, graph_1,graph_2,results):
         return dict(content=content, filename="Report.html")
 
 if __name__ == '__main__':
-    app.run_server()
+    app.run_server(debug=True)
