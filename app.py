@@ -9,7 +9,12 @@ from dash.dependencies import Input, Output, State
 import dash_table
 from dash_table.Format import Format, Scheme, Sign, Symbol
 from indeterminatebeam.indeterminatebeam import (
-    Beam, Support, PointLoad, PointTorque, TrapezoidalLoad
+    Beam, Support
+)
+from indeterminatebeam.loading import (
+    PointLoad,
+    TrapezoidalLoad,
+    PointTorque
 )
 from datetime import datetime
 import time
@@ -997,8 +1002,9 @@ def analyse_beam(click, beams, point_loads, point_torques, querys,
 
     if input_json == prev_input:
         raise PreventUpdate
-
+    
     try:
+
         t1 = time.perf_counter()
 
         if positive_y_direction == 'up':
@@ -1008,8 +1014,6 @@ def analyse_beam(click, beams, point_loads, point_torques, querys,
 
         for row in beams:
             beam = Beam(*(float(a) for a in row.values()))
-
-        beam._DATA_POINTS = data_points
 
         if supports:
             for row in supports:
@@ -1047,16 +1051,17 @@ def analyse_beam(click, beams, point_loads, point_torques, querys,
                     raise ValueError(
                         'input incorrect for m restraint of support')
 
-                beam.add_supports(Support(
-                    float(row['Coordinate (m)']),
-                    (
-                        DOF_x,
-                        DOF_y,
-                        DOF_m
+                beam.add_supports(
+                    Support(
+                        float(row['Coordinate (m)']),
+                        (
+                            DOF_x,
+                            DOF_y,
+                            DOF_m
+                        ),
+                        ky=ky,
+                        kx=kx,
                     ),
-                    ky=ky,
-                    kx=kx,
-                )
                 )
         # TO DO: add capitals
         
@@ -1093,7 +1098,7 @@ def analyse_beam(click, beams, point_loads, point_torques, querys,
                     float(row['Torque (kN.m)']),
                     float(row['Coordinate (m)']),
                 )
-                )
+            )
 
         beam.analyse()
 
@@ -1115,13 +1120,6 @@ def analyse_beam(click, beams, point_loads, point_torques, querys,
         color = "success"
         message = f"Calculation completed in {t:.2f} seconds, at {dt}"
 
-        # results_data = [
-        #     {'type':'Normal Force (kN)', 'max':beam.get_normal_force(return_max=True), 'min':beam.get_normal_force(return_min=True)},
-        #     {'type':'Shear Force (kN)', 'max':beam.get_shear_force(return_max=True), 'min':beam.get_shear_force(return_min=True)},
-        #     {'type':'Bending Moment (kN.m)', 'max':beam.get_bending_moment(return_max=True), 'min':beam.get_bending_moment(return_min=True)},
-        #     {'type':'Deflection (mm)', 'max':beam.get_deflection(return_max=True), 'min':beam.get_deflection(return_min=True)},
-        # ]
-        
         results_data = [
             {
                 'val':'Max', 
@@ -1151,8 +1149,6 @@ def analyse_beam(click, beams, point_loads, point_torques, querys,
                         'D':beam.get_deflection(x_)[0],
                     },
                 )
-
-
 
     except BaseException:
         color = "danger"
@@ -1310,4 +1306,4 @@ def report(n, graph_1,graph_2,results):
         return dict(content=content, filename="Report.html")
 
 if __name__ == '__main__':
-    app.run_server(debug=True)
+    app.run_server()

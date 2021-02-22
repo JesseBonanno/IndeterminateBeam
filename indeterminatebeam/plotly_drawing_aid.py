@@ -12,7 +12,7 @@ from indeterminatebeam.loading import(
     PointLoadH,
     PointLoadV,
     PointTorque,
-    UDL,
+    UDLoad,
     TrapezoidalLoad,
     DistributedLoad,
 )
@@ -492,7 +492,7 @@ def draw_force(fig, load, row=None, col=None):
             row=row,
             col=col)
 
-    elif isinstance(load, (DistributedLoad, UDL, TrapezoidalLoad)):
+    elif isinstance(load, (DistributedLoad, UDLoad, TrapezoidalLoad)):
         angle = load.angle
         if angle % 90 == 0:
             # vertical or horizontal
@@ -518,8 +518,8 @@ def draw_force(fig, load, row=None, col=None):
             y_lam = lambdify(x, expr, 'numpy')
             y_vec = np.array([round(float(y_lam(t)),3) for t in x_vec])
 
-        elif isinstance(load, UDL):
-            name = 'UDL'
+        elif isinstance(load, UDLoad):
+            name = 'UDLoad'
             x_vec = np.array(load.span)
             y_vec = np.array([load.force, load.force])
         else:
@@ -639,7 +639,7 @@ def draw_load_hoverlabel(fig, load, row=None, col=None):
 
     # Else is distributed load type, hoverlabel needed for arrow at each side
     # of function
-    elif isinstance(load, (DistributedLoad, UDL, TrapezoidalLoad)):
+    elif isinstance(load, (DistributedLoad, UDLoad, TrapezoidalLoad)):
         if load.angle % 90 == 0:
             # vertical or horizontal
             color = 'mediumpurple'

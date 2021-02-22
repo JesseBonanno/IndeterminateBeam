@@ -183,7 +183,6 @@ class TrapezoidalLoad(Load):
                 - slope * SingularityFunction(x, xb, 1),
             ])
 
-
         else:
             triangular_component = 0
 
