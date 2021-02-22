@@ -761,7 +761,7 @@ option_result_table = dbc.FormGroup(
 option_content = dbc.Form([
     option_result_table,
     option_support_input,
-    option_positive_direction_y
+    option_positive_direction_y,
     option_data_point,
 
 ])
