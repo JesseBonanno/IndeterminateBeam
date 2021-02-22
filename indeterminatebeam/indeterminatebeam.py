@@ -254,6 +254,8 @@ class Beam:
         self._I = I
         self._A = A
 
+        self._DATA_POINTS = 200
+
     def add_loads(self, *loads):
         """Apply an arbitrary list of (point or distributed) loads
         to the beam.
@@ -278,6 +280,12 @@ class Beam:
                     raise ValueError(
                         f"Coordinate {load.span} for {str(load)} is not a point on beam."
                     )
+                if isinstance(load, DistributedLoad):
+                    force = 1
+                elif isinstance(load, UDL):
+                    force = load.force
+                else:
+                    force = max(load.force, key=abs)
 
             elif isinstance(load,(PointTorque, PointLoad)):
                 coordinate = load.position
@@ -286,7 +294,10 @@ class Beam:
                     raise ValueError(
                         f"Coordinate {coordinate} for {str(load)} is not a point on beam.")
 
-            self._loads.append(load)
+                force = load.force
+                
+            if force != 0:
+                self._loads.append(load)
 
 
     def remove_loads(self, *loads, remove_all=False):
@@ -610,11 +621,16 @@ class Beam:
 
         # moment unit is kn.m, dv_EI kn.m2, v_EI Kn.m3 --> *10^3, *10^9
         # to get base units. EI unit is N/mm2 , mm4 --> N.mm2
-        self._shear_forces = F_i
-        self._bending_moments = M_i
+
+        # Not sure what type F_i is probably should run code from here for debugger lol.
+        # Need to change imports everywhere though, unless i change the path to be earlier.
+        self._shear_forces = self.sympy_expr_to_piecewise(F_i)
+        self._bending_moments = self.sympy_expr_to_piecewise(M_i)
         # a positive moment indicates a negative deflection, i thought??
-        self._deflection_equation = v_EI * 10 ** 12 / (self._E * self._I)
-        self._normal_forces = N_i
+        self._deflection_equation = self.sympy_expr_to_piecewise(
+            v_EI * 10 ** 12 / (self._E * self._I)
+        )
+        self._normal_forces = self.sympy_expr_to_piecewise(N_i)
         # Nv_EI represents the beam elongation, to make displacement need to add initial
         # Comparatively v_EI is already the beam displacement and has a constant in it
         # (C2) that considers any intial displacement
@@ -623,8 +639,10 @@ class Beam:
         else:
             initial_displacement_x = float(solutions_xx[0]  / unknowns['x'][0]['stiffness'])
         # in meters
-        self._axial_deflection= Nv_EA * 10**3 / (self._E * self._A) \
-            + initial_displacement_x / 10 ** 3 
+        self._axial_deflection= self.sympy_expr_to_piecewise(
+            Nv_EA * 10**3 / (self._E * self._A) \
+            + initial_displacement_x / 10 ** 3
+        )
 
     # SECTION - QUERY VALUE
     def get_reaction(self, x_coord, direction=None):
@@ -712,20 +730,18 @@ class Beam:
 
         """
 
-        if isinstance(sym_func, list):
-            func = sum(sym_func)
-        #func = lambdify(x, sym_func, "numpy")
+        y_lam = lambdify(x, sym_func, 'numpy')
 
         if 1 not in (return_absmax, return_max, return_min):
             if type(x_coord) == tuple:
-                return [round(float(func.subs(x,x_)), 3) for x_ in x_coord]
+                return [round(float(y_lam(x_)), 3) for x_ in x_coord]
             else:
-                return round(float(func.subs(x,x_coord)), 3)
+                return round(float(y_lam(x_coord)), 3)
 
         # numpy array for x positions closely spaced (allow for graphing)
         # i think lambdify is needed to let the function work with numpy
-        x_vec = np.linspace(self._x0, self._x1, int(100))
-        y_vec = np.array([float(func.subs(x,t)) for t in x_vec])
+        x_vec = np.linspace(self._x0, self._x1, 100)
+        y_vec = np.array([float(y_lam(t)) for t in x_vec])
         min_ = float(y_vec.min())
         max_ = float(y_vec.max())
 
@@ -1573,12 +1589,12 @@ class Beam:
             Returns a handle to a figure with the deflection diagram.
         """
         # numpy array for x positions closely spaced (allow for graphing)
-        x_vec = np.linspace(self._x0, self._x1, int(100))
-
+        x_vec = np.linspace(self._x0, self._x1, self._DATA_POINTS)
+        y_lam = lambdify(x, sym_func, 'numpy')
         # transform sympy expressions to lambda functions which can be used to
         # calculate numerical values very fast (with numpy).
         # Unfortunetly, for Singularity functions currently can't use lambdify.
-        y_vec = np.array([float(sym_func.subs(x,t)) for t in x_vec])
+        y_vec = np.array([y_lam(t) for t in x_vec])
 
         fill = 'tozeroy'
 
@@ -1676,10 +1692,75 @@ class Beam:
     def __add__(self, other):
         new_beam = deepcopy(self)
         # add loads in beam other to new beam.
-        # new_beam.add_loads(other._loads) 
+        # new_beam.add_loads(other._loads)
+    
+    def sympy_expr_to_piecewise(self, func):
+        """ Takes sympy function with Singularity expressions and 
+        changes any singularity expressions into Piecewise."""
+
+        # Function can be:
+        # 1. a single Singularity Function
+        # 2. a add function
+            # containing multiplication functions,
+            # containing non-SingularityFunction items,
+            # containing SingularityFunction
+        # 3. a Multiplication function
+            # containing sf and other functions
+            # containing other functions (ie piecewise)
+        # 4. Not any of the above
+
+        # Note: Function could be better using recursion for multiplication 
+        # and addition sympy classes. Can refactor in future.
+
+        new = 0 
+        # case 1
+        if type(func) == SingularityFunction:
+            return func._eval_rewrite_as_Piecewise()
+        # case 2 and 3
+        elif func.is_Mul or func.is_Add:
+            # nesting cases now, could use recursion to cover all possible cases.
+            # Expect worst case to be add containing mul containing SF.
+            #case 3
+            if func.is_Mul:
+                temp = 1
+                for m in func.args:
+                    if type(m) == SingularityFunction:
+                        temp *= m._eval_rewrite_as_Piecewise()
+                    else:
+                        temp *= m
+                return temp
+
+            # case 2
+            else:
+                temp = 0
+                for a in func.args:
+                    if type(a) == SingularityFunction:
+                        temp += a._eval_rewrite_as_Piecewise()
+                    if a.is_Mul:
+                        temp_mul = 1
+                        for m in a.args:
+                            if type(m) == SingularityFunction:
+                                temp_mul *= m._eval_rewrite_as_Piecewise()
+                            else:
+                                temp_mul *= m
+                        temp += temp_mul
+                    else:
+                        temp += a
+                return temp
+
+
+        # case 4.
+        else:
+            return func
 
 
 if __name__ == "__main__":
+    # if want to run directly from this file add the following
+    # two lines at the start of this script:
+
+    # import sys, os
+    # sys.path.insert(0, os.path.abspath('../'))
+
     a = PointLoad(5,1,90)
     b = UDL(4,(0,2))
 
@@ -1689,3 +1770,4 @@ if __name__ == "__main__":
     beam.analyse()
 
     beam.plot_beam_external()
+    beam.plot_beam_internal()

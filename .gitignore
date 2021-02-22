@@ -18,3 +18,4 @@ indeterminatebeam/TODO.txt
 venv
 
 tests/*.txt
+tests/test_sympy.py

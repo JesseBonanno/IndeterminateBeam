@@ -9,7 +9,7 @@ from dash.dependencies import Input, Output, State
 import dash_table
 from dash_table.Format import Format, Scheme, Sign, Symbol
 from indeterminatebeam.indeterminatebeam import (
-    Beam, Support, PointLoad, PointTorque, DistributedLoadV, TrapezoidalLoad
+    Beam, Support, PointLoad, PointTorque, TrapezoidalLoad
 )
 from datetime import datetime
 import time
@@ -674,6 +674,31 @@ option_instructions = dcc.Markdown('''
             ''')
 
 
+option_data_point = dbc.FormGroup(
+    [
+        dbc.Label("Graph Data Points", html_for="option_data_points", width=3),
+        dbc.Col(
+            dcc.Slider(
+                id = 'option_data_points',
+                min=100,
+                max=1000,
+                value=100,
+                step = 100,
+                marks={
+                    100: {'label': '100'},
+                    500: {'label': '500'},
+                    1000: {'label': '1000'}
+                },
+                included=True
+            ),             
+            width=8,
+        ),
+    ],
+    row=True,
+)
+
+
+
 option_support_input = dbc.FormGroup(
     [
         dbc.Label("Support Mode", html_for="option_support_input", width=3),
@@ -737,6 +762,7 @@ option_content = dbc.Form([
     option_result_table,
     option_support_input,
     option_positive_direction_y
+    option_data_point,
 
 ])
 
@@ -930,11 +956,12 @@ def results_setup(mode):
      State('basic-support-table', 'data'),
      State('graph_1', 'figure'), State('graph_2', 'figure'),
      State('hidden-input', 'children'), State('advanced-support', 'is_open'),
-     State('option_positive_direction_y','value')])
+     State('option_positive_direction_y','value'),
+     State('option_data_points', 'value')])
 def analyse_beam(click, beams, point_loads, point_torques, querys,
                  distributed_loads, advanced_supports, basic_supports, graph_1, 
-                 graph_2, prev_input, advanced_support_open, positive_y_direction):
-    
+                 graph_2, prev_input, advanced_support_open, positive_y_direction,data_points):
+                 
     if advanced_support_open:
         supports = advanced_supports
     else:
@@ -963,7 +990,8 @@ def analyse_beam(click, beams, point_loads, point_torques, querys,
             'point_torques':point_torques, 
             'distributed_loads':distributed_loads,
             'querys':querys,
-            'y': positive_y_direction,
+            'y':positive_y_direction,
+            'data_points':data_points,
         }
     )
 
@@ -980,6 +1008,8 @@ def analyse_beam(click, beams, point_loads, point_torques, querys,
 
         for row in beams:
             beam = Beam(*(float(a) for a in row.values()))
+
+        beam._DATA_POINTS = data_points
 
         if supports:
             for row in supports:
@@ -1280,4 +1310,4 @@ def report(n, graph_1,graph_2,results):
         return dict(content=content, filename="Report.html")
 
 if __name__ == '__main__':
-    app.run_server()
+    app.run_server(debug=True)

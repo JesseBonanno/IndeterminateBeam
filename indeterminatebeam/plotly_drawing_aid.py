@@ -199,8 +199,10 @@ def draw_arrow(fig, angle, force, x_sup, xoffset=0, yoffset=0, color='red',
     # Factor to switch arrow direction based on force sign
     if force > 0:
         d = 1
-    else:
+    elif force<0:
         d = -1
+    else:
+        return fig
 
     # Draw arrowhead for force
     fig = draw_arrowhead(
@@ -512,8 +514,9 @@ def draw_force(fig, load, row=None, col=None):
             x0, x1 = load.span
             expr = load.expr
             # numpy array for x positions closely spaced (allow for graphing)
-            x_vec = np.linspace(x0, x1, int(min((x1 - x0) * 50 + 1, 1e3)))
-            y_vec = np.array([round(float(expr.subs(x,t)),3) for t in x_vec])
+            x_vec = np.linspace(x0, x1, int(min((x1 - x0) * 100 + 1, 1e3)))
+            y_lam = lambdify(x, expr, 'numpy')
+            y_vec = np.array([round(float(y_lam(t)),3) for t in x_vec])
 
         elif isinstance(load, UDL):
             name = 'UDL'

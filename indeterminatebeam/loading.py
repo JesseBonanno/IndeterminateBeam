@@ -136,7 +136,9 @@ class UDL(Load):
             self._y0 = 0
 
         self._integrate_load()
-        self._m0 = integrate(self._y0 * x, (x, 0, span[1]))
+
+        xa, length = span[0], span[1] - span[0]
+        self._m0 =  force * length * (xa + length/2)
 
         self.expr = expr
         self.span = span
@@ -149,10 +151,6 @@ class TrapezoidalLoad(Load):
         # Validate force input
         assert_length(force, 2, 'force')
 
-        # check if UDL (not sure if this code will work properly)
-        if force[0] == force [1]:
-            return UDL(force[0], span, angle)
-
         # Validate span input
         assert_length(span, 2, 'span')
         assert_positive_number(span[0], 'span start')
@@ -161,25 +159,33 @@ class TrapezoidalLoad(Load):
         # validate angle input
         assert_number(angle, 'angle')
 
+        force_x = cos(radians(angle)).evalf(10)
+        force_y = sin(radians(angle)).evalf(10)
+
+        xa, xb = span[0], span[1]
+        a, b = 0, force[1] - force[0]
+        length = xb - xa
+
         #turn trapezoid into a triangle + rectangle
         UDL_component = force[0] * (
             SingularityFunction(x, span[0], 0) 
             - SingularityFunction(x, span[1], 0)
         )
+                # check if UDL (not sure if this code will work properly)
+        if force[0] != force [1]:
+            # express values for triangular load distribution
+            slope = b / (span[1] - span[0])
 
-        # express values for triangular load distribution
-        xa, xb = span[0], span[1]
-        a, b = 0, force[1] - force[0]
-        slope = b / (span[1] - span[0])
 
-        force_x = cos(radians(angle)).evalf(10)
-        force_y = sin(radians(angle)).evalf(10)
+            triangular_component = sum([
+                + slope * SingularityFunction(x, xa, 1),
+                - b * SingularityFunction(x, xb, 0),
+                - slope * SingularityFunction(x, xb, 1),
+            ])
 
-        triangular_component = sum([
-            + slope * SingularityFunction(x, xa, 1),
-            - b * SingularityFunction(x, xb, 0),
-            - slope * SingularityFunction(x, xb, 1),
-        ])
+
+        else:
+            triangular_component = 0
 
         expr = triangular_component + UDL_component
 
@@ -194,11 +200,10 @@ class TrapezoidalLoad(Load):
             self._y0 = 0
 
         self._integrate_load()
-        self._m0 = integrate(
-            slope * SingularityFunction(x, xa, 1) * x * force_y +
-            UDL_component * x, 
-            (x, span[0], span[1])
-        )
+
+        UDL_m0 = (force[0] * length) * (xa + length/2)
+        triangle_m0 = (b * length /2 ) * (xa + length*2/3)
+        self._m0 = (UDL_m0 + triangle_m0) * force_y
 
         self.expr = expr
         self.span = span
@@ -302,3 +307,7 @@ class DistributedLoadV(DistributedLoad):
 class DistributedLoadH(DistributedLoad):
     def __init__(self, expr = 0, span = (0,0)):
         super().__init__(expr, span, angle=0)
+
+if __name__ == '__main__':
+    a = TrapezoidalLoad((1,2),(1,2),90)
+    print(a._m0)
