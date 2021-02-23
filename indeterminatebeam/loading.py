@@ -1,5 +1,9 @@
+"""Module containing load classes."""
+
 from sympy.abc import x
 from sympy import oo, integrate, SingularityFunction, sympify, cos, sin
+
+from math import radians
 
 from indeterminatebeam.data_validation import (
     assert_length, 
@@ -8,29 +12,39 @@ from indeterminatebeam.data_validation import (
     assert_strictly_positive_number
 )
 
-import time
-
-from math import radians
-
 class Load:
-    def _integrate_load(self):
+    """Load class from which all other types of loads inherit."""
+    def _add_load_functions(self, angle, expr):
+        # x and y vectors for force
+        force_x = cos(radians(angle))
+        force_y = sin(radians(angle))
+
         # self._x0 represents w(x), load as a function of x
-        self._x1 = integrate(self._x0, x) #NF
+        if abs(round(force_x,8)) > 0:
+            self._x0 = force_x * expr
+        else: 
+            self._x0 = 0
 
         # self._y0 represents w(x), load as a function of x
+        if abs(round(force_y,8)) > 0:
+            self._y0 = force_y * expr
+        else: 
+            self._y0 = 0
+
+        # self._x1 represents NF(x), normal force as function of x.
+        self._x1 = integrate(self._x0, x) #NF
+
+        # self._y1 represents SF(x), shear force as function of x.
         self._y1 = integrate(self._y0, x) #SF
 
-
-# Main load types
-
 class PointTorque(Load):
-    """Point clockwise torque, described by a tuple of floats:
-    (torque, coord).
+    """Point clockwise torque.
 
     Parameters:
     -----------
-    torque: float
+    force: float
         Torque in kN.m
+        Note: named force for simplicity.
     coord: float
         x coordinate of torque on beam
 
@@ -39,23 +53,30 @@ class PointTorque(Load):
     # 30 kN·m (clockwise) torque at x=4 m
     >>> motor_torque = PointTorque(30, 4)
     """
-
     
     def __init__(self, force = 0, coord=0):
+        # Data Validation.
         assert_number(force, 'force')
         assert_positive_number(coord, 'coordinate')
         
-        self._x0 = 0
-        self._y0 = force * SingularityFunction(x, coord, -1)
-
-        self._integrate_load()
+        #load as a function of x (non-directional)
+        expr = force * SingularityFunction(x, coord, -1)
+        
+        # add load as a function of x (directional)
+        # and add integration of this function to object.
+        # angle 90 as moment only affects vertical direction.
+        angle = 90
+        self._add_load_functions(angle, expr)
+    
+        # self._m0 is moment induced by load about coord 0.
         self._m0 = force
-
+        
+        # Assign other inputs to load object
         self.position = coord
         self.force = force
 
 class PointLoad(Load):
-    """Point load described by a tuple of floats: (force, coord, angle).
+    """Point load.
 
     Parameters:
     -----------
@@ -81,38 +102,59 @@ class PointLoad(Load):
     """
     
     def __init__(self, force = 0, coord=0, angle=0):
+        # Data Validation for inputs
         assert_number(force, 'force')
         assert_positive_number(coord, 'coordinate')
         assert_number(angle, 'angle')
 
-        force_x = force * cos(radians(angle)).evalf(8)
-        force_y = force * sin(radians(angle)).evalf(8)
+        # load as a function of x (non-directional)
+        expr = force * SingularityFunction(x, coord, -1)
 
-        if abs(round(force_x,5)) > 0:
-            self._x0 = force_x * SingularityFunction(x, coord, -1)
-        else: 
-            self._x0 = 0
+        # add load as a function of x (directional)
+        # and add integration of this function to object
+        self._add_load_functions(angle, expr)
         
-        if abs(round(force_y,5)) > 0:
-            self._y0 = force_y * SingularityFunction(x, coord, -1)
-        else: 
-            self._y0 = 0
+        # self._m0 is moment induced by load about coord 0.
+        force_y = sin(radians(angle))
+        self._m0 = force * coord * force_y
 
-        self._integrate_load()
-        self._m0 = integrate(self._y0 * x, (x, 0, coord))
-
+        # Assign other inputs to load object
         self.position = coord
         self.force = force
         self.angle = angle
 
 class UDL(Load):
+    """Uniformly Distributed Load (UDL).
+
+    Parameters
+    ----------
+    force : int, optional
+        UDL load in kN/m, by default 0
+    span: tuple of floats
+        A tuple containing the starting and ending coordinate that
+        the UDL is applied to.
+    angle: float
+        angle of point load where:
+        - 0 degrees is purely horizontal +ve
+        - 90 degrees is purely vertical +ve
+        - 180 degrees is purely horizontal -ve of force sign specified.
+
+    Examples
+    --------
+    # load of 1 kN/m from 1 <= x <= 4 (vertical)
+    >>> self_weight = UDL(1, (1, 4), 90)
+    """
     
     def __init__(self, force = 0, span =(0, 0), angle = 0):
+       
         
         # Validate span input
         assert_length(span, 2, 'span')
         assert_positive_number(span[0], 'span start')
-        assert_strictly_positive_number(span[1]-span[0], 'span start minus span end')
+        assert_strictly_positive_number(
+            span[1]-span[0], 
+            'span start minus span end'
+        )
 
         # validate angle input
         assert_number(angle, 'angle')
@@ -120,33 +162,51 @@ class UDL(Load):
         # validate force input
         assert_number(force, 'force')
 
-        force_x = force * cos(radians(angle)).evalf(8)
-        force_y = force * sin(radians(angle)).evalf(8)
+        # load as a function of x (non-directional)
+        expr = force * (
+            SingularityFunction(x, span[0], 0) \
+            - SingularityFunction(x, span[1], 0)
+        )
 
-        expr = SingularityFunction(x, span[0], 0) - SingularityFunction(x, span[1], 0)
+        # add load as a function of x (directional)
+        # and add integration of this function to object
+        self._add_load_functions(angle, expr)
 
-        if abs(round(force_x,5)) > 0:
-            self._x0 = force_x * expr
-        else: 
-            self._x0 = 0
-        
-        if abs(round(force_y,5)) > 0:
-            self._y0 = force_y * expr
-        else: 
-            self._y0 = 0
-
-        self._integrate_load()
-
+        # self._m0 is moment induced by load about coord 0.
         xa, length = span[0], span[1] - span[0]
-        self._m0 =  force * length * (xa + length/2)
+        force_y = sin(radians(angle))
 
+        self._m0 =  force * length * (xa + length/2) * force_y
+
+        # Assign other inputs to load object
         self.expr = expr
         self.span = span
         self.force = force
         self.angle = angle
 
 class TrapezoidalLoad(Load):
+    """Trapezoidal Distributed Load.
 
+    Parameters
+    ----------
+    force : tuple of floats
+        A tuple containing the starting and ending loads of
+        the trapezoidal load in kN/m.
+    span: tuple of floats
+        A tuple containing the starting and ending coordinate that
+        the trapezoidal load is applied to.
+    angle: float
+        angle of point load where:
+        - 0 degrees is purely horizontal +ve
+        - 90 degrees is purely vertical +ve
+        - 180 degrees is purely horizontal -ve of force sign specified.
+
+    Examples
+    --------
+    # trapezoidal load starting at 2 kN/m at 1 m and ending at 3 kN/m at 4 m (vertical)
+    >>> self_weight = UDL((2,3), (1, 4), 90)
+    """
+    
     def __init__(self, force = (0,0), span =(0, 0), angle = 0):
         # Validate force input
         assert_length(force, 2, 'force')
@@ -159,24 +219,28 @@ class TrapezoidalLoad(Load):
         # validate angle input
         assert_number(angle, 'angle')
 
-        force_x = cos(radians(angle)).evalf(10)
-        force_y = sin(radians(angle)).evalf(10)
-
+        # Assign intermediate variables
         xa, xb = span[0], span[1]
         a, b = 0, force[1] - force[0]
         length = xb - xa
 
-        #turn trapezoid into a triangle + rectangle
+        # turn trapezoid into a triangle (1) + rectangle (2) for
+        # load as a function of x (non-directional).
+        # (1) UDL/rectangle Component
         UDL_component = force[0] * (
             SingularityFunction(x, span[0], 0) 
             - SingularityFunction(x, span[1], 0)
         )
-                # check if UDL (not sure if this code will work properly)
+
+        # (2) triangular component
         if force[0] != force [1]:
             # express values for triangular load distribution
             slope = b / (span[1] - span[0])
 
-
+            # Last two terms to deal with continuity past xb
+            # triangular component is negative if slope is down,
+            # as need to cut away from UDL. If slope is up/positive
+            # then triangular component is positive as need to add to UDL.
             triangular_component = sum([
                 + slope * SingularityFunction(x, xa, 1),
                 - b * SingularityFunction(x, xb, 0),
@@ -186,24 +250,21 @@ class TrapezoidalLoad(Load):
         else:
             triangular_component = 0
 
+        # load as a function of x (non-directional).
         expr = triangular_component + UDL_component
 
-        if abs(round(force_x,8)) > 0:
-            self._x0 = force_x * expr
-        else: 
-            self._x0 = 0
+        # add load as a function of x (directional)
+        # and add integration of this function to object
+        self._add_load_functions(angle, expr)
         
-        if abs(round(force_y,8)) > 0:
-            self._y0 = force_y * expr
-        else: 
-            self._y0 = 0
-
-        self._integrate_load()
-
+        # self._m0 is moment induced by load about coord 0.
         UDL_m0 = (force[0] * length) * (xa + length/2)
         triangle_m0 = (b * length /2 ) * (xa + length*2/3)
-        self._m0 = (UDL_m0 + triangle_m0) * force_y
+        force_y = sin(radians(angle))
 
+        self._m0 = (UDL_m0 + triangle_m0) * force_y
+        
+        # Assign other inputs to load object
         self.expr = expr
         self.span = span
         self.force = force
@@ -234,6 +295,7 @@ class DistributedLoad(Load):
     """
 
     def __init__(self, expr, span =(0, 0), angle = 0):
+        # Validate expr.
         try:
             expr = sympify(expr)
         except:
@@ -250,22 +312,13 @@ class DistributedLoad(Load):
         # validate angle input
         assert_number(angle, 'angle')
 
-        force_x = cos(radians(angle)).evalf(10)
-        force_y = sin(radians(angle)).evalf(10)
+        # load as a function of x (directional).
+        self._add_load_functions(angle, expr)
 
-        if abs(round(force_x,8)) > 0:
-            self._x0 = force_x * expr
-        else: 
-            self._x0 = 0
-        
-        if abs(round(force_y,8)) > 0:
-            self._y0 = force_y * expr
-        else: 
-            self._y0 = 0
-
-        self._integrate_load()
+        # self._m0 is moment induced by load about coord 0.
         self._m0 = integrate(self._y0 * x, (x, 0, span[1]))
         
+        # Assign other inputs to load object
         self.span = span
         self.expr = expr
         self.angle = angle
@@ -273,40 +326,44 @@ class DistributedLoad(Load):
 # simplified load types- vertical and horizontal direction classes
 
 class PointLoadV(PointLoad):
+    """Vertical Point Load."""
     def __init__(self, force = 0, coord = 0):
         super().__init__(force,coord,angle=90)
 
 class PointLoadH(PointLoad):
+    """Horizontal Point Load."""
     def __init__(self, force = 0, coord = 0):
         super().__init__(force,coord,angle=0)
 
 
 class UDLV(UDL):
+    """Vertical Uniformly Distributed Load."""
     def __init__(self, force = 0, span = (0,0)):
         super().__init__(force,span,angle=90)
 
 class UDLH(UDL):
+    """Horizontal Uniformly Distributed Load."""
     def __init__(self, force = 0, span = (0,0)):
         super().__init__(force, span, angle=0)
 
 
 class TrapezoidalLoadV(TrapezoidalLoad):
+    """Vertical Trapezoidal Distributed Load."""
     def __init__(self, force = (0,0), span =(0, 0)):
         super().__init__(force, span, angle=90)
 
 class TrapezoidalLoadH(TrapezoidalLoad):
+    """Horizontal Trapezoidal Distributed Load."""
     def __init__(self, force = (0,0), span =(0, 0)):
         super().__init__(force, span, angle=0)
 
 
 class DistributedLoadV(DistributedLoad):
+    """Vertical Distributed Load."""
     def __init__(self, expr = 0, span = (0,0)):
         super().__init__(expr, span, angle=90)
 
 class DistributedLoadH(DistributedLoad):
+    """Horizontal Distributed Load."""
     def __init__(self, expr = 0, span = (0,0)):
         super().__init__(expr, span, angle=0)
-
-if __name__ == '__main__':
-    a = TrapezoidalLoad((1,2),(1,2),90)
-    print(a._m0)

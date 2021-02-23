@@ -75,14 +75,6 @@ Note: As the Python package calculations are purely analytical calculation \
 times can be relatively slow.
 ''')
 
-copyright_ = dbc.Row(
-            [
-                dbc.Col(dcc.Markdown("[![License](https://img.shields.io/badge/license-MIT-lightgreen.svg)](https://github.com/JesseBonanno/IndeterminateBeam/blob/main/LICENSE.txt)")),
-                dbc.Col(dcc.Markdown("Copyright (c) 2020, Jesse Bonanno")),
-                dbc.Col(dcc.Markdown("Contact: JesseBonanno@gmail.com")),
-            ]
-)
-
 # the content for the sidebar
 sidebar_content = html.Div(
     [
@@ -99,6 +91,15 @@ sidebar = html.Div(
         sidebar_content
     ],
     style=SIDEBAR_STYLE,
+)
+
+# Copyright content for footer
+copyright_ = dbc.Row(
+            [
+                dbc.Col(dcc.Markdown("[![License](https://img.shields.io/badge/license-MIT-lightgreen.svg)](https://github.com/JesseBonanno/IndeterminateBeam/blob/main/LICENSE.txt)")),
+                dbc.Col(dcc.Markdown("Copyright (c) 2020, Jesse Bonanno")),
+                dbc.Col(dcc.Markdown("Contact: JesseBonanno@gmail.com")),
+            ]
 )
 
 
@@ -179,7 +180,7 @@ beam_content = dbc.Card(
     className="mt-3",
 )
 
-# Properties for Support Tab
+# Properties for (Advanced) Support Tab
 # Just do as a table but let inputs be
 # R - Restraint, F- Free, or number for spring, Spring not an option for m.
 
@@ -594,23 +595,7 @@ query_content = dbc.Card(
     className="mt-3",
 )
 
-# # Properties for results section
-# results_columns = [
-#         {"name": "", "id": "type"},
-#         {"name": "Maximum Effect", "id": "max"},
-#         {"name": "Minimum Effect", "id": "min"},
-#     ]
-
-# results_data = [
-#         {'type':'Normal Force', 'max':0, 'min':0},
-#         {'type':'Shear Force', 'max':0, 'min':0},
-#         {'type':'Bending Moment', 'max':0, 'min':0},
-#         {'type':'Deflection', 'max':0, 'min':0},
-#     ]
-
-
-# # results 2
-
+# Properties for results section
 results_columns = [
         {"name": "", "id": "val"},
         {"name": 'Normal Force (kN)', "id": "NF"},
@@ -675,34 +660,11 @@ option_instructions = dcc.Markdown('''
                positive direction for y forces to be downwards has been allowed.  
                This is actually achieved by reversing the angle direction  
                of loading behind the scenes, (multiplying by negative 1)  
-               which can be revealed by hoverlabels.  
+               which can be revealed by hoverlabels.
+            4. Data points:
+               - Number of increments used for plotting graphs, higher number 
+               results in longer calculation speeds.  
             ''')
-
-
-option_data_point = dbc.FormGroup(
-    [
-        dbc.Label("Graph Data Points", html_for="option_data_points", width=3),
-        dbc.Col(
-            dcc.Slider(
-                id = 'option_data_points',
-                min=100,
-                max=1000,
-                value=100,
-                step = 100,
-                marks={
-                    100: {'label': '100'},
-                    500: {'label': '500'},
-                    1000: {'label': '1000'}
-                },
-                included=True
-            ),             
-            width=8,
-        ),
-    ],
-    row=True,
-)
-
-
 
 option_support_input = dbc.FormGroup(
     [
@@ -763,7 +725,30 @@ option_result_table = dbc.FormGroup(
     row=True,
 )
 
-option_content = dbc.Form([
+option_data_point = dbc.FormGroup(
+    [
+        dbc.Label("Graph Data Points", html_for="option_data_points", width=3),
+        dbc.Col(
+            dcc.Slider(
+                id = 'option_data_points',
+                min=100,
+                max=1000,
+                value=100,
+                step = 100,
+                marks={
+                    100: {'label': '100'},
+                    500: {'label': '500'},
+                    1000: {'label': '1000'}
+                },
+                included=True
+            ),             
+            width=8,
+        ),
+    ],
+    row=True,
+)
+
+option_combined = dbc.Form([
     option_result_table,
     option_support_input,
     option_positive_direction_y,
@@ -774,7 +759,7 @@ option_content = dbc.Form([
 option_content = dbc.Card(
     dbc.CardBody(
         [
-            option_content,
+            option_combined,
             html.Br(),
             dbc.Collapse(
                 [
@@ -948,7 +933,7 @@ def results_setup(mode):
 
 # option - positive y direction
 
-
+# Main callback - assembles entire beam and analyses base on inputs.
 @app.callback(
     [Output('graph_1', 'figure'), Output('graph_2', 'figure'),
      Output('alert-fade', 'color'), Output('alert-fade', 'children'), 

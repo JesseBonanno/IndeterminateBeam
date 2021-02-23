@@ -12,7 +12,7 @@ from indeterminatebeam.loading import(
     PointLoadH,
     PointLoadV,
     PointTorque,
-    UDLoad,
+    UDL,
     TrapezoidalLoad,
     DistributedLoad,
 )
@@ -152,7 +152,7 @@ def draw_arrowhead(fig, angle, x_sup, length=5, xoffset=0, yoffset=0,
 
 
 def draw_arrow(fig, angle, force, x_sup, xoffset=0, yoffset=0, color='red',
-               line_width=2, arrowhead=5, arrowlength=40, show_values=True,row=None, col=None):
+               line_width=2, arrowhead=5, arrowlength=40, show_values=True, row=None, col=None):
     """Draw an anchored arrow on a plotly figure.
 
     Parameters
@@ -180,6 +180,8 @@ def draw_arrow(fig, angle, force, x_sup, xoffset=0, yoffset=0, color='red',
         Size of the arrowhead lines, by default 5
     arrowlength: int, optional
         length of the arrow line, by default 30
+    show_values: bool,optional
+        If true annotates numerical force value next to arrow, by default True.
     row : int or None,
         Row of subplot to draw line on. If None specified assumes a full plot,
         by default None.
@@ -384,7 +386,9 @@ def draw_moment(fig, moment, x_sup, color='magenta', show_values=True, row=None,
     direction : 'clockwise' or 'anti-clockwise', optional
         direction for circular arrow to point in, default 'clockwise
     color : str, optional
-        color of circular arrow, default 'red'
+        color of circular arrow, default 'magenta'
+    show_values: bool,optional
+        If true annotates numerical force value next to arrow, by default True.
     row : int or None,
         Row of subplot to draw line on. If None specified assumes a full plot,
         by default None.
@@ -453,8 +457,6 @@ def draw_force(fig, load, row=None, col=None):
         plotly figure to append force representation to.
     load : instance of a load class
         force to be represented on figure
-    color : str, optional
-        color of force representation, default 'red'
     row : int or None,
         Row of subplot to draw line on. If None specified assumes a full plot,
         by default None.
@@ -468,9 +470,6 @@ def draw_force(fig, load, row=None, col=None):
         Returns the plotly figure passed into function with the force
         representation appended to it.
     """
-    # Get namedtuple name to check the type of load.  (Is used as an
-    # alternative to isinstance method in order to avoid importing the
-    # load classes to avoid circular dependency.)
 
     if isinstance(load, PointTorque):
         moment, x_sup = load.force, load.position
@@ -492,7 +491,7 @@ def draw_force(fig, load, row=None, col=None):
             row=row,
             col=col)
 
-    elif isinstance(load, (DistributedLoad, UDLoad, TrapezoidalLoad)):
+    elif isinstance(load, (DistributedLoad, UDL, TrapezoidalLoad)):
         angle = load.angle
         if angle % 90 == 0:
             # vertical or horizontal
@@ -518,8 +517,8 @@ def draw_force(fig, load, row=None, col=None):
             y_lam = lambdify(x, expr, 'numpy')
             y_vec = np.array([round(float(y_lam(t)),3) for t in x_vec])
 
-        elif isinstance(load, UDLoad):
-            name = 'UDLoad'
+        elif isinstance(load, UDL):
+            name = 'UDL'
             x_vec = np.array(load.span)
             y_vec = np.array([load.force, load.force])
         else:
@@ -529,13 +528,12 @@ def draw_force(fig, load, row=None, col=None):
 
     
         largest = abs(max(y_vec, key=abs))
+        
+
+        # draw each function normalised to 1. ie the max is always 1.
+        # largest accounts for magnitude, angle factor rectifies polarity.
         y_vec = (angle_factor) * y_vec / largest
 
-
-        # need to know sign for each side.
-        # draw each function normalised to 1. ie the max is always 1.
-        # evaluate force at left and force at right to plot
-        
 
         # Create trace object for graph of distributed force
         trace = go.Scatter(
@@ -595,11 +593,6 @@ def draw_load_hoverlabel(fig, load, row=None, col=None):
     plotly figure
         plotly figure to append hoverlabel representation to.
     """
-
-    # Get namedtuple name to check the type of load.  (Is used as an
-    # alternative to isinstance method in order to avoid importing the
-    # load classes to avoid circular dependency.)
-
     y_sup = 0
 
     if isinstance(load, (PointLoad, PointTorque)):
@@ -639,7 +632,7 @@ def draw_load_hoverlabel(fig, load, row=None, col=None):
 
     # Else is distributed load type, hoverlabel needed for arrow at each side
     # of function
-    elif isinstance(load, (DistributedLoad, UDLoad, TrapezoidalLoad)):
+    elif isinstance(load, (DistributedLoad, UDL, TrapezoidalLoad)):
         if load.angle % 90 == 0:
             # vertical or horizontal
             color = 'mediumpurple'
@@ -894,6 +887,10 @@ def draw_support_spring(fig, support, orientation="up",color='orange',show_value
         support to be represented on figure
     orientation : 'up' or 'right, optional
         direction that the arrow faces, by default "up"
+    color : str, optional
+        color of spring, by default 'orange'.
+    show_values: bool,optional
+        If true annotates numerical force value next to arrow, by default True.
     row : int or None,
         Row of subplot to draw line on. If None specified assumes a full plot,
         by default None.

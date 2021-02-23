@@ -29,11 +29,11 @@ import time
 
 class BeamTestCase(unittest.TestCase):
     def test_speed(self):
-        t1 = time.perf_counter()
+
         self.store_speeds = []
         self.filename_speeds = input('What is the test name?')
         # case 1
-        print(t1 - time.perf_counter())
+
         t1 = time.perf_counter()
 
         beam = Beam(5)
@@ -49,8 +49,6 @@ class BeamTestCase(unittest.TestCase):
         i = TrapezoidalLoadV((0,1),(0,1))
         j = TrapezoidalLoadH((0,1),(0,1))
 
-        print(t1 - time.perf_counter())
-        t1 = time.perf_counter()
 
         beam.add_loads(a,b,c,d)
         beam.add_supports(
@@ -58,23 +56,14 @@ class BeamTestCase(unittest.TestCase):
             Support(5,(1,1,0))
         )
 
-        print(t1 - time.perf_counter())
-        t1 = time.perf_counter()
 
         beam.analyse()
 
-        print(t1 - time.perf_counter())
-        t1 = time.perf_counter()
 
-        fig = beam.plot_beam_external()
-
-        print(t1 - time.perf_counter())
-        t1 = time.perf_counter()
-        
+        fig = beam.plot_beam_external()       
         fig = beam.plot_beam_internal()
 
         print(t1 - time.perf_counter())
-        t1 = time.perf_counter()
 
         self.store_speeds.append(t1-time.perf_counter())
 
@@ -103,7 +92,8 @@ class BeamTestCase(unittest.TestCase):
 
         fig = beam.plot_beam_external()
         fig = beam.plot_beam_internal()
-
+        
+        print(t1 - time.perf_counter())
         self.store_speeds.append(t1-time.perf_counter())
 
         filename = self.filename_speeds + ".txt"

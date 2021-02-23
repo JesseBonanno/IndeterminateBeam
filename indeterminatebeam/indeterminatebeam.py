@@ -34,7 +34,7 @@ from indeterminatebeam.plotly_drawing_aid import (
 from indeterminatebeam.loading import (
     PointTorque,
     PointLoad,
-    UDLoad,
+    UDL,
     TrapezoidalLoad,
     DistributedLoad,
 )
@@ -273,7 +273,7 @@ class Beam:
         # If load valid then add to self._loads.
         # Note: Have ignored distributedLoadH in this version.
         for load in loads:
-            if isinstance(load, (DistributedLoad, UDLoad, TrapezoidalLoad)):
+            if isinstance(load, (DistributedLoad, UDL, TrapezoidalLoad)):
                 left, right = load.span
 
                 if self._x0 > left or right > self._x1:
@@ -1762,7 +1762,7 @@ if __name__ == "__main__":
     # sys.path.insert(0, os.path.abspath('../'))
 
     a = PointLoad(5,1,90)
-    b = UDLoad(4,(0,2))
+    b = UDL(4,(0,2))
 
     beam = Beam(5)
     beam.add_loads(a,b)
