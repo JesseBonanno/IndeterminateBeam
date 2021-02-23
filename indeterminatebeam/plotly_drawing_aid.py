@@ -17,6 +17,7 @@ from indeterminatebeam.loading import(
     DistributedLoad,
 )
 
+
 def draw_line(fig, angle, x_sup, length=-20, xoffset=0, yoffset=0,
               color='red', line_width=2, row=None, col=None):
     """Draw an anchored line on a plotly figure.
@@ -152,7 +153,8 @@ def draw_arrowhead(fig, angle, x_sup, length=5, xoffset=0, yoffset=0,
 
 
 def draw_arrow(fig, angle, force, x_sup, xoffset=0, yoffset=0, color='red',
-               line_width=2, arrowhead=5, arrowlength=40, show_values=True, row=None, col=None):
+               line_width=2, arrowhead=5, arrowlength=40, show_values=True,
+               row=None, col=None):
     """Draw an anchored arrow on a plotly figure.
 
     Parameters
@@ -201,7 +203,7 @@ def draw_arrow(fig, angle, force, x_sup, xoffset=0, yoffset=0, color='red',
     # Factor to switch arrow direction based on force sign
     if force > 0:
         d = 1
-    elif force<0:
+    elif force < 0:
         d = -1
     else:
         return fig
@@ -235,15 +237,21 @@ def draw_arrow(fig, angle, force, x_sup, xoffset=0, yoffset=0, color='red',
         # determine start and end of arrow
         x0 = xoffset + x_sup
         y0 = yoffset
-        x1 = (x0 + int(sympify(-arrowlength* d * cos(radians(angle))).evalf(2)))*1.1
-        y1 = (y0 + int(sympify(-arrowlength * d * sin(radians(angle))).evalf(2)))*1.3
-        
+        x1 = (
+            x0
+            + int(sympify(-arrowlength * d * cos(radians(angle))).evalf(2))
+            ) * 1.1
+        y1 = (
+            y0
+            + int(sympify(-arrowlength * d * sin(radians(angle))).evalf(2))
+            ) * 1.3
+
         # make so text doesnt intersect x axis
-        if abs(y1)<5:
+        if abs(y1) < 5:
             if y1 >= 0:
-                y1=10
+                y1 = 10
             else:
-                y1=-10
+                y1 = -10
 
         annotation = dict(
             xref="x", yref="y",
@@ -254,7 +262,7 @@ def draw_arrow(fig, angle, force, x_sup, xoffset=0, yoffset=0, color='red',
             text=force,
             font_color=color,
             showarrow=False,
-            )
+        )
 
         # Append shape to plot or subplot
         if row and col:
@@ -373,8 +381,14 @@ def draw_support_rectangle(fig, x_sup, orientation="up", row=None, col=None):
     return fig
 
 
-def draw_moment(fig, moment, x_sup, color='magenta', show_values=True, row=None,
-                col=None):
+def draw_moment(
+        fig,
+        moment,
+        x_sup,
+        color='magenta',
+        show_values=True,
+        row=None,
+        col=None):
     """Draw a moment (torque) shape (circular arrow) on a plotly figure.
 
     Parameters
@@ -437,7 +451,7 @@ def draw_moment(fig, moment, x_sup, color='magenta', show_values=True, row=None,
             text=moment,
             font_color=color,
             showarrow=False,
-            )
+        )
 
         # Append shape to plot or subplot
         if row and col:
@@ -480,7 +494,7 @@ def draw_force(fig, load, row=None, col=None):
             row=row,
             col=col)
 
-    elif isinstance(load,PointLoad):
+    elif isinstance(load, PointLoad):
         force, x_sup, angle = load.force, load.position, load.angle
 
         fig = draw_arrow(
@@ -502,12 +516,11 @@ def draw_force(fig, load, row=None, col=None):
         elif angle % 90 != 0:
             color = 'green'
 
-        if sin(angle)>=0:
+        if sin(angle) >= 0:
             angle_factor = -1
         else:
             angle_factor = 1
 
-                
         if isinstance(load, DistributedLoad):
             name = 'Distributed<br>Load'
             x0, x1 = load.span
@@ -515,7 +528,7 @@ def draw_force(fig, load, row=None, col=None):
             # numpy array for x positions closely spaced (allow for graphing)
             x_vec = np.linspace(x0, x1, int(min((x1 - x0) * 100 + 1, 1e3)))
             y_lam = lambdify(x, expr, 'numpy')
-            y_vec = np.array([round(float(y_lam(t)),3) for t in x_vec])
+            y_vec = np.array([round(float(y_lam(t)), 3) for t in x_vec])
 
         elif isinstance(load, UDL):
             name = 'UDL'
@@ -526,14 +539,11 @@ def draw_force(fig, load, row=None, col=None):
             x_vec = np.array(load.span)
             y_vec = np.array(load.force)
 
-    
         largest = abs(max(y_vec, key=abs))
-        
 
         # draw each function normalised to 1. ie the max is always 1.
         # largest accounts for magnitude, angle factor rectifies polarity.
         y_vec = (angle_factor) * y_vec / largest
-
 
         # Create trace object for graph of distributed force
         trace = go.Scatter(
@@ -556,7 +566,7 @@ def draw_force(fig, load, row=None, col=None):
 
         # draw arrow for left force and right force (if larger than 2% of
         # max load)
-        for a in [0,-1]:
+        for a in [0, -1]:
             if abs(y_vec[a]) > 0.02:
                 fig = draw_arrow(
                     fig,
@@ -564,8 +574,8 @@ def draw_force(fig, load, row=None, col=None):
                     angle_factor * y_vec[a] * largest,
                     x_vec[a],
                     color=color,
-                    arrowlength=30*abs(y_vec[a]),
-                    row=row, 
+                    arrowlength=30 * abs(y_vec[a]),
+                    row=row,
                     col=col)
 
     return fig
@@ -610,7 +620,6 @@ def draw_load_hoverlabel(fig, load, row=None, col=None):
                 <br>Angle: %{meta[2]} deg'
             name = 'Point<br>Load'
 
-
         # Define hoverlabel as a marker with 0 opacity and a hovertemplate that
         # relies on meta data field
         trace = go.Scatter(
@@ -649,15 +658,17 @@ def draw_load_hoverlabel(fig, load, row=None, col=None):
         name = 'Distributed<br>Load'
         y_sup = 1
 
-        meta = [(x0, round(float(expr.subs(x,x0)),3), angle), (x1, round(float(expr.subs(x,x1)),3), angle)]
-        hovertemplate = 'x: %{meta[0]} m<br>Force: %{meta[1]} kN/m<br>Angle: %{meta[2]} deg'
+        meta = [(x0, round(float(expr.subs(x, x0)), 3), angle),
+                (x1, round(float(expr.subs(x, x1)), 3), angle)]
+        hovertemplate = 'x: %{meta[0]} m<br>Force: %{meta[1]} kN/m<br>\
+            Angle: %{meta[2]} deg'
 
-        for x_,y_,a_ in meta:
+        for x_, y_, a_ in meta:
             trace = go.Scatter(
                 x=[x_], y=[0],
                 showlegend=False, mode="markers",
                 name=name,
-                meta=[x_,y_,a_],
+                meta=[x_, y_, a_],
                 marker=dict(symbol="triangle-up", size=10, color=color),
                 hovertemplate=hovertemplate,
                 hoverinfo="skip",
@@ -707,7 +718,7 @@ def draw_reaction_hoverlabel(fig, reactions, x_sup, row=None, col=None):
         hovertemplate += "<br>y: %{meta[1]} kN"
     if m_:
         hovertemplate += "<br>m: %{meta[2]} kN.m"
-    
+
     # Create scatter object with opacity 0 for hovertemplate
     trace = go.Scatter(
         x=[x_sup], y=[0],
@@ -719,7 +730,7 @@ def draw_reaction_hoverlabel(fig, reactions, x_sup, row=None, col=None):
         hoverinfo="skip",
         opacity=0
     )
-    
+
     # Add to plot or subplot
     if row and col:
         fig.add_trace(trace, row=row, col=col)
@@ -777,7 +788,7 @@ def draw_support_hoverlabel(fig, support, kx=0, ky=0, row=None, col=None):
             hovertemplate += "<br>kx: %{meta[0]} kN/mm"
         if ky:
             hovertemplate += "<br>ky: %{meta[1]} kN/mm"
-    
+
     # Support
     else:
         name = "Support"
@@ -840,7 +851,7 @@ def draw_support_rollers(fig, x_sup, orientation='up', offset=1, row=None,
     radius = 1
     if orientation in ['up', 'right']:
 
-        # shifting the position from x_sup to make more aesthetic for 
+        # shifting the position from x_sup to make more aesthetic for
         # triangle or rectangle.
         # A triangle is wider so an offset of 1 is used.
         # A rectangle uses an offset shorter, currently 0.6 is used.
@@ -876,7 +887,14 @@ def draw_support_rollers(fig, x_sup, orientation='up', offset=1, row=None,
     return fig
 
 
-def draw_support_spring(fig, support, orientation="up",color='orange',show_values=True, row=None, col=None):
+def draw_support_spring(
+        fig,
+        support,
+        orientation="up",
+        color='orange',
+        show_values=True,
+        row=None,
+        col=None):
     """Draw an anchored spring shape on a plotly figure.
 
     Parameters
@@ -952,25 +970,24 @@ def draw_support_spring(fig, support, orientation="up",color='orange',show_value
             x0, y0 = x1, y1
 
         if show_values:
-            y0 = max(y0,7)
+            y0 = max(y0, 7)
 
             annotation = dict(
                 xref="x", yref="y",
                 x=x_sup,
                 y=0,
-                yshift=y0*1.5,
-                xshift=x0*2,
+                yshift=y0 * 1.5,
+                xshift=x0 * 2,
                 text=stiffness,
                 font_color=color,
                 showarrow=False,
-                )
+            )
 
             # Append shape to plot or subplot
             if row and col:
                 fig.add_annotation(annotation, row=row, col=col)
             else:
                 fig.add_annotation(annotation)
-
 
     return fig
 
@@ -1018,7 +1035,7 @@ def draw_support(fig, support, row=None, col=None):
         if fixed == [0, 0, 1]:
             fig = draw_moment(
                 fig,
-                moment = 1,
+                moment=1,
                 x_sup=support._position,
                 color='blue',
                 show_values=False,

@@ -12,6 +12,8 @@ Example
 >>> beam.analyse()
 >>> beam.plot()
 """
+import sys, os
+sys.path.insert(0, os.path.abspath('../'))
 
 from collections import namedtuple
 from copy import deepcopy
@@ -565,7 +567,7 @@ class Beam:
         for reaction in unknowns['y']:
                 equations_ym.append(
                     (v_EI.subs(x, reaction['position']) * 10 ** 12 / (self._E * self._I))
-                    + reaction['force'] / reaction['stiffness']
+                    + reaction['variable'] / reaction['stiffness']
                 )
 
         # equation for normal forces, only for indeterminate in x
@@ -583,9 +585,9 @@ class Beam:
                 equations_xx.append(
                     (Nv_EA.subs(x, end['position']) - Nv_EA.subs(x, start['position']))
                     * 10**3 / (self._E * self._A)
-                    + start['force'] / start['stiffness']
+                    + start['variable'] / start['stiffness']
                     # represents elongation displacment on right
-                    - end['force'] / end['stiffness']
+                    - end['variable'] / end['stiffness']
                 )
 
         # compute analysis with linsolve
@@ -1767,6 +1769,7 @@ if __name__ == "__main__":
     beam = Beam(5)
     beam.add_loads(a,b)
     beam.add_supports(Support())
+    beam.add_supports(Support(3,(0,0,0),ky=5))
     beam.analyse()
 
     beam.plot_beam_external()
