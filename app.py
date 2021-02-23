@@ -306,6 +306,10 @@ basic_support_instructions = dcc.Markdown('''
             1. Specify the coodinate location of the support 
             2. For each direction specify the conventional support type from the dropdown.
 
+            Note: Dropdown doesnt appear to currently be working properly.
+            Can fill in by deleting text then typing either "Roller", "Pinned", or "Fixed.
+            After typing the first letter should be able to press "Enter" key to fill in.
+
             ''')
 
 basic_support_content = dbc.Card(
