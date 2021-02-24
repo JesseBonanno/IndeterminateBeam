@@ -22,9 +22,8 @@ E and I are constant.
 Results
 --------
 
-The following values can be directly extracted using the `check_determinancy`, `get_shear_force`, `get_bending_moment` and `get_reaction` methods:
+The following values can be directly extracted using the `get_shear_force`, `get_bending_moment` and `get_reaction` methods:
 
-   #. The degree of determinancy	  --> 1
    #. The absolute maximum shear force 	  --> 16.75 kN
    #. The absolute maximum bending moment --> 11.25 kN.m
    #. The reaction at B         	  --> 9.25 kN

@@ -258,13 +258,20 @@ class Beam:
         self._supports = []
         self._query = []
 
+        self._DATA_POINTS = 200
+
+        self.analysis_reset()
+
+    def analysis_reset(self):
+        """ Reset properties determined by analysis."""
+
         self._normal_forces = 0
         self._shear_forces = 0
         self._bending_moments = 0
         self._deflection_equation = 0
 
         self._reactions = {}
-        self._DATA_POINTS = 200
+        self._plotting_vectors = {}
 
     def add_loads(self, *loads):
         """Associate load objects with the beam object.
@@ -277,6 +284,8 @@ class Beam:
             (or segment) must be within the Beam span.
 
         """
+        self.analysis_reset()
+
         # Iterate through each load passed into function
         for load in loads:
             # Check if distributed load (will be true for V and H load
@@ -315,7 +324,7 @@ class Beam:
             # if not a distributed load or point load then isnt a load class.
             else:
                 raise ValueError(
-                    f"Load '{Load}' is not a load object.")
+                    f"Load '{load}' is not a load object.")
 
             # if force isnt 0, then add to self._loads, otherwise will
             # have no effect on the beam and as such shouldnt add.
@@ -335,6 +344,9 @@ class Beam:
             by default False.
 
         """
+
+        self.analysis_reset()
+
         # if remove all set to True, reintialize self._loads
         if remove_all:
             self._loads = []
@@ -350,6 +362,8 @@ class Beam:
         # an issue if they dont properly recreate the load they were
         # trying to remove and dont notice that they didnt actually
         # delete it.
+        
+
 
     def add_supports(self, *supports):
         """Associate support objects with the beam object.
@@ -362,6 +376,8 @@ class Beam:
             (or segment) must be within the Beam span.
 
         """
+
+        self.analysis_reset()
 
         # Check support valid then append to self._supports
         for support in supports:
@@ -404,6 +420,8 @@ class Beam:
             If true all supports associated with beam will be removed,
             by default False.
         """
+
+        self.analysis_reset()
 
         # if remove all set to True, reintialize self._supports
         if remove_all:
@@ -660,6 +678,44 @@ class Beam:
             v_EI * 10 ** 12 / (self._E * self._I)
         )
 
+        self.set_plotting_vectors()
+
+    def set_plotting_vectors(self):
+        """ Create vectors of data points for functions to 
+        allow for quicker plotting and determining of results."""
+        
+        x_vec = np.linspace(self._x0, self._x1, self._DATA_POINTS)
+
+        nf_func = lambdify(x, self._normal_forces, 'numpy')
+        sf_func = lambdify(x, self._shear_forces, 'numpy')
+        bm_func = lambdify(x, self._bending_moments, 'numpy')
+        d_func = lambdify(x, self._deflection_equation, 'numpy')
+
+        nf = np.array([float(nf_func(t)) for t in x_vec])
+        sf = np.array([float(sf_func(t)) for t in x_vec])
+        bm = np.array([float(bm_func(t)) for t in x_vec])
+        d = np.array([float(d_func(t)) for t in x_vec])
+
+        self._plotting_vectors = {
+            'x': x_vec,
+            'nf': {
+                'y_lam': nf_func,
+                'y_vec': nf,
+            },
+            'sf': {
+                'y_lam': sf_func,
+                'y_vec': sf,
+            },
+            'bm': {
+                'y_lam': bm_func,
+                'y_vec': bm,
+            },
+            'd': {
+                'y_lam': d_func,
+                'y_vec': d,
+            },
+        }
+
     # SECTION - QUERY VALUE
     def get_reaction(self, x_coord, direction=None):
         """Find the reactions of a support at position x.
@@ -715,7 +771,7 @@ class Beam:
         else:
             return self._reactions[x_coord]
 
-    def _get_query_value(self, x_coord, sym_func, return_max=False,
+    def _get_query_value(self, x_coord, func, return_max=False,
                          return_min=False, return_absmax=False):
         """Find the value of a function at position x_coord, or
         determine function extremes.
@@ -725,8 +781,12 @@ class Beam:
         x_coord: list
             The x_coordinates on the beam to be substituted into the
             equation. List returned (if bools all false)
-        sym_func: sympy function
-            The function to be analysed
+        func: str
+            String representing function to query:
+                'nf' if normal force.
+                'sf' if shear force.
+                'bm' if bending moment.
+                'd' if deflection.
         return_max: bool
             return max value of function if true
         return_min: bool
@@ -741,20 +801,18 @@ class Beam:
             on which parameters are set. If single x-coordinate set
             then also returns int.
         list of ints
-            If x-coordinates are specfied value of sym_func at
-            x-coordinates. If max and min both True returns max and min,
-            and any x_coordinates that have been passed in (mainly useful
-            for Dash website result table generation speed.)
+            If x-coordinates are specfied value at x-coordinates for
+            func.
 
         Notes
         -----
         * Priority of query parameters is return_max, return_min,
           return_absmax, x_coord (if more than 1 of the parameters are
-          specified, and return_max and return_min arent both true).
-
+          specified).
         """
-        # lambdify function to allow for faster computation
-        y_lam = lambdify(x, sym_func, 'numpy')
+
+        y_vec = self._plotting_vectors[func]['y_vec']
+        y_lam = self._plotting_vectors[func]['y_lam']
 
         # if there are no max/min parameters set to true base
         # return on x_coord
@@ -766,26 +824,10 @@ class Beam:
             else:
                 return round(float(y_lam(x_coord)), 3)
 
-        # numpy array for x positions closely spaced (allow for graphing)
-        # i think lambdify is needed to let the function work with numpy
-        x_vec = np.linspace(self._x0, self._x1, self._DATA_POINTS)
-        y_vec = np.array([float(y_lam(t)) for t in x_vec])
         min_ = float(y_vec.min())
         max_ = float(y_vec.max())
 
-        # if both return max and return min then we are dealing with the
-        # solution mainly needed for the Dash application results table.
-        if return_max and return_min:
-            # add max and min values to array
-            temp = [round(max_, 3), round(min_, 3)]
-            # if any x_coordinates then for each coordinate
-            # add value to array.
-            if x_coord:
-                for x_ in x_coord:
-                    temp.append(round(float(y_lam(x_)), 3))
-            return temp
-        # otherwise return the required value.
-        elif return_max:
+        if return_max:
             return round(max_, 3)
         elif return_min:
             return round(min_, 3)
@@ -811,25 +853,23 @@ class Beam:
         Returns
         --------
         int
-            Max, min or absmax value of the bending moment function
-            depending on which parameters are set. If single x-coordinate
-            set then also returns int.
+            Max, min or absmax value of the bending moment depending
+            on which parameters are set. If single x-coordinate set
+            then also returns int.
         list of ints
-            If x-coordinates are specfied value of bending moment at
-            x-coordinates. If max and min both True returns max and min,
-            and any x_coordinates that have been passed in (mainly useful
-            for Dash website result table generation speed.)
+            If x-coordinates are specfied value at x-coordinates for
+            func.
 
         Notes
         -----
         * Priority of query parameters is return_max, return_min,
           return_absmax, x_coord (if more than 1 of the parameters are
-          specified, and return_max and return_min arent both true).
+          specified).
         """
 
         return self._get_query_value(
             x_coord,
-            sym_func=self._bending_moments,
+            func='bm',
             return_max=return_max,
             return_min=return_min,
             return_absmax=return_absmax
@@ -854,25 +894,23 @@ class Beam:
         Returns
         --------
         int
-            Max, min or absmax value of the shear force function
-            depending on which parameters are set. If single x-coordinate
-            set then also returns int.
+            Max, min or absmax value of the shear force depending
+            on which parameters are set. If single x-coordinate set
+            then also returns int.
         list of ints
-            If x-coordinates are specfied value of shear force at
-            x-coordinates. If max and min both True returns max and min,
-            and any x_coordinates that have been passed in (mainly useful
-            for Dash website result table generation speed.)
+            If x-coordinates are specfied value at x-coordinates for
+            func.
 
         Notes
         -----
         * Priority of query parameters is return_max, return_min,
           return_absmax, x_coord (if more than 1 of the parameters are
-          specified, and return_max and return_min arent both true).
+          specified).
         """
 
         return self._get_query_value(
             x_coord,
-            sym_func=self._shear_forces,
+            func='sf',
             return_max=return_max,
             return_min=return_min,
             return_absmax=return_absmax
@@ -897,24 +935,22 @@ class Beam:
         Returns
         --------
         int
-            Max, min or absmax value of the normal force function
-            depending on which parameters are set. If single x-coordinate
-            set then also returns int.
+            Max, min or absmax value of the normal force depending
+            on which parameters are set. If single x-coordinate set
+            then also returns int.
         list of ints
-            If x-coordinates are specfied value of normal force at
-            x-coordinates. If max and min both True returns max and min,
-            and any x_coordinates that have been passed in (mainly useful
-            for Dash website result table generation speed.)
+            If x-coordinates are specfied value at x-coordinates for
+            func.
 
         Notes
         -----
         * Priority of query parameters is return_max, return_min,
           return_absmax, x_coord (if more than 1 of the parameters are
-          specified, and return_max and return_min arent both true).
+          specified).
         """
         return self._get_query_value(
             x_coord,
-            sym_func=self._normal_forces,
+            func='nf',
             return_max=return_max,
             return_min=return_min,
             return_absmax=return_absmax
@@ -939,25 +975,23 @@ class Beam:
         Returns
         --------
         int
-            Max, min or absmax value of the deflection function
-            depending on which parameters are set. If single x-coordinate
-            set then also returns int.
+            Max, min or absmax value of the deflection depending
+            on which parameters are set. If single x-coordinate set
+            then also returns int.
         list of ints
-            If x-coordinates are specfied value of deflection at
-            x-coordinates. If max and min both True returns max and min,
-            and any x_coordinates that have been passed in (mainly useful
-            for Dash website result table generation speed.)
+            If x-coordinates are specfied value at x-coordinates for
+            func.
 
         Notes
         -----
         * Priority of query parameters is return_max, return_min,
           return_absmax, x_coord (if more than 1 of the parameters are
-          specified, and return_max and return_min arent both true).
+          specified).
         """
 
         return self._get_query_value(
             x_coord,
-            sym_func=self._deflection_equation,
+            func='d',
             return_max=return_max,
             return_min=return_min,
             return_absmax=return_absmax)
@@ -1345,7 +1379,7 @@ class Beam:
         color = "red"
 
         fig = self.plot_analytical(
-            self._normal_forces,
+            'nf',
             color,
             title,
             xlabel,
@@ -1396,7 +1430,7 @@ class Beam:
         color = "aqua"
 
         fig = self.plot_analytical(
-            self._shear_forces,
+            'sf',
             color,
             title,
             xlabel,
@@ -1447,7 +1481,7 @@ class Beam:
         title = "Bending Moment Plot"
         color = "lightgreen"
         fig = self.plot_analytical(
-            self._bending_moments,
+            'bm',
             color,
             title,
             xlabel,
@@ -1497,7 +1531,7 @@ class Beam:
         title = "Deflection Plot"
         color = "blue"
         fig = self.plot_analytical(
-            self._deflection_equation,
+            'd',
             color,
             title,
             xlabel,
@@ -1514,7 +1548,7 @@ class Beam:
 
         return fig
 
-    def plot_analytical(self, sym_func, color="blue", title="", xlabel="",
+    def plot_analytical(self, func, color="blue", title="", xlabel="",
                         ylabel="", xunits="", yunits="", reverse_x=False,
                         reverse_y=False, switch_axes=False, fig=None,
                         row=None, col=None):
@@ -1524,8 +1558,12 @@ class Beam:
 
         Parameters
         -----------
-        sym_func: sympy function
-            symbolic function using the variable x
+        func: str
+            String representing function to query:
+                'nf' if normal force.
+                'sf' if shear force.
+                'bm' if bending moment.
+                'd' if deflection.
         color: str
             color to be used for plot, default blue.
         title: str
@@ -1560,12 +1598,9 @@ class Beam:
             Returns a handle to a figure with the deflection diagram.
         """
         # numpy array for x positions closely spaced (allow for graphing)
-        x_vec = np.linspace(self._x0, self._x1, self._DATA_POINTS)
-        y_lam = lambdify(x, sym_func, 'numpy')
-        # transform sympy expressions to lambda functions which can be used to
-        # calculate numerical values very fast (with numpy).
-        # Unfortunetly, for Singularity functions currently can't use lambdify.
-        y_vec = np.array([y_lam(t) for t in x_vec])
+        x_vec = self._plotting_vectors['x']
+        y_vec = self._plotting_vectors[func]['y_vec']
+        y_lam = self._plotting_vectors[func]['y_lam']
 
         fill = 'tozeroy'
 
@@ -1613,7 +1648,7 @@ class Beam:
             fig.update_xaxes(autorange="reversed") if reverse_x else None
 
         for q_val in self._query:
-            q_res = self._get_query_value(q_val, sym_func)
+            q_res = self._get_query_value(q_val, func)
             if q_res < 0:
                 ay = 40
             else:
