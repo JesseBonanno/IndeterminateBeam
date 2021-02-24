@@ -656,14 +656,28 @@ def draw_load_hoverlabel(fig, load, row=None, col=None):
             color = 'green'
 
         x0, x1 = load.span
-        expr = load.expr
         angle = load.angle
-
         name = 'Distributed<br>Load'
-        y_sup = 1
 
-        meta = [(x0, round(float(expr.subs(x, x0)), 3), angle),
-                (x1, round(float(expr.subs(x, x1)), 3), angle)]
+        if isinstance(load, DistributedLoad):
+            expr = load.expr
+            meta = [
+                (x0, round(float(expr.subs(x, x0)), 3), angle),
+                (x1, round(float(expr.subs(x, x1)), 3), angle)
+            ]
+
+        elif isinstance(load, UDL):
+            meta = [
+                (x0, load.force, angle),
+                (x1, load.force, angle)
+            ]
+        else:
+            meta = [
+                (x0, load.force[0], angle),
+                (x1, load.force[1], angle)
+            ]
+        
+        
         hovertemplate = 'x: %{meta[0]} m<br>Force: %{meta[1]} kN/m<br>\
             Angle: %{meta[2]} deg'
 

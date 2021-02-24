@@ -15,6 +15,7 @@ Example
 # Standard Library Imports
 from collections import namedtuple
 from math import radians
+import time
 
 # Third Party Imports
 import numpy as np
@@ -496,7 +497,7 @@ class Beam:
                 )
 
         # grab the set of all the sympy unknowns for y and m and change
-        # to a list, do same for x unknowns
+        # to a list, do same for x unknowns. To be later used by linsolve.
         unknowns_ym = [a['variable'] for a in unknowns['y']] \
             + [a['variable'] for a in unknowns['m']]
 
@@ -678,24 +679,28 @@ class Beam:
             v_EI * 10 ** 12 / (self._E * self._I)
         )
 
-        self.set_plotting_vectors()
+        self._set_plotting_vectors()
 
-    def set_plotting_vectors(self):
+    def _set_plotting_vectors(self):
         """ Create vectors of data points for functions to 
         allow for quicker plotting and determining of results."""
         
+        # create vector of x coordinate points
         x_vec = np.linspace(self._x0, self._x1, self._DATA_POINTS)
 
+        # lamdify functions
         nf_func = lambdify(x, self._normal_forces, 'numpy')
         sf_func = lambdify(x, self._shear_forces, 'numpy')
         bm_func = lambdify(x, self._bending_moments, 'numpy')
         d_func = lambdify(x, self._deflection_equation, 'numpy')
 
+        # create numpy arrays for functions (y vectors)
         nf = np.array([float(nf_func(t)) for t in x_vec])
         sf = np.array([float(sf_func(t)) for t in x_vec])
         bm = np.array([float(bm_func(t)) for t in x_vec])
         d = np.array([float(d_func(t)) for t in x_vec])
-
+        
+        # associate functions and vectors with self._plotting_vectors
         self._plotting_vectors = {
             'x': x_vec,
             'nf': {
@@ -1600,7 +1605,6 @@ class Beam:
         # numpy array for x positions closely spaced (allow for graphing)
         x_vec = self._plotting_vectors['x']
         y_vec = self._plotting_vectors[func]['y_vec']
-        y_lam = self._plotting_vectors[func]['y_lam']
 
         fill = 'tozeroy'
 
