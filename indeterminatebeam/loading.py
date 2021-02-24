@@ -1,10 +1,13 @@
 """Module containing load classes."""
 
+# Standard Libary Imports
+from math import radians
+
+# Third Party Imports
 from sympy.abc import x
 from sympy import oo, integrate, SingularityFunction, sympify, cos, sin
 
-from math import radians
-
+# Local application imports
 from indeterminatebeam.data_validation import (
     assert_length,
     assert_number,

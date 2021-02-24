@@ -1,12 +1,16 @@
 """Module to help draw plotly shapes, drawing and annotations"""
 
-from plotly.subplots import make_subplots
-import plotly.graph_objects as go
+# Standard Library Imports
+from math import radians
+
+# Third Party Imports
 import numpy as np
 from sympy import lambdify, sympify, sin, cos, oo
 from sympy.abc import x
-from math import radians
+from plotly.subplots import make_subplots
+import plotly.graph_objects as go
 
+# Local Application Imports
 from indeterminatebeam.loading import(
     PointLoad,
     PointLoadH,

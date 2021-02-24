@@ -1,6 +1,5 @@
-"""Main module that contains the main class Beam, and auxiliary classes
-Support, PointLoadH, PointLoadV, DistributedLoadH, and DistributedLoadV,
-PointLoad, PointTorque and TrapezoidalLoad.
+"""Main module that contains the main class for Beam 
+and auxillary class for Support.
 
 Example
 -------
@@ -12,27 +11,26 @@ Example
 >>> beam.analyse()
 >>> beam.plot()
 """
-import sys, os
-sys.path.insert(0, os.path.abspath('../'))
 
+# Standard Library Imports
 from collections import namedtuple
 from copy import deepcopy
+from math import radians
+
+# Third Party Imports
 import numpy as np
-import os
 from sympy import (integrate, lambdify, Piecewise, sympify, symbols, 
                    linsolve, sin, cos, oo, SingularityFunction)
 from sympy.abc import x
-from math import radians
+from plotly.subplots import make_subplots
+import plotly.graph_objects as go
 
-from indeterminatebeam.data_validation import (assert_number, assert_positive_number,
-                             assert_strictly_positive_number, assert_length)
-from indeterminatebeam.plotly_drawing_aid import (
-    draw_line, draw_arrowhead, draw_arrow, draw_support_triangle,
-    draw_support_rectangle, draw_moment, draw_force, draw_load_hoverlabel,
-    draw_reaction_hoverlabel, draw_support_hoverlabel, draw_support_rollers,
-    draw_support_spring, draw_support
-    )
-
+# Local Application Imports
+from indeterminatebeam.data_validation import (
+    assert_number,
+    assert_positive_number,
+    assert_strictly_positive_number, assert_length
+)
 from indeterminatebeam.loading import (
     PointTorque,
     PointLoad,
@@ -40,11 +38,23 @@ from indeterminatebeam.loading import (
     TrapezoidalLoad,
     DistributedLoad,
 )
+from indeterminatebeam.plotly_drawing_aid import (
+    draw_line, 
+    draw_arrowhead, 
+    draw_arrow, 
+    draw_support_triangle,
+    draw_support_rectangle, 
+    draw_moment, 
+    draw_force, 
+    draw_load_hoverlabel,
+    draw_reaction_hoverlabel, 
+    draw_support_hoverlabel, 
+    draw_support_rollers,
+    draw_support_spring, 
+    draw_support
+)
 
-from plotly.subplots import make_subplots
-import plotly.graph_objects as go
 
-import time
 
 class Support:
     """
@@ -66,9 +76,6 @@ class Support:
             Degrees of freedom that are completely fixed on a beam for
             movement in x, y and bending, 1 represents fixed and 0
             represents free or spring  (default (1,1,1))
-        _id : positive number
-            id assigned when support associated with Beam object, to
-            help remove supports.
 
     Examples
     --------
@@ -103,30 +110,35 @@ class Support:
             stiffness of y support (kN/mm), if set will overide the
             value placed in the fixed tuple. (default = None)
         """
-        # input validation
+        # validate coordinate
         assert_positive_number(coord, 'coordinate')
-
+        
+        # validate support stiffness if assigned
         if kx:
             assert_positive_number(kx, 'kx')
         if ky:
             assert_positive_number(ky, 'ky')
 
+        # validate fixed tuple elements
         for a in fixed:
             if a not in [0, 1]:
                 raise ValueError(
                     "The provided fixed parameter, must be a tuple of \
                     booleans of length 3"
                 )
+
+        # validate fixed tuple length
         if len(fixed) != 3:
             raise ValueError(
                 "The provided fixed parameter, must be a tuple of \
                 booleans of length 3"
             )
 
-        # Spring representation, set rigid to infinity instead of 1
+        # Spring representation, set rigid to infinity instead of 1.
+        # Otherwise set to 0
         self._stiffness = [oo if a else 0 for a in fixed]
 
-        # If kx or ky has been included override oo value
+        # If kx or ky has been included override oo or 0 value
         if kx:
             self._stiffness[0] = kx
         if ky:
@@ -138,20 +150,16 @@ class Support:
             int(bool(e)) if e == oo else 0 for e in self._stiffness
         ]
         self._position = coord
-        self._id = None
 
     def __str__(self):
         return f"""--------------------------------
-        id = {self._id}
         position = {float(self._position)}
         Stiffness_x = {self._stiffness[0]}
         Stiffness_y = {self._stiffness[1]}
         Stiffness_M = {self._stiffness[2]} """
 
     def __repr__(self):
-        if self._id:
-            return f"<support, id = {self._id}>"
-        return "<Support>"
+        return f"<support, position = {self._position}>"
 
 
 class Beam:
@@ -162,18 +170,24 @@ class Beam:
     Attributes
     --------------
     _x0 :float
-        Left end coordinate of beam. This module always takes this
-        value as 0.
+        Left end coordinate of beam (always defined as 0).
     _x1 :float
-        Right end coordinate of beam. This module always takes this
-        to be the same as the beam span.
+        Right end coordinate of beam.
+
+    _E: float
+        Young's Modulus of the beam (N/mm2 or MPa)
+    _I: float
+        Second Moment of Area of the beam (mm4)
+    _A: float
+        Cross-sectional area of the beam (mm2)
 
     _loads: list
         list of load objects associated with the beam
-    _distributed_forces_x: list
-        list of distributed forces implemented as piecewise functions
-    _distributed_forces_y:
-        list of distributed forces implemented as piecewise functions
+    _supports: list
+        A list of support objects associated with the beam.
+    _query: list
+        A list containing x coordinates that are to have values
+        explicitly written on graphs.
 
     _normal_forces: sympy piecewise function
         A sympy function representing the internal axial force as a
@@ -184,22 +198,18 @@ class Beam:
     _bending_moments: sympy piecewise function
         A sympy function representing the internal bending moments
         as a function of x.
+    _deflection_equation: sympy piecewise function
+        A sympy function representing the tangential deflection as 
+        a function of x.
+    _axial_deflection: sympy piecewise function
+        A sympy function representing the axial defelection as a
+        function of x.
 
-    _query: list
-        A list containing x coordinates that are to have values
-        explicitly written on graphs.
-    _supports: list
-        A list of support objects associated with the beam.
     _reactions: dictionary of lists
         A dictionary with keys for support positions. Each key is
         associated with a list of forces of the form ['x','y','m']
-
-    _E: float
-        Young's Modulus of the beam (N/mm2 or MPa)
-    _I: float
-        Second Moment of Area of the beam (mm4)
-    _A: float
-        Cross-sectional area of the beam (mm2)
+    _DATA_POINTS: integer,
+        Number of data points generated for plotting, default 200.
 
     Notes
     -----
@@ -208,10 +218,9 @@ class Beam:
     * The default units for beam properties (E, I, A) are in N and mm
       (N/mm2, mm4, mm2)
     * The default unit for spring supports is kN/mm
-    * Default properties are for a 150UB18.0 steel beam.
     """
 
-    def __init__(self, span: float = 10, E=2 * 10**5, I=9.05 * 10**6,
+    def __init__(self, span: float = 5, E=2 * 10**5, I=9.05 * 10**6,
                  A=2300):
         """Initializes a Beam object of a given length.
 
@@ -220,7 +229,7 @@ class Beam:
         span : float
             Length of the beam span. Must be positive, and the pinned
             and rolling supports can only be placed within this span.
-            The default value is 10.
+            The default value is 5.
         E: float
             Youngs modulus for the beam. The default value is
             200 000 MPa, which is the youngs modulus for steel.
@@ -230,99 +239,118 @@ class Beam:
         A: float
             Cross-sectional area for the beam about the z axis.
             The default value is 2300 mm4.
-        """
 
+        Notes
+        -----
+        * Default properties are for a 150UB18.0 steel beam.
+        """
+        # Validate inputs for span and beam properties.
         assert_strictly_positive_number(span, 'span')
         assert_strictly_positive_number(E, "Young's Modulus (E)")
         assert_strictly_positive_number(I, 'Second Moment of Area (I)')
         assert_strictly_positive_number(A, 'Area (A)')
 
+        # Assign input properties for beam object.
         self._x0 = 0
         self._x1 = span
-
-        self._loads = []
-        self._distributed_forces_x = {}
-        self._distributed_forces_y = {}
-
-        self._normal_forces = []
-        self._shear_forces = []
-        self._bending_moments = []
-
-        self._query = []
-        self._supports = []
-        self._reactions = {}
 
         self._E = E
         self._I = I
         self._A = A
 
+        # Intialize other beam object properties.
+        self._loads = []
+        self._supports = []
+        self._query = []
+
+        self._normal_forces = 0
+        self._shear_forces = 0
+        self._bending_moments = 0
+        self._deflection_equation = 0
+        self._axial_deflection = 0
+
+        self._reactions = {}
         self._DATA_POINTS = 200
 
     def add_loads(self, *loads):
-        """Apply an arbitrary list of (point or distributed) loads
-        to the beam.
+        """Associate load objects with the beam object.
 
         Parameters
         ----------
-        loads : iterable
-            An iterable containing DistributedLoad or PointLoad objects
-            to be applied to the Beam object. Note that the load
-            application point (or segment) must be within the Beam span.
+        *loads : iterable
+            An iterable containing load objects to be applied to the 
+            Beam object. Note that the load application point 
+            (or segment) must be within the Beam span.
 
         """
-        # For every load validate that has correct values to fit the
-        # beam such that no errors occur in analysis from the loads.
-        # If load valid then add to self._loads.
-        # Note: Have ignored distributedLoadH in this version.
+        # Iterate through each load passed into function
         for load in loads:
+            # Check if distributed load (will be true for V and H load 
+            # types since they inherit from these main load types)
             if isinstance(load, (DistributedLoad, UDL, TrapezoidalLoad)):
+                
+                # check span exists within beam
                 left, right = load.span
-
                 if self._x0 > left or right > self._x1:
                     raise ValueError(
                         f"Coordinate {load.span} for {str(load)} is not a point on beam."
                     )
+                
+                # associate force variable with force value of load,
+                # in order to not add any loads that have no force later.
                 if isinstance(load, DistributedLoad):
-                    force = 1
+                    # set force as arbritrary non-zero value so add any
+                    # Distributed load to self._loads
+                    force = 1 
                 elif isinstance(load, UDL):
                     force = load.force
                 else:
                     force = max(load.force, key=abs)
 
+            # check if point load/torque
             elif isinstance(load,(PointTorque, PointLoad)):
+
+                # check point exists within beam
                 coordinate = load.position
-                
                 if self._x0 > coordinate or coordinate > self._x1:
                     raise ValueError(
                         f"Coordinate {coordinate} for {str(load)} is not a point on beam.")
 
                 force = load.force
-                
+            
+            # if not a distributed load or point load then isnt a load class.
+            else:
+                raise ValueError(
+                        f"Load '{Load}' is not a load object.")
+            
+            # if force isnt 0, then add to self._loads, otherwise will 
+            # have no effect on the beam and as such shouldnt add.
             if force != 0:
                 self._loads.append(load)
 
 
     def remove_loads(self, *loads, remove_all=False):
-        """Remove an arbitrary list of (point- or distributed) loads
-        from the beam.
+        """Unassociate load objects with the beam object.
 
         Parameters
         ----------
-        loads : iterable
-            An iterable containing DistributedLoad or PointLoad objects
-            to be removed from the Beam object. If object not on beam
-            then does nothing.
+        *loads : iterable
+            An iterable containing load objects to be removed from
+            the Beam object. If load not on beam then does nothing.
         remove_all: boolean
-            If true all loads associated with beam will be removed.
+            If true all loads associated with beam will be removed, 
+            by default False.
 
         """
-        # if remove all set, reintialize parameters
+        # if remove all set to True, reintialize self._loads
         if remove_all:
             self._loads = []
             return None
 
-        # if individual loads check if associated with beam and if so
-        # remove. 
+        # for each load remove if currently associated with beam object. 
+        for load in loads:
+            if load in self._loads:
+                self._loads.remove(load)
 
         # Could be considered a bug that a user isnt notified
         # if a load isnt removed because it wasnt there. This might be
@@ -330,17 +358,12 @@ class Beam:
         # trying to remove and dont notice that they didnt actually 
         # delete it.
 
-        for load in loads:
-            if load in self._loads:
-                self._loads.remove(load)
-
     def add_supports(self, *supports):
-        """Apply an arbitrary list of supports (Support objects) to the
-        beam.
+        """Associate support objects with the beam object.
 
         Parameters
         ----------
-        supports : iterable
+        *supports : iterable
             An iterable containing Support objects to be applied to 
             the Beam object. Note that the load application point 
             (or segment) must be within the Beam span.
@@ -349,27 +372,35 @@ class Beam:
 
         # Check support valid then append to self._supports
         for support in supports:
+            # check is a Support object
             if not isinstance(support, Support):
                 raise TypeError("support must be of type class Support")
-
+            
+            # check support exists on beam
             if (self._x0 > support._position) or (
                     support._position > self._x1):
                 raise ValueError("Not a point on beam")
-
+            
+            # if currently no supports then there is nothing the
+            # support being added can conflict with. Add it in.
             if self._supports == []:
                 self._supports.append(support)
 
+            # if there are already supports associated with the 
+            # beam object only add the new support if no support
+            # exists at the same position.
             elif support._position not in [
                 x._position for x in self._supports
             ]:
                 self._supports.append(support)
+            
+            # if already a supported associated with position raise error
             else:
                 raise ValueError(
                     f"This coordinate {support._position} already has a support associated with it")
 
     def remove_supports(self, *supports, remove_all=False):
-        """Remove an arbitrary list of supports (Support objects) from
-        the beam.
+        """Unassociate support objects with the beam object.
 
         Parameters
         ----------
@@ -377,13 +408,16 @@ class Beam:
             An iterable containing Support objects to be removed from
             the Beam object. If support not on beam then does nothing.
         remove_all: boolean
-            If true all supports associated with beam will be removed.
-
+            If true all supports associated with beam will be removed,
+            by default False.
         """
+
+        # if remove all set to True, reintialize self._supports
         if remove_all:
             self._supports = []
             return None
-
+        
+        # for each support remove if currently associated with beam object. 
         for support in self._supports:
             if support in supports:
                 self._supports.remove(support)
@@ -394,92 +428,49 @@ class Beam:
         # were trying to remove and dont notice that they didnt actually 
         # delete it.
 
-    def get_support_details(self):
-        """Print out a readable summary of all supports on the beam. """
-
-        print(f"There are {str(len(self._supports))} supports:", end='\n\n')
-        for support in self._supports:
-            print(support, end='\n\n')
-
-    def check_determinancy(self):
-        """Check the determinancy of the beam.
-
-        Returns
-        ---------
-        int
-            < 0 if the beam is unstable
-            0 if the beam is statically determinate
-            > 0 if the beam is statically indeterminate
-
-        """
-
-        unknowns = np.array([0, 0, 0])
-        equations = 3
-
-        # DOF has a 1 where a reaction force is returned, the sum of 
-        # this list returns the number of unknowns associated with a 
-        # particular support. If consider all supports then have total
-        # number of unknowns to solve for.
-        for support in self._supports:
-            unknowns = np.array(support._DOF) + unknowns
-
-        # If you dont have any horizontal loads then x equilibrium isnt
-        # helpful to solve the beam
-        if unknowns[0] == 0:
-            equations -= 1
-        
-        # If you dont have any vertical loads then y equilibrium isnt
-        # helpful to solve the beam
-        if unknowns[1] == 0:
-            equations -= 1
-
-        unknowns = sum(unknowns)
-
-        if unknowns == 0:
-            return ValueError("No reaction forces exist")
-
-        if unknowns < equations:
-            return ValueError("Structure appears to be unstable")
-
-        else:
-            self._determinancy = (unknowns - equations)
-            return (unknowns - equations)
-
     def analyse(self):
         """Solve the beam structure for reaction and internal forces  """
 
         x1 = self._x1
 
         # initialised with position and stiffness.
-
         self._supports = sorted(self._supports, key = lambda item: item._position)
 
+        # intialize unknowns as a dictionary of lists
         unknowns = {}
-        unknowns['x'] = [
-            {
-                'position':a._position,
-                'stiffness':a._stiffness[0],
-                'force': symbols("x_" + str(a._position)) * SingularityFunction(x, a._position, 0),
-                'variable' : symbols("x_" + str(a._position))
-             } for a in self._supports if a._stiffness[0] != 0
-        ]
+        unknowns['x'] = []
+        unknowns['y'] = []
+        unknowns['m'] = []
 
-        unknowns['y'] = [
-            {
-                'position':a._position, 
-                'stiffness':a._stiffness[1],
-                'force':symbols("y_" + str(a._position)) * SingularityFunction(x, a._position, 0),
-                'variable' : symbols("y_" + str(a._position))
-             } for a in self._supports if a._stiffness[1] != 0
-        ]
-
-        unknowns['m'] = [
-            {
-                'position':a._position,
-                'torque':symbols("m_" + str(a._position)) * SingularityFunction(x, a._position, 0),
-                'variable' : symbols("m_" + str(a._position))
-            } for a in self._supports if a._stiffness[2] != 0
-        ]
+        # for each support if there is a reaction force create an appropriate,
+        # sympy variable and entry in unknowns dictionary.
+        for a in self._supports:
+            if a._stiffness[0] != 0:
+                unknowns['x'].append()
+                    {
+                        'position':a._position,
+                        'stiffness':a._stiffness[0],
+                        'force': symbols("x_" + str(a._position)) * SingularityFunction(x, a._position, 0),
+                        'variable' : symbols("x_" + str(a._position))
+                    }
+                )
+            if a._stiffness[1] != 0:
+                unknowns['y'].append(
+                    {
+                        'position':a._position, 
+                        'stiffness':a._stiffness[1],
+                        'force':symbols("y_" + str(a._position)) * SingularityFunction(x, a._position, 0),
+                        'variable' : symbols("y_" + str(a._position))
+                    }
+                )
+            if a._stiffness[2] != 0:
+                unknowns['m'].append(
+                    {
+                        'position':a._position,
+                        'torque':symbols("m_" + str(a._position)) * SingularityFunction(x, a._position, 0),
+                        'variable' : symbols("m_" + str(a._position))
+                    }
+                )
 
         # grab the set of all the sympy unknowns for y and m and change
         # to a list, do same for x unknowns
@@ -504,14 +495,15 @@ class Beam:
                 'You need at least two y or m restraints, even if there \
                 are no y or m forces')
 
-
-
         # external reaction equations
 
-        # should integrate from end of beam or sumfin ?
+        # sum contribution of loads and contribution of supports.
+        # for loads ._x1 represents the load distribution integrated,
+        # thereby giving the total load by the end of the support.
         F_Rx = sum([load._x1.subs(x,x1) for load in self._loads]) \
             + sum([a['variable'] for a in unknowns['x']])
 
+        # similiar to F_Rx
         F_Ry = sum([load._y1.subs(x,x1) for load in self._loads]) \
             + sum([a['variable'] for a in unknowns['y']])
 
@@ -519,22 +511,25 @@ class Beam:
         M_R = sum(load._m0 for load in self._loads) \
             + sum([a['variable'] for a in unknowns['m']])
 
-        # internal beam equations
+        # Create integration constants as sympy unknowns
         C1, C2 = symbols('C1'), symbols('C2')
         unknowns_ym += [C1, C2]
 
-        # normal forces is same concept as shear forces only no
-        # distributed for now.
+        # normal forces, same concept as shear forces
         N_i = sum(load._x1 for load in self._loads) \
             + sum([a['force'] for a in unknowns['x']])
 
-
+        # integrate to get NF * x as a function of x. Needed
+        # later for displacement which is used if x springs are present
         Nv_EA = integrate(N_i, x)
 
-        # shear forces, an internal force acting down would be considered
-        # positive by adopted convention hence if the sum of forces on
-        # the beam are all positive, our internal force would also be
-        # positive due to difference in convention
+        # shear forces. At a point x within the beam the cumulative sum of the 
+        # vertical forces (represented by load._y1 + reactons) plus the internal 
+        # shear force should be equal to 0. i.e.  load._y1 + reactions + F_i = 0 
+        # ->  - F_i = load._y1 + reactions
+        # However when considering the difference in load convention (for loads
+        # upwards is positive, whereas for shear forces down is postive), this 
+        # becomes F_i = load._y1 + reactions
         F_i = sum(load._y1 for load in self._loads) \
             + sum([a['force'] for a in unknowns['y']])
 
@@ -543,48 +538,63 @@ class Beam:
         # external reactions and we looked right). An anti-clockwise moment
         # is adopted as positive internally. Hence we need to consider a
         # postive for our shear forces and negative for our moments by
-        # our sign convention
+        # our sign convention. Note that F_i includes the contributions
+        # of point torques through load._y1 which represents moments
+        # as a SingularityFunction of power -1 (the point moments are
+        # therefore only considered once the integration below takes place)
         M_i = integrate(F_i, x) \
             - sum([a['torque'] for a in unknowns['m']])
         
-        # with respect to x, + constants but the constants are the M at fixed
-        # supports
-
+        # integrate M_i for beam slope equation
         dv_EI = integrate(M_i, x) + C1
 
+        # integrate M_i twice for deflection equation
         v_EI = integrate(dv_EI, x) +  C2
 
-        # equations , create a lsit fo equations
+        # create a list of equations for tangential direction
         equations_ym = [F_Ry, M_R]
 
         # at location that moment is restaint, the slope is known (to be 0,
-        # since dont deal for rotational springs)
+        # always since dont deal for rotational springs in this version.)
         for reaction in unknowns['m']:
                 equations_ym.append(dv_EI.subs(x, reaction['position']))
 
         # at location that y support is restaint the deflection is known (to be
-        # F/k)
+        # F/k, where k is the spring stiffness which is a real number for a spring
+        # and infinity for conventional fixed support.)
         for reaction in unknowns['y']:
                 equations_ym.append(
                     (v_EI.subs(x, reaction['position']) * 10 ** 12 / (self._E * self._I))
                     + reaction['variable'] / reaction['stiffness']
                 )
 
-        # equation for normal forces, only for indeterminate in x
+        # equation for normal forces
         equations_xx = [F_Rx]
 
         # the extension of the beam will be equal to the spring
-        # displacement on right minus spring displacment on left
+        # displacement on right minus spring displacment on left.
+        # between fixed supports the extension is 0.
 
-
+        # Only perform calculation if axially indeterminate
         if len(unknowns_xx) > 1:
-            # dont consider the starting point? only want to look between
-            # supports and not at cantilever sections i think
+            # Assign start to be the first x support.
             start = unknowns['x'][0]
+            # For each support other than the start, set an endpoint
             for end in unknowns['x'][1:]:
+                # the extension between start and end is known to be
+                # a result of axial deformation.
+                # i.e start_position = end_position - axial deformation between.  
+                # where:
+                # start_position = spring_displacement = F/k (start support)
+                # end_position = spring_displacement = F/k (end support)
+                # axial deformation at any point = NV_EA.subs(x, point)/ (EA)
+                # axial deformation between start and end = (NV_EA(end) - NV_EA(start)) / (EA)
+                # Note: NV_EA is a term representing the deflection divided by EA (represents N*L),
+                # where N is in kN and L is in m --> * 10 ** 6 tp change to base units
+                # the following code represents this idea.
                 equations_xx.append(
                     (Nv_EA.subs(x, end['position']) - Nv_EA.subs(x, start['position']))
-                    * 10**3 / (self._E * self._A)
+                    * 10**6 / (self._E * self._A)
                     + start['variable'] / start['stiffness']
                     # represents elongation displacment on right
                     - end['variable'] / end['stiffness']
@@ -594,23 +604,26 @@ class Beam:
         solutions_ym = list(linsolve(equations_ym, unknowns_ym))[0]
         solutions_xx = list(linsolve(equations_xx, unknowns_xx))[0]
 
+        # Create solution dictionary
         solutions = [a for a in solutions_ym + solutions_xx]
         solution_dict = dict(zip(unknowns_ym + unknowns_xx, solutions))
 
+        # Initialise self._reactions to hold reaction forces for each support
         self._reactions = {a._position: [0, 0, 0] for a in self._supports}
 
-        # substitue in value instead of variable in functions
+        # substitue in value inplace of variable in functions
         for var, ans in solution_dict.items():
             ans = float(ans)
             v_EI = v_EI.subs(var, ans)  # complete deflection equation
             M_i = M_i.subs(var, ans)  # complete moment equation
             F_i = F_i.subs(var, ans)  # complete shear force equation
             N_i = N_i.subs(var, ans)  # complete normal force equation
-            Nv_EA = Nv_EA.subs(var,ans)
+            Nv_EA = Nv_EA.subs(var,ans) # complete axial deformation equation
 
             # create self._reactions to allow for plotting of reaction
             # forces if wanted and for use with get_reaction method.
             if var not in [C1, C2]:
+                # vec represents direction, num represents position
                 vec, num = str(var).split('_')
                 position = float(num)
                 if vec == 'x':
@@ -619,31 +632,40 @@ class Beam:
                     i = 1
                 else:
                     i = 2
+
+                # assign reaction to self._reactions using support position
+                # as key, and using i for correct position in list.
+                # Note list for each supports reaction forces is of form [x,y,m].
                 self._reactions[position][i] = float(round(ans, 5))
 
-        # moment unit is kn.m, dv_EI kn.m2, v_EI Kn.m3 --> *10^3, *10^9
-        # to get base units. EI unit is N/mm2 , mm4 --> N.mm2
-
-        # Not sure what type F_i is probably should run code from here for debugger lol.
-        # Need to change imports everywhere though, unless i change the path to be earlier.
+        # set calculated beam equations on beam changing all singularity 
+        # functions to piecewise functions (see sympy_expr_to_piecewise
+        # for more details.)
+        self._normal_forces = self.sympy_expr_to_piecewise(N_i)
         self._shear_forces = self.sympy_expr_to_piecewise(F_i)
         self._bending_moments = self.sympy_expr_to_piecewise(M_i)
-        # a positive moment indicates a negative deflection, i thought??
+
+        # moment unit is kn.m, dv_EI kn.m2, v_EI Kn.m3 --> *10^3, *10^9
+        # to get base units. E and I are already base units.
         self._deflection_equation = self.sympy_expr_to_piecewise(
             v_EI * 10 ** 12 / (self._E * self._I)
         )
-        self._normal_forces = self.sympy_expr_to_piecewise(N_i)
-        # Nv_EI represents the beam elongation, to make displacement need to add initial
+        
+        # THIS IS NOT CLEAR AND I DONT THINK IT IS CORRECT. FIX THIS. TO DO.
+        # Nv_EA represents the beam elongation, to make displacement need to add initial
+        # displacement. Can get the intial displacement by finding spring displacement
+        # at first support, and then minusing any axial deformation before it.
         # Comparatively v_EI is already the beam displacement and has a constant in it
         # (C2) that considers any intial displacement
         if unknowns['x'][0]['stiffness'] == oo:
-            initial_displacement_x = 0
+            initial_spring_displacement_x = 0
         else:
-            initial_displacement_x = float(solutions_xx[0]  / unknowns['x'][0]['stiffness'])
+            initial_spring_displacement_x = float(solutions_xx[0]  / unknowns['x'][0]['stiffness'])\
         # in meters
         self._axial_deflection= self.sympy_expr_to_piecewise(
-            Nv_EA * 10**3 / (self._E * self._A) \
-            + initial_displacement_x / 10 ** 3
+            (Nv_EA - NV_EA.subs(x, unknowns['x'][0]['position']))
+            * 10**3 / (self._E * self._A)
+            + initial_spring_displacement_x / 10 ** 3
         )
 
     # SECTION - QUERY VALUE
@@ -673,29 +695,32 @@ class Beam:
             If there is no support at the x coordinate specified.
         """
 
+        # Check beam has been analysed
         if not self._reactions:
             print(
                 "You must analyse the structure before calling this function"
             )
 
-        assert_positive_number(x_coord, 'x coordinate')
-
+        # check x_coord is associated with reactions
         if x_coord not in self._reactions.keys():
             return None
 
         directions = ['x', 'y', 'm']
 
+        # if a direction has been passed will be returning a single value
+        # for the reaction force in that direction
         if direction:
+            # check direction valid
             if direction not in directions:
                 raise ValueError(
                     "direction should be the value 'x', 'y' or 'm'")
+            # if direction valid return appropriate reaction fore
             else:
                 return self._reactions[x_coord][directions.index(direction)]
+
+        # if no direction is specified return a list of all the reaction forces.
         else:
             return self._reactions[x_coord]
-
-    # check if sym_func is the sum of the functions already in
-    # plot_analytical
 
     def _get_query_value(self,x_coord,sym_func,return_max=False,
                          return_min=False,return_absmax=False):
