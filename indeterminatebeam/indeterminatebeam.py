@@ -2,7 +2,7 @@
 and auxillary class for Support.
 
 Example
--------
+--------
 >>> beam = Beam(6)
 >>> a = Support()
 >>> c = Support(6,(0,1,0))
@@ -10,7 +10,10 @@ Example
 >>> beam.add_loads(PointLoadV(-15,3))
 >>> beam.analyse()
 >>> beam.plot()
+
 """
+import sys, os
+sys.path.insert(0, os.path.abspath('../'))
 
 # Standard Library Imports
 from collections import namedtuple
@@ -78,13 +81,13 @@ class Support:
 
     Examples
     --------
-    # Creates a fixed suppot at location 0
+    >>> # Creates a fixed suppot at location 0
     >>> Support(0, (1,1,1))
-    # Creates a pinned support at location 5
+    >>> # Creates a pinned support at location 5
     >>> Support(5, (1,1,0))
-    # Creates a roller support at location 5.54
+    >>> # Creates a roller support at location 5.54
     >>> Support(5.54, (0,1,0))
-    # Creates a y direction spring support at location 7.5
+    >>> # Creates a y direction spring support at location 7.5
     >>> Support(7.5, (0,1,0), ky = 5)
     """
 
@@ -459,6 +462,8 @@ class Beam:
 
         # for each support if there is a reaction force create an appropriate,
         # sympy variable and entry in unknowns dictionary.
+        # for x and y singularity function power is 0 to be added in at SF level.
+        # for m singularity function power is also 0, to be added in at BM level.
         for a in self._supports:
             if a._stiffness[0] != 0:
                 unknowns['x'].append(
@@ -532,7 +537,8 @@ class Beam:
 
         # moments taken at the left of the beam, anti-clockwise is positive
         M_R = sum(load._m0 for load in self._loads) \
-            + sum([a['variable'] for a in unknowns['m']])
+            + sum([a['variable'] for a in unknowns['m']]) \
+            + sum([a['variable']*a['position'] for a in unknowns['y']])
 
         # Create integration constants as sympy unknowns
         C1, C2 = symbols('C1'), symbols('C2')
@@ -1765,15 +1771,18 @@ if __name__ == "__main__":
     # import sys, os
     # sys.path.insert(0, os.path.abspath('../'))
 
-    a = PointLoad(2, 1, 90)
-    b = UDL(5, (0, 2))
-    c = PointTorque(1, 1)
+    beam = Beam(3, E=(200)*10**3, I=(4.6875*10**-6)*10**12)
+    a = Support(0, (1,1,0), ky = 45*10**-3)   
+    b = Support(3, (0,1,0), ky = 45*10**-3)
 
-    beam = Beam(5)
-    beam.add_loads(a, b, c)
-    beam.add_supports(Support())
-    beam.add_supports(Support(3, (0, 0, 0), ky=5))
+    load_1 = PointLoad(-3,1,90)
+
+    beam.add_supports(a,b)
+    beam.add_loads(load_1)
+
     beam.analyse()
+
+    beam.get_deflection(1)
 
     beam.plot_beam_external()
     beam.plot_beam_internal()

@@ -3,7 +3,7 @@
 ===========================
 IndeterminateBeam Reference
 ===========================
-.. automodule:: indeterminatebeam
+.. automodule:: indeterminatebeam.indeterminatebeam
 
 Support
 ---------
@@ -36,11 +36,11 @@ Beam
 
 PointLoads
 -----------
-.. autoclass:: loading.PointTorque
-.. autoclass:: loading.PointLoad
+.. autoclass:: indeterminatebeam.PointTorque
+.. autoclass:: indeterminatebeam.PointLoad
 
 DistributedLoads
 -----------------
-.. autoclass:: loading.UDL
-.. autoclass:: loading.TrapezoidalLoad
+.. autoclass:: indeterminatebeam.UDL
+.. autoclass:: indeterminatebeam.TrapezoidalLoad
 .. autoclass:: indeterminatebeam.DistributedLoad

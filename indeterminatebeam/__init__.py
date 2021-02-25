@@ -9,6 +9,9 @@ from indeterminatebeam.loading import (
     PointTorque,
     TrapezoidalLoad,
     TrapezoidalLoadV,
-    TrapezoidalLoadH
+    TrapezoidalLoadH,
+    UDL,
+    UDLH,
+    UDLV
 )
 from indeterminatebeam.data_validation import assert_length

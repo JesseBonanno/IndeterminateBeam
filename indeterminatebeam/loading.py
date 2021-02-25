@@ -55,9 +55,10 @@ class PointTorque(Load):
         x coordinate of torque on beam
 
     Examples
-    --------
-    # 30 kN·m (clockwise) torque at x=4 m
+    ---------
+    >>> # 30 kN·m (clockwise) torque at x=4 m
     >>> motor_torque = PointTorque(30, 4)
+
     """
 
     def __init__(self, force=0, coord=0):
@@ -66,7 +67,9 @@ class PointTorque(Load):
         assert_positive_number(coord, 'coordinate')
 
         # load as a function of x (non-directional)
-        expr = force * SingularityFunction(x, coord, -1)
+        # the minus is to rectify sign convention, since
+        # a positive shear causes a negative moment
+        expr =  - force * SingularityFunction(x, coord, -2)
 
         # add load as a function of x (directional)
         # and add integration of this function to object.
@@ -100,12 +103,13 @@ class PointLoad(Load):
 
     Examples
     --------
-    # 10 kN towards the right at x=9 m
+    >>> # 10 kN towards the right at x=9 m
     >>> external_force = PointLoad(10, 9, 90)
-    # 30 kN downwards at x=3 m
+    >>> # 30 kN downwards at x=3 m
     >>> external_force = PointLoad(-30, 3, 0)
     >>> external_force
-    PointLoad(force=-30, coord=3, angle=0)
+        PointLoad(force=-30, coord=3, angle=0)
+    
     """
 
     def __init__(self, force=0, coord=0, angle=0):
@@ -149,7 +153,7 @@ class UDL(Load):
 
     Examples
     --------
-    # load of 1 kN/m from 1 <= x <= 4 (vertical)
+    >>> # load of 1 kN/m from 1 <= x <= 4 (vertical)
     >>> self_weight = UDL(1, (1, 4), 90)
     """
 
@@ -211,8 +215,8 @@ class TrapezoidalLoad(Load):
 
     Examples
     --------
-    # trapezoidal load starting at 2 kN/m at 1 m and ending at 3 kN/m
-    # at 4 m (vertical)
+    >>> # trapezoidal load starting at 2 kN/m at 1 m and ending at 3 kN/m
+    >>> # at 4 m (vertical)
     >>> self_weight = UDL((2,3), (1, 4), 90)
     """
 
@@ -301,7 +305,7 @@ class DistributedLoad(Load):
         - 180 degrees is purely horizontal -ve of force sign specified.
     Examples
     --------
-    # Linearly growing load for 0<x<2 m
+    >>> # Linearly growing load for 0<x<2 m
     >>> snow_load = DistributedLoad("10*x+5", (0, 2),90)
     """
 
