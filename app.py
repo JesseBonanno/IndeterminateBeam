@@ -299,6 +299,10 @@ basic_support_table = dash_table.DataTable(
             ]
         }
     },
+    # dropdowns arent visible unless you add the code below.
+    # solution taken from https://github.com/plotly/dash-table/issues/221 
+    # - reesehopkins commented on 29 Sep 2020
+    css=[{"selector": ".Select-menu-outer", "rule": "display: block !important"}],
 )
 
 basic_support_instructions = dcc.Markdown('''
@@ -307,10 +311,6 @@ basic_support_instructions = dcc.Markdown('''
 
             1. Specify the coodinate location of the support
             2. For each direction specify the conventional support type from the dropdown.
-
-            Note: Dropdown doesnt appear to currently be working properly.
-            Can fill in by deleting text then typing either "Roller", "Pinned", or "Fixed.
-            After typing the first letter should be able to press "Enter" key to fill in.
 
             ''')
 
