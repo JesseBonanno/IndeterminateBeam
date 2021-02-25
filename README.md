@@ -1,7 +1,7 @@
 # Indeterminate Beam
 
 
-[![Version](https://img.shields.io/badge/version-v1.2.3-blue.svg)](https://github.com/JesseBonanno/IndeterminateBeam/releases/tag/v1.2.2)
+[![Version](https://img.shields.io/badge/version-v1.2.3-blue.svg)](https://github.com/JesseBonanno/IndeterminateBeam/releases/tag/v2.0.0)
 [![License](https://img.shields.io/badge/license-MIT-lightgreen.svg)](https://github.com/JesseBonanno/IndeterminateBeam/blob/main/LICENSE.txt)
 [![Documentation Status](https://readthedocs.org/projects/indeterminatebeam/badge/?version=main)](https://indeterminatebeam.readthedocs.io/en/main/?badge=main)
 [![Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/JesseBonanno/IndeterminateBeam/blob/main/indeterminatebeam/simple_demo.ipynb)
@@ -93,8 +93,8 @@ beam.plot_beam_internal()
 The `plot` method is actually a wrapper that combines these four methods: `plot_normal_force`, `plot_shear_force`, `plot_bending_moment` and `plot_deflection` into a single A4-sized printer-friendly plot.
 
 The script above produces the following figures:
-![example_1 beam diagram plot](https://github.com/JesseBonanno/IndeterminateBeam/blob/main/docs/examples/readme_example_external.html)
-![example_1 beam internal plot](https://github.com/JesseBonanno/IndeterminateBeam/blob/main/docs/examples/readme_example_internal.html)
+![example_1 beam diagram plot](https://github.com/JesseBonanno/IndeterminateBeam/blob/main/docs/examples/readme_example_external.png)
+![example_1 beam internal plot](https://github.com/JesseBonanno/IndeterminateBeam/blob/main/docs/examples/readme_example_internal.png)
 
 
 ## Installing the package
