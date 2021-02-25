@@ -383,7 +383,8 @@ point_load_instructions = dcc.Markdown('''
             2. Specify the force applied in kN.
             3. Specify the load angle where:
                * A positive force with an angle of 0 points horizontally to the right.
-               * A positive force with an angle of 90 points vertically upwards.
+               * A positive force with an angle of 90 points vertically in the 
+                 positive y direction chosen in the options tab (default downwards).
 
             ''')
 
@@ -527,7 +528,8 @@ distributed_load_instructions = dcc.Markdown('''
             1. Specify the start and end locations of the distributed load.
             2. Specify the start and end loads in kN/m.
 
-            Note: A positive load acts in an upwards direction.
+            Note: A positive load acts in the positive y direction chosen 
+            in the options tab (default downwards).
 
             ''')
 
