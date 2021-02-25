@@ -37,7 +37,7 @@ A typical use case of the `indeterminatebeam` package involves the following ste
 4. Solve for forces on `Beam` object
 5. Plot results
 
-Default units are kN, m, and kN.m   _(except for E (MPa), and I (mm4))_
+Default units are kN, m, and kN.m   _(except for E (MPa), I (mm4), A(mm2))_
 
 Load convention is described in the [package documentation](https://indeterminatebeam.readthedocs.io/en/main/).
 

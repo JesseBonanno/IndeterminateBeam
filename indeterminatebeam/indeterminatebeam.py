@@ -261,9 +261,9 @@ class Beam:
 
         self._DATA_POINTS = 200
 
-        self.analysis_reset()
+        self._analysis_reset()
 
-    def analysis_reset(self):
+    def _analysis_reset(self):
         """ Reset properties determined by analysis."""
 
         self._normal_forces = 0
@@ -285,7 +285,7 @@ class Beam:
             (or segment) must be within the Beam span.
 
         """
-        self.analysis_reset()
+        self._analysis_reset()
 
         # Iterate through each load passed into function
         for load in loads:
@@ -346,7 +346,7 @@ class Beam:
 
         """
 
-        self.analysis_reset()
+        self._analysis_reset()
 
         # if remove all set to True, reintialize self._loads
         if remove_all:
@@ -378,7 +378,7 @@ class Beam:
 
         """
 
-        self.analysis_reset()
+        self._analysis_reset()
 
         # Check support valid then append to self._supports
         for support in supports:
@@ -422,7 +422,7 @@ class Beam:
             by default False.
         """
 
-        self.analysis_reset()
+        self._analysis_reset()
 
         # if remove all set to True, reintialize self._supports
         if remove_all:
@@ -679,6 +679,9 @@ class Beam:
             v_EI * 10 ** 12 / (self._E * self._I)
         )
 
+        # inefficient, user might not want to plot or want max or min.
+        # They might also only be interested in a particular component, 
+        # such as Bending Moment.
         self._set_plotting_vectors()
 
     def _set_plotting_vectors(self):
