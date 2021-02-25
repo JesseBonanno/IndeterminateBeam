@@ -152,19 +152,17 @@ beam_table = dash_table.DataTable(
 
 beam_instructions = dcc.Markdown('''
 
-            Instructions:
+            ###### **Instructions:**
 
             1. Specify the length of the beam
             2. Specify the beam sectional properties as indicated for:
                * Young's Modulus (E)
                * Second Moment of Area (I)
-               * Cross-sectional Area (A)
+               * Cross-sectional Area (A)  
 
-            Note: E and I will only affect the deflection unless a spring
-            in the y direction is specified in which case they will also
-            affect the load distribution. Where a spring in the x direction
-            is specified E and A will affect the load distribution for the
-            horizontal loads only.
+            Note: E and I will only affect the deflection unless a spring in the y direction is specified  
+            in which case they will also affect the load distribution. Where a spring in the x direction  
+            is specified E and A will affect the load distribution for the horizontal loads only.   
             ''')
 
 beam_content = dbc.Card(
@@ -230,13 +228,14 @@ support_table = dash_table.DataTable(
 
 support_instructions = dcc.Markdown('''
 
-            Instructions:
+            ###### **Instructions:**
 
             1. Specify the coodinate location of the support
             2. For each direction specify one of the following:
                * f or F - Indicates a free support
                * r or R - Indicates a rigid support
-               * n - Indicates a spring stiffness of n kN /mm (where n is a (generally) positive number)
+               * n - Indicates a spring stiffness of n kN /mm   
+                 (where n is (generally) a positive number)
 
             ''')
 
@@ -307,10 +306,11 @@ basic_support_table = dash_table.DataTable(
 
 basic_support_instructions = dcc.Markdown('''
 
-            Instructions:
+            ###### **Instructions:**
 
-            1. Specify the coodinate location of the support
-            2. For each direction specify the conventional support type from the dropdown.
+            1. Specify the coodinate location of the support  
+            2. For each direction specify the conventional 
+               support type from the dropdown.  
 
             ''')
 
@@ -377,14 +377,14 @@ point_load_table = dash_table.DataTable(
 
 point_load_instructions = dcc.Markdown('''
 
-            Instructions:
+            ###### **Instructions:**
 
-            1. Specify the coodinate location of the point load.
+            1. Specify the coodinate location of the point load.  
             2. Specify the force applied in kN.
-            3. Specify the load angle where:
-               * A positive force with an angle of 0 points horizontally to the right.
-               * A positive force with an angle of 90 points vertically in the 
-                 positive y direction chosen in the options tab (default downwards).
+            3. Specify the load angle where:  
+               * A positive force with an angle of 0 points horizontally to the right.  
+               * A positive force with an angle of 90 points vertically in the   
+                 positive y direction chosen in the options tab (default downwards).  
 
             ''')
 
@@ -445,12 +445,12 @@ point_torque_table = dash_table.DataTable(
 
 point_torque_instructions = dcc.Markdown('''
 
-            Instructions:
+            ###### **Instructions:**
 
-            1. Specify the coodinate location of the point torque.
-            2. Specify the moment applied in kN.m.
+            1. Specify the coodinate location of the point torque.  
+            2. Specify the moment applied in kN.m.  
 
-            Note: A positive moment indicates an anti-clockwise moment direction.
+            Note: A positive moment indicates an anti-clockwise moment direction.  
 
             ''')
 
@@ -523,12 +523,12 @@ distributed_load_table = dash_table.DataTable(
 
 distributed_load_instructions = dcc.Markdown('''
 
-            Instructions:
+            ###### **Instructions:**
 
-            1. Specify the start and end locations of the distributed load.
-            2. Specify the start and end loads in kN/m.
+            1. Specify the start and end locations of the distributed load.  
+            2. Specify the start and end loads in kN/m.  
 
-            Note: A positive load acts in the positive y direction chosen 
+            Note: A positive load acts in the positive y direction chosen  
             in the options tab (default downwards).
 
             ''')
@@ -580,7 +580,7 @@ query_table = dash_table.DataTable(
 
 query_instructions = dcc.Markdown('''
 
-            Instructions:
+            ###### **Instructions:**
 
             1. Specify a point of interest to have values annotated on graph.
 
@@ -648,30 +648,29 @@ results_content = dbc.Collapse(
 # Options
 option_instructions = dcc.Markdown('''
 
-            Instructions:
+            ###### **Instructions:**
 
             Toggle options as desired.
 
             1. Results Table:
-               - Choose to show or hide the table that
-                summarises the maximum and minimum effects
-                determined over the beam
+               - Choose to show or hide the table that summarises the maximum  
+               and minimum effects determined over the beam  
             2. Support Input:
-               - Choose mode to use for support input where:
-                  - Basic: Provides a dropdown for conventional supports
-                  - Advanced: Allows for custom support configurations,
-                    as well as spring supports
+               - Choose mode to use for support input where:  
+                  - Basic: Provides a dropdown for conventional supports  
+                  - Advanced: Allows for custom support configurations, as well  
+                  as spring supports  
             3. Positive y direction:
-               - Choose the positive y direction.
-               Note: The python package conventionally takes `UP` as being the
-               direction for positive forces, as indicated in the package
-               documentaion. Due to popular request the option to change the
-               positive direction for y forces to be downwards has been allowed.
-               This is actually achieved by reversing the angle direction
-               of loading behind the scenes, (multiplying by negative 1)
-               which can be revealed by hoverlabels.
+               - Choose the positive y direction.  
+               - Note: The python package conventionally takes `UP` as being the  
+               direction for positive forces, as indicated in the package   
+               documentaion. Due to popular request the option to change the  
+               positive direction for y forces to be downwards has been allowed.  
+               This is actually achieved by reversing the angle direction  
+               of loading behind the scenes, (multiplying by negative 1)  
+               which can be revealed by hoverlabels.  
             4. Data points:
-               - Number of increments used for plotting graphs, higher number
+               - Number of increments used for plotting graphs, higher number  
                results in longer calculation speeds.
             ''')
 
