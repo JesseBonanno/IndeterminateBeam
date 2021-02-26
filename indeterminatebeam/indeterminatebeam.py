@@ -34,11 +34,19 @@ from indeterminatebeam.data_validation import (
     assert_strictly_positive_number, assert_length
 )
 from indeterminatebeam.loading import (
-    PointTorque,
     PointLoad,
-    UDL,
-    TrapezoidalLoad,
+    PointLoadV,
+    PointLoadH,
     DistributedLoad,
+    DistributedLoadV,
+    DistributedLoadH,
+    PointTorque,
+    TrapezoidalLoad,
+    TrapezoidalLoadV,
+    TrapezoidalLoadH,
+    UDL,
+    UDLH,
+    UDLV
 )
 from indeterminatebeam.plotly_drawing_aid import (
     draw_line,
