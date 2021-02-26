@@ -9,7 +9,7 @@ First steps
 |colab|
 
 .. |colab| image:: https://colab.research.google.com/assets/colab-badge.svg
-   :target: https://colab.research.google.com/github/JesseBonanno/IndeterminateBeam/blob/main/IndeterminateBeam/simple_demo.ipynb
+   :target: https://colab.research.google.com/github/JesseBonanno/IndeterminateBeam/blob/main/docs/examples/simple_demo.ipynb
 
 * You can also download and install the ``indeterminatebeam`` package, which runs on Python 3.
 
