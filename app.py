@@ -978,6 +978,8 @@ def analyse_beam(
         positive_y_direction,
         data_points):
 
+    t1 = time.perf_counter()
+
     if advanced_support_open:
         supports = advanced_supports
     else:
@@ -1015,8 +1017,6 @@ def analyse_beam(
         raise PreventUpdate
 
     try:
-
-        t1 = time.perf_counter()
 
         if positive_y_direction == 'up':
             d_ = 1
@@ -1080,37 +1080,37 @@ def analyse_beam(
 
         if distributed_loads:
             for row in distributed_loads:
-                if abs(float(row['Start Load (kN/m)'])) > 0 or \
-                        abs(float(row['End Load (kN/m)'])) > 0:
-                    beam.add_loads(
-                        TrapezoidalLoad(
-                            force=(
-                                float(row['Start Load (kN/m)']),
-                                float(row['End Load (kN/m)'])
-                            ),
-                            span=(
-                                float(row['Start x_coordinate (m)']),
-                                float(row['End x_coordinate (m)'])
-                            ),
-                            angle=(d_ * 90)
-                        )
+                beam.add_loads(
+                    TrapezoidalLoad(
+                        force=(
+                            float(row['Start Load (kN/m)']),
+                            float(row['End Load (kN/m)'])
+                        ),
+                        span=(
+                            float(row['Start x_coordinate (m)']),
+                            float(row['End x_coordinate (m)'])
+                        ),
+                        angle=(d_ * 90)
                     )
+                )
 
         if point_loads:
             for row in point_loads:
-                beam.add_loads(PointLoad(
-                    float(row['Force (kN)']),
-                    float(row['Coordinate (m)']),
-                    d_ * float(row['Angle (deg)'])
-                )
+                beam.add_loads(
+                    PointLoad(
+                        float(row['Force (kN)']),
+                        float(row['Coordinate (m)']),
+                        d_ * float(row['Angle (deg)'])
+                    )
                 )
 
         if point_torques:
             for row in point_torques:
-                beam.add_loads(PointTorque(
-                    float(row['Torque (kN.m)']),
-                    float(row['Coordinate (m)']),
-                )
+                beam.add_loads(
+                    PointTorque(
+                        float(row['Torque (kN.m)']),
+                        float(row['Coordinate (m)']),
+                    )
                 )
 
         beam.analyse()

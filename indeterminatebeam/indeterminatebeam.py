@@ -697,6 +697,33 @@ class Beam:
         # create vector of x coordinate points
         x_vec = np.linspace(self._x0, self._x1, self._DATA_POINTS)
 
+        # add x coordinates minutely close to any singularity position
+
+        # take position from reaction (x_p is for x position)
+        x_p = [a for a in self._reactions.keys()]
+
+        # take position from loading
+        for a in self._loads:
+            if hasattr(a,'position'):
+                x_p.append(a.position)
+            elif hasattr(a,'span'):
+                x_p += list(a.span)
+        
+        # add incremental positions besides point to list x_i if within beam
+        x_i =[]
+        for a in x_p:
+            l = a - 0.0000001
+            r = a + 0.0000001
+            if l > 0:
+                x_i.append(l)
+            if r < self._x1:
+                x_i.append(r)
+
+        # add points to x_vec, unique removes double ups and sorts
+        # need to make both numpy arrays for them to be compatible
+        x_vec = np.concatenate([x_vec, np.array(x_i)])
+        x_vec = np.unique(x_vec)
+
         # lamdify functions
         nf_func = lambdify(x, self._normal_forces, 'numpy')
         sf_func = lambdify(x, self._shear_forces, 'numpy')
@@ -1633,7 +1660,7 @@ class Beam:
             line=dict(color=color, width=1),
             fill=fill,
             name=ylabel,
-            hovertemplate="%{x:.3f} <br>%{y:.3f} "
+            hovertemplate="x: %{x:.3f} m <br>f(x): %{y:.3f} "
         )
 
         if row and col and fig:

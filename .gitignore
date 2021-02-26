@@ -19,3 +19,7 @@ venv
 
 tests/*.txt
 tests/test_sympy.py
+tool_comparison_table.aux
+tool_comparison_table.log
+tool_comparison_table.out
+tool_comparison_table.synctex.gz

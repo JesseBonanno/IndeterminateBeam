@@ -163,7 +163,7 @@ class UDL(Load):
         assert_length(span, 2, 'span')
         assert_positive_number(span[0], 'span start')
         assert_strictly_positive_number(
-            span[1] - span[0],
+            round(span[1] - span[0],5),
             'span start minus span end'
         )
 
@@ -228,7 +228,8 @@ class TrapezoidalLoad(Load):
         assert_length(span, 2, 'span')
         assert_positive_number(span[0], 'span start')
         assert_strictly_positive_number(
-            span[1] - span[0], 'span start minus span end')
+            round(span[1] - span[0],5),
+            'span start minus span end')
 
         # validate angle input
         assert_number(angle, 'angle')
@@ -323,7 +324,8 @@ class DistributedLoad(Load):
         assert_length(span, 2, 'span')
         assert_positive_number(span[0], 'span start')
         assert_strictly_positive_number(
-            span[1] - span[0], 'span start minus span end')
+            round(span[1] - span[0],5),
+            'span start minus span end')
 
         # validate angle input
         assert_number(angle, 'angle')
