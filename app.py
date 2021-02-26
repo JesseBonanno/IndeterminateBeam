@@ -1153,10 +1153,10 @@ def analyse_beam(
                 results_data.append(
                     {
                         'val': f'x = {x_} m',
-                        'NF': beam.get_normal_force(x_)[0],
-                        'SF': beam.get_shear_force(x_)[0],
-                        'BM': beam.get_bending_moment(x_)[0],
-                        'D': beam.get_deflection(x_)[0],
+                        'NF': beam.get_normal_force(x_),
+                        'SF': beam.get_shear_force(x_),
+                        'BM': beam.get_bending_moment(x_),
+                        'D': beam.get_deflection(x_),
                     },
                 )
 

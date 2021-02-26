@@ -12,8 +12,7 @@ Example
 >>> beam.plot()
 
 """
-import sys, os
-sys.path.insert(0, os.path.abspath('../'))
+
 
 # Standard Library Imports
 from collections import namedtuple
@@ -858,12 +857,36 @@ class Beam:
         # if there are no max/min parameters set to true base
         # return on x_coord
         if 1 not in (return_absmax, return_max, return_min):
-            # if multiple x_coordinates return a list of solutions
-            if isinstance(x_coord, tuple):
-                return [round(float(y_lam(x_)), 3) for x_ in x_coord]
-            # if only one x_coodinate return a single value.
+            # change x_coord to be a list if it isnt so
+            # can treat both cases of 1 input and multiple inputs
+            # the same for the following section of code.
+            
+            if not isinstance(x_coord, tuple):
+                x_coord = [x_coord]
+
+            # loop through each x_coordinate in make a new list which
+            # has point infintismally at each side.
+            # (The point of this is to avoid having the exact same x
+            # as a singularity function value, and in the case of
+            # being at a singularity value the values from each side
+            # are inspected and the absmax case is returned.)
+            x_ = []
+            for p in x_coord:
+                l = p - 0.0000001
+                r = p + 0.0000001
+
+                a = round(float(y_lam(l)), 3)
+                b = round(float(y_lam(r)), 3)
+
+                c = max([a,b], key = abs)
+                x_.append(c)
+
+            # make a list of one only return one value to match
+            # data type return from previous versions.
+            if len(x_) == 1:
+                return x_[0]
             else:
-                return round(float(y_lam(x_coord)), 3)
+                return x_
 
         min_ = float(y_vec.min())
         max_ = float(y_vec.max())
@@ -1809,6 +1832,8 @@ if __name__ == "__main__":
 
     beam.analyse()
 
+    beam.get_bending_moment(1)
+    
     beam.get_deflection(1)
 
     beam.plot_beam_external()
