@@ -724,7 +724,7 @@ option_result_table = dbc.FormGroup(
                     {'label': 'Hide', 'value': 'hide'},
                     {'label': 'Show', 'value': 'show'},
                 ],
-                value='hide',
+                value='show',
                 inline=True,
             ),
             width=8,
@@ -739,14 +739,14 @@ option_data_point = dbc.FormGroup(
         dbc.Col(
             dcc.Slider(
                 id='option_data_points',
-                min=100,
-                max=1000,
-                value=100,
-                step=100,
+                min=50,
+                max=500,
+                value=50,
+                step=50,
                 marks={
-                    100: {'label': '100'},
-                    500: {'label': '500'},
-                    1000: {'label': '1000'}
+                    50: {'label': '50'},
+                    250: {'label': '250'},
+                    500: {'label': '500'}
                 },
                 included=True
             ),
@@ -1287,7 +1287,10 @@ def toggle_collapse(n, is_open):
 )
 def report(n, graph_1, graph_2, results):
     date = datetime.now().strftime("%d/%m/%Y")
+    #if the botton has been clicked.
     if n > 0:
+        # for each row in the results table,
+        # write html table row
         table = [f"""<tr>
                 <td class="tg-baqh">{a['val']}</td>
                 <td class="tg-baqh">{a['NF']}</td>
@@ -1297,8 +1300,12 @@ def report(n, graph_1, graph_2, results):
                 </tr>
                 """ for a in results]
 
+        # join all the strings for each table row
         table = ''.join(table)
 
+        # report to consist of graph_1, table and graph_2, and date generated tag
+        # cant remember why to_html properties are set the way they are set.
+        # table format appropriated from an online generator.
         content = [
             to_html(fig=graph_1, full_html=False, include_plotlyjs='cdn'),
             """
