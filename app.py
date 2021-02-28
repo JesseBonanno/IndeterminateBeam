@@ -902,7 +902,14 @@ content_first_row = html.Div(
 
 content = html.Div(
     [
-        html.H2('IndeterminateBeam Calculator', style=TEXT_STYLE),
+        html.H2(
+            'IndeterminateBeam Calculator', 
+            style={
+                'textAlign': 'center',
+                'color': '#191970',
+                'padding': '40px 0px 0px 0px',
+            }
+        ),
         html.Hr(),
         calc_status,
         content_first_row,
