@@ -19,9 +19,11 @@ from indeterminatebeam.loading import (
 from datetime import datetime
 import time
 from indeterminatebeam.version import __version__
+
 from dash_extensions import Download
 from dash.exceptions import PreventUpdate
 from plotly.io import to_html
+import plotly.graph_objects as go
 
 
 # the style arguments for the sidebar.
@@ -1310,15 +1312,20 @@ def report(n, graph_1, graph_2, results):
 
         # join all the strings for each table row
         table = ''.join(table)
+        
+        #help graph 2 fit better on the second page.
+        graph_2 = go.Figure(graph_2)
+        graph_2.update_layout(height=950)
 
         # report to consist of graph_1, table and graph_2, and date generated tag
         # cant remember why to_html properties are set the way they are set.
         # table format appropriated from an online generator.
+        # added page-break-after:always for formatting when print to pdf
         content = [
             to_html(fig=graph_1, full_html=False, include_plotlyjs='cdn'),
             """
             <style type="text/css">
-            .tg  {border-collapse:collapse;border-spacing:0;margin:120px}
+            .tg  {border-collapse:collapse;border-spacing:0;margin:20px;page-break-after:always}
             .tg td{border-color:black;border-style:solid;border-width:1px;font-family:Arial, sans-serif;font-size:14px;
             overflow:hidden;padding:10px 20px;word-break:normal;}
             .tg th{border-color:black;border-style:solid;border-width:1px;font-family:Arial, sans-serif;font-size:14px;
@@ -1340,7 +1347,7 @@ def report(n, graph_1, graph_2, results):
             </table>
             """,
             to_html(fig=graph_2, full_html=False, include_plotlyjs='cdn'),
-            f'Report generated at https://indeterminate-beam.herokuapp.com/ on {date} </br>'
+            f'<i>Report generated at https://indeterminate-beam.herokuapp.com/ on {date}</i>'
         ]
 
         content = "<br>".join(content)
