@@ -915,9 +915,14 @@ content = html.Div(
 app = dash.Dash(__name__, external_stylesheets=[dbc.themes.MINTY])
 server = app.server
 app.layout = html.Div([sidebar, content])
+
+# add google analytics
 app.scripts.append_script({
     'external_url': 'https://cdn.jsdelivr.net/gh/JesseBonanno/IndeterminateBeam/assets/gtag.js'
     })
+
+# add tab title 
+app.title = "IndeterminateBeam"
 
 # options - support mode
 
