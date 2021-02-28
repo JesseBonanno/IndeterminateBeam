@@ -31,7 +31,6 @@ class SupportTestCase(unittest.TestCase):
         b = Support(0,(1,1,1))
         c = Support(1, (1,0,1))
         d = Support(2, (1,1,1), ky =50, kx = 40)
-        c._id = 1
 
         ##check default set up
         #self.assertEqual(a,b)
@@ -39,10 +38,6 @@ class SupportTestCase(unittest.TestCase):
         ##check position
         self.assertEqual(a._position,0)
         self.assertEqual(c._position,1)
-
-        ##check id
-        self.assertFalse(a._id)
-        self.assertEqual(c._id, 1)
 
         ##check translation
         self.assertEqual(c._DOF, [1,0,1])
@@ -71,9 +66,6 @@ class BeamTestCase(unittest.TestCase):
         ##check the beam properties are consistent
         beam = self.beam
 
-        ##check the determinancy is 1
-        self.assertEqual(beam.check_determinancy(),1)
-
         ##Use get reactions function to assert correct reactions
         ##get reactions returns reaction force rounded to 5 dp
         #{'x': [(0.0, 0)], 'y': [(4.6875, 6), (10.3125, 0)], 'm': [(16.875, 0)]} if add_supports(c,a)
@@ -86,19 +78,19 @@ class BeamTestCase(unittest.TestCase):
 
         ##check the forces on the beam, round to 1 dp to reduce error chance
             ##normal forces
-        self.assertEqual(round(beam.get_normal_force(1)[0],1), 0)
+        self.assertEqual(round(beam.get_normal_force(1),1), 0)
         self.assertEqual(round(beam.get_normal_force(return_max=True),1), 0)
         self.assertEqual(round(beam.get_normal_force(return_min=True),1), 0)
             ##shear forces
-        self.assertEqual(round(beam.get_shear_force(1)[0],1), 10.3)
+        self.assertEqual(round(beam.get_shear_force(1),1), 10.3)
         self.assertEqual(round(beam.get_shear_force(return_max=True),1), 10.3)
         self.assertEqual(round(beam.get_shear_force(return_min=True),1), -4.7)
             ##bending moments
-        self.assertEqual(round(beam.get_bending_moment(0)[0],1), -16.9)   
-        self.assertEqual(round(beam.get_bending_moment(return_max=True),2), 14.05)
+        self.assertEqual(round(beam.get_bending_moment(0),1), -16.9)   
+        self.assertEqual(round(beam.get_bending_moment(return_max=True),1), 14.1)
         self.assertEqual(round(beam.get_bending_moment(return_min=True),1), -16.9)
             ##deflection
-        self.assertEqual(round(beam.get_deflection(3)[0],1), -16.3)
+        self.assertEqual(round(beam.get_deflection(3),1), -16.3)
         self.assertEqual(round(beam.get_deflection(return_max=True),1), 0)
         self.assertEqual(round(beam.get_deflection(return_min=True),1), -16.7)
 

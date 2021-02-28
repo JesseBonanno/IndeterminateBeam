@@ -1,0 +1,32 @@
+# Modified from BeamBending https://raw.githubusercontent.com/alfredocarella/simplebendingpractice/master/.travis.yml
+# ----------------------------------------------------------------------------------------------------------------------
+
+# ref: https://docs.travis-ci.com/user/languages/python/
+dist: xenial   # required for Python >= 3.7
+services:
+  - xvfb
+language: python
+python:
+  - "3.7"
+  - "3.8"
+  - "3.9"
+
+# ref: https://docs.travis-ci.com/user/customizing-the-build/#building-specific-branches
+branches:
+  only:
+  - main
+
+install:
+  - pip install -r requirements.txt
+
+# set up the display port to generate figures
+# ref: https://docs.travis-ci.com/user/gui-and-headless-browsers/#using-xvfb-directly
+# before_script:
+#   - "export DISPLAY=:99.0"
+#   - "sh -e /etc/init.d/xvfb start"
+#   - sleep 3 # give xvfb some time to start
+
+# command to test examples and then run tests
+script:
+  # run tests
+  - pytest
