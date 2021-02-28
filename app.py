@@ -915,6 +915,9 @@ content = html.Div(
 app = dash.Dash(__name__, external_stylesheets=[dbc.themes.MINTY])
 server = app.server
 app.layout = html.Div([sidebar, content])
+app.scripts.append_script({
+    'external_url': 'https://cdn.jsdelivr.net/gh/JesseBonanno/IndeterminateBeam/assets/gtag.js'
+    })
 
 # options - support mode
 
