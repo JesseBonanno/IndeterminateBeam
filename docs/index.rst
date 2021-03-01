@@ -7,14 +7,14 @@ Welcome to IndeterminateBeam's documentation!
 =============================================
 
 
-`IndeterminateBeam` is a Python Package aiming to serve as a foundation for civil and structural engineering projects in Python. The module can also serve as a standalone program and is useful for determining: 
+``IndeterminateBeam`` is a Python Package aiming to serve as a foundation for civil and structural engineering projects in Python. The module can also serve as a standalone program and is useful for determining: 
 
   - reaction forces for indeterminate beams
   - internal forces for indeterminate beams (shear, bending, axial)
   - deflection of the beam due to resulting forces
   - axial force, shear force, and bending moment diagrams
 
-The `indeterminatebeam` [package repository](https://github.com/JesseBonanno/IndeterminateBeam) can be found on Github and is ready for installation using `pip`. 
+The ``indeterminatebeam`` `package repository <https://github.com/JesseBonanno/IndeterminateBeam>`_ can be found on Github and is ready for installation using `pip`. 
 
 .. toctree::
    :maxdepth: 2
