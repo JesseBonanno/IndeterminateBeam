@@ -36,12 +36,6 @@ SIDEBAR_STYLE = {
     'padding': '40px 40px',
     'background-color': '#f8f9fa'
 }
-from indeterminatebeam import PointLoadV, PointTorque, DistributedLoadV
-load_1 = PointLoadV(1,2) # Create 1kN point load at x = 2m
-load_2 = DistributedLoadV(2,(1,4)) # Create a 2kN UDL from x = 1m to x = 4m
-load_3 = PointTorque(2, 3.5) # Defines a 2kN.m point torque at x = 3.5m
-beam.add_loads(load_1,load_2,load_3) # Assign the load objects to the beam object
-
 
 # the style arguments for the main content page.
 CONTENT_STYLE = {
