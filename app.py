@@ -70,7 +70,7 @@ For more, you can view the following:
    The sign conventions used
 * [![Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/JesseBonanno/IndeterminateBeam/blob/main/docs/examples/simple_demo.ipynb)
    The Python based Jupyter Notebook examples
-* [![Article](https://img.shields.io/badge/Article-Complete-green.svg)](https://github.com/JesseBonanno/IndeterminateBeam/blob/main/Article.pdf)
+* [![Article](https://img.shields.io/badge/Article-Complete-green.svg)](https://github.com/JesseBonanno/IndeterminateBeam/blob/main/IndeterminateBeam_Article.pdf)
 
 Note: As the Python package calculations are purely analytical calculation \
 times can be relatively slow.
