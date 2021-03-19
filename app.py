@@ -816,11 +816,14 @@ tabs = dbc.Tabs(
             [
                 dbc.Collapse(
                     support_content,
-                    id='advanced-support'
+                    id='advanced-support',
+                    is_open = False,
                 ),
                 dbc.Collapse(
                     basic_support_content,
-                    id='basic-support'
+                    id='basic-support',
+                    is_open=True
+
                 ),
             ],
             label="Supports",
@@ -1243,9 +1246,9 @@ def analyse_beam(
             {'type': 'Bending Moment', 'max': 0, 'min': 0},
             {'type': 'Deflection', 'max': 0, 'min': 0},
         ]
-    if click == 0 and button_id == 'submit_button':
-        color = "danger"
-        message = "No analysis has been run."
+    # if click == 0 and button_id == 'dummy-div':
+    #     color = "danger"
+    #     message = "No analysis has been run."
     return graph_1, graph_2, color, message, True, results_data, input_json, False
 
 
@@ -1323,7 +1326,10 @@ def update_tables(
     # is also needed in the analysis function.
     # Also, as data is now always automatically added from previous, it is useful to be able to clear data
     # so a clear inputs button and functionality was added.
-    
+    if not input_json_data:
+        raise PreventUpdate
+        
+
     ctx = dash.callback_context
     dummy_div = False
 
@@ -1486,6 +1492,9 @@ def toggle_collapse(n, is_open):
      State('input-json','data')]
 )
 def report(n, graph_1, graph_2, results, json):
+    if not json:
+        raise PreventUpdate
+
     date = datetime.now().strftime("%d/%m/%Y")
     #if the botton has been clicked.
     beam_data = "<!--" + json + "-->"
@@ -1550,4 +1559,4 @@ def report(n, graph_1, graph_2, results, json):
 
 
 if __name__ == '__main__':
-    app.run_server(debug=True)
+    app.run_server()
