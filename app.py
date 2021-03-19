@@ -1,5 +1,6 @@
 import sys
 import os
+import base64
 import json
 import dash
 import dash_bootstrap_components as dbc
@@ -147,8 +148,6 @@ beam_table = dash_table.DataTable(
     data=[beam_table_init],
     editable=True,
     row_deletable=False,
-    persistence=True,
-    persistence_type='session'
 )
 
 beam_instructions = dcc.Markdown('''
@@ -558,7 +557,7 @@ distributed_load_content = dbc.Card(
 )
 
 # Properties for query tab
-query_table_data = {
+query_table_init = {
     'Query coordinate (m)': 0,
 }
 
@@ -573,10 +572,10 @@ query_table = dash_table.DataTable(
         'format': Format(
                 symbol=Symbol.yes,
                 symbol_suffix=' m')
-    } for i in query_table_data.keys()],
+    } for i in query_table_init.keys()],
     data=[],
     editable=True,
-    row_deletable=True
+    row_deletable=True,
 )
 
 query_instructions = dcc.Markdown('''
@@ -717,10 +716,10 @@ option_positive_direction_y = dbc.FormGroup(
 
 option_result_table = dbc.FormGroup(
     [
-        dbc.Label("Result Table", html_for="option-result-table", width=3),
+        dbc.Label("Result Table", html_for="option_result_table", width=3),
         dbc.Col(
             dbc.RadioItems(
-                id="option-result-table",
+                id="option_result_table",
                 options=[
                     {'label': 'Hide', 'value': 'hide'},
                     {'label': 'Show', 'value': 'show'},
@@ -749,7 +748,7 @@ option_data_point = dbc.FormGroup(
                     250: {'label': '250'},
                     500: {'label': '500'}
                 },
-                included=True
+                included=True,
             ),
             width=8,
         ),
@@ -762,7 +761,33 @@ option_combined = dbc.Form([
     option_support_input,
     option_positive_direction_y,
     option_data_point,
-
+    html.Br(),
+    dbc.Row(
+        [
+            dbc.Label("Work from Report", width=3),
+            html.Div([
+                dcc.Upload(
+                    id='upload-data',
+                    children=html.Div([
+                        'Drag and Drop or ',
+                        html.A('Select Files'),
+                    ]),
+                    style={
+                        'width': '100%',
+                        'height': '60px',
+                        'lineHeight': '60px',
+                        'borderWidth': '1px',
+                        'borderStyle': 'dashed',
+                        'borderRadius': '5px',
+                        'textAlign': 'center',
+                        'margin': '5px'
+                    },
+                    # Allow multiple files to be uploaded
+                    multiple=False
+                ),
+            ])
+        ]
+    )
 ])
 
 option_content = dbc.Card(
@@ -874,10 +899,25 @@ content_first_row = html.Div(
                                 width=4
                             ),
                             dbc.Col(
-                                dbc.Spinner(submit_button),
+                                [
+                                    dbc.Button(
+                                        "Clear Inputs",
+                                        id="clear-inputs-button",
+                                        className="mb-3",
+                                        color="info",
+                                        n_clicks=0,
+                                        block=True,
+                                    ),
+                                ],
                                 width=4
-                            )
-                        ]
+                            ),
+                        ],
+                    ),
+                    dbc.Row(
+                        dbc.Col(
+                            dbc.Spinner(submit_button),
+                            width=12
+                        )
                     ),
                     html.Br(),
                 ],
@@ -911,8 +951,9 @@ content = html.Div(
         ),
         html.Hr(),
         calc_status,
+        dcc.Store(id='input-json', storage_type='local'),
+        html.Div(id='dummy-div', style=dict(display='none')),
         content_first_row,
-        html.Div(id='hidden-input', style=dict(display='none')),
         html.Hr(),
         copyright_
     ],
@@ -920,66 +961,54 @@ content = html.Div(
 )
 
 # Initialise app
-app = dash.Dash(__name__, external_stylesheets=[dbc.themes.MINTY])
+app = dash.Dash(
+    __name__,
+    external_stylesheets=[dbc.themes.MINTY],
+    external_scripts=['https://cdn.jsdelivr.net/gh/JesseBonanno/IndeterminateBeam/assets/gtag.js']
+)
+
 server = app.server
 app.layout = html.Div([sidebar, content])
 
-# add google analytics
-app.scripts.append_script({
-    'external_url': 'https://cdn.jsdelivr.net/gh/JesseBonanno/IndeterminateBeam/assets/gtag.js'
-    })
 
 # add tab title 
 app.title = "IndeterminateBeam"
 
-# options - support mode
-
-
+# ANALYSIS 
 @app.callback(
-    [Output('advanced-support', 'is_open'),
-     Output('basic-support', 'is_open')],
-    Input('option_support_input', 'value')
-)
-def support_setup(mode):
-    if mode == 'basic':
-        return False, True
-    else:
-        return True, False
-
-# option - result data (to be query data in future really)
-
-
-@app.callback(
-    Output('results-collapse', 'is_open'),
-    Input('option-result-table', 'value')
-)
-def results_setup(mode):
-    if mode == 'hide':
-        return False
-    else:
-        return True
-
-# option - positive y direction
-
-# Main callback - assembles entire beam and analyses base on inputs.
-
-
-@app.callback(
-    [Output('graph_1', 'figure'), Output('graph_2', 'figure'),
-     Output('alert-fade', 'color'), Output('alert-fade', 'children'),
-     Output('alert-fade', 'is_open'), Output('results-table', 'data'),
-     Output('hidden-input', 'children'), Output('submit_button', 'disabled')],
-    [Input('submit_button', 'n_clicks')],
-    [State('beam-table', 'data'), State('point-load-table', 'data'),
-     State('point-torque-table', 'data'), State('query-table', 'data'),
-     State('distributed-load-table', 'data'), State('support-table', 'data'),
-     State('basic-support-table', 'data'),
-     State('graph_1', 'figure'), State('graph_2', 'figure'),
-     State('hidden-input', 'children'), State('advanced-support', 'is_open'),
-     State('option_positive_direction_y', 'value'),
-     State('option_data_points', 'value')])
+    [
+        Output('graph_1', 'figure'),
+        Output('graph_2', 'figure'),
+        Output('alert-fade', 'color'),
+        Output('alert-fade', 'children'),
+        Output('alert-fade', 'is_open'),
+        Output('results-table', 'data'),
+        Output('input-json', 'data'),
+        Output('submit_button', 'disabled')
+    ],
+    [
+        Input('submit_button', 'n_clicks'),
+        Input('dummy-div', 'children'),
+    ],
+    [
+        State('beam-table', 'data'),
+        State('point-load-table', 'data'),
+        State('point-torque-table', 'data'),
+        State('query-table', 'data'),
+        State('distributed-load-table', 'data'),
+        State('support-table', 'data'),
+        State('basic-support-table', 'data'),
+        State('graph_1', 'figure'),
+        State('graph_2', 'figure'),
+        State('input-json', 'data'),
+        State('option_support_input', 'value'),
+        State('option_positive_direction_y', 'value'),
+        State('option_data_points', 'value'),
+        State('option_result_table', 'value')
+    ])
 def analyse_beam(
         click,
+        dummy_div,
         beams,
         point_loads,
         point_torques,
@@ -990,46 +1019,66 @@ def analyse_beam(
         graph_1,
         graph_2,
         prev_input,
-        advanced_support_open,
+        option_support,
         positive_y_direction,
-        data_points):
+        data_points,
+        option_result_table):
+
+    ctx = dash.callback_context
+    button_id = ctx.triggered[0]['prop_id'].split('.')[0]
+
+    # if an update was raised by button, and that was by a additional row, dont run.
+    if dummy_div == False and button_id == 'dummy-div':
+        raise PreventUpdate
 
     t1 = time.perf_counter()
 
-    if advanced_support_open:
-        supports = advanced_supports
-    else:
-        for i, s in enumerate(basic_supports):
-            sup = s.pop('Support')
-            if sup == 'Fixed':
-                s['X'] = 'R'
-                s['Y'] = 'R'
-                s['M'] = 'R'
-            elif sup == 'Pinned':
-                s['X'] = 'R'
-                s['Y'] = 'R'
-                s['M'] = 'F'
-            elif sup == 'Roller':
-                s['X'] = 'F'
-                s['Y'] = 'R'
-                s['M'] = 'F'
-            basic_supports[i] = s
-        supports = basic_supports
-
+    # jsonify all inputs
     input_json = json.dumps(
         {
             'beam': beams,
-            'supports': supports,
+            'advanced_supports': advanced_supports,
+            'basic_supports': basic_supports,
             'point_loads': point_loads,
             'point_torques': point_torques,
             'distributed_loads': distributed_loads,
             'querys': querys,
+            'adv_sup': option_support,
             'y': positive_y_direction,
             'data_points': data_points,
+            'result_table': option_result_table,
         }
     )
+  
+    for i, s in enumerate(basic_supports):
+        sup = s.pop('Support')
+        if sup == 'Fixed':
+            s['X'] = 'R'
+            s['Y'] = 'R'
+            s['M'] = 'R'
+        elif sup == 'Pinned':
+            s['X'] = 'R'
+            s['Y'] = 'R'
+            s['M'] = 'F'
+        elif sup == 'Roller':
+            s['X'] = 'F'
+            s['Y'] = 'R'
+            s['M'] = 'F'
+        basic_supports[i] = s
 
-    if input_json == prev_input:
+    if option_support == 'advanced':
+        supports = advanced_supports
+    else:
+        supports = basic_supports
+
+
+
+    # if all inputs the same as stored inputs then
+    # no need to calculate again.
+    # if clicks 0 then inputs are set to prev input
+    # hence they will be the same but will need to run the
+    # analysis to show the results.
+    if input_json == prev_input and click > 0:
         raise PreventUpdate
 
     try:
@@ -1194,86 +1243,219 @@ def analyse_beam(
             {'type': 'Bending Moment', 'max': 0, 'min': 0},
             {'type': 'Deflection', 'max': 0, 'min': 0},
         ]
-    if click == 0:
+    if click == 0 and button_id == 'submit_button':
         color = "danger"
         message = "No analysis has been run."
     return graph_1, graph_2, color, message, True, results_data, input_json, False
 
 
-# Add button to add row for supports
+# ADD ROWS AND RESTORE DATA AND CLEAR DATA
+# (ANYTHING TABLE RELATED)
 @app.callback(
-    Output('support-table', 'data'),
-    Input('support-rows-button', 'n_clicks'),
-    State('support-table', 'data'),
-    State('support-table', 'columns'))
-def add_row2(n_clicks, rows, columns):
-    if n_clicks > 0:
-        rows.append(support_table_init)
-    return rows
+    [
+        Output('beam-table', 'data'),
+        Output('support-table', 'data'),
+        Output('basic-support-table', 'data'),
+        Output('point-load-table', 'data'),
+        Output('point-torque-table', 'data'),
+        Output('distributed-load-table', 'data'),
+        Output('query-table', 'data'),
+        Output('option_support_input', 'value'),
+        Output('option_positive_direction_y', 'value'),
+        Output('option_result_table', 'value'),
+        Output('option_data_points', 'value'),
+        Output('dummy-div','children'),
+    ],
+    [
+        Input('support-rows-button', 'n_clicks'),
+        Input('basic-support-rows-button', 'n_clicks'),
+        Input('point-load-rows-button', 'n_clicks'),
+        Input('point-torque-rows-button', 'n_clicks'),
+        Input('distributed-load-rows-button', 'n_clicks'),
+        Input('query-rows-button', 'n_clicks'),
+        Input('clear-inputs-button', 'n_clicks'),
+        Input('upload-data', 'contents'),        
+    ],
+    [
+        State('beam-table', 'data'),
+        State('support-table', 'data'),
+        State('basic-support-table', 'data'),
+        State('point-load-table', 'data'),
+        State('point-torque-table', 'data'),
+        State('distributed-load-table', 'data'),
+        State('query-table', 'data'),
+        State('option_support_input', 'value'),
+        State('option_positive_direction_y', 'value'),
+        State('option_result_table', 'value'),
+        State('option_data_points', 'value'),
+        State('input-json', 'data'),
+    ]
+)
+def update_tables(
+    support_table_clicks,
+    basic_support_table_clicks,
+    point_load_table_clicks,
+    point_torque_table_clicks,
+    distributed_load_table_clicks,
+    query_table_clicks,
+    clear_inputs_clicks,
+    upload_data,
+    beam_table_rows,
+    advanced_support_table_rows,
+    basic_support_table_rows,
+    point_load_table_rows,
+    point_torque_table_rows,
+    distributed_load_table_rows,
+    query_table_rows,
+    option_support_input,
+    option_positive_direction_y,
+    option_result_table,
+    option_data_points,
+    input_json_data,
+    ):
+    #solution summary:
+    # in order to automatically update tables to previously stored information
+    # it is necessary to use the same function to add table rows and to add the past information
+    # as graphs are produced from clicking analysis, a dummy variable was created that triggers
+    # an analysis run. In order to make the model not run every time a row is added, the value is set to
+    # FALSE which makes the analysis not run as per the analysis function. As the data in the function 
+    # can remain FALSE or TRUE while data is changed and analysis is re run, a check on the trigger context
+    # is also needed in the analysis function.
+    # Also, as data is now always automatically added from previous, it is useful to be able to clear data
+    # so a clear inputs button and functionality was added.
+    
+    ctx = dash.callback_context
+    dummy_div = False
 
+    if not ctx.triggered or ctx.triggered[0]['prop_id'].split('.')[0] == 'upload-data':
+        if not input_json_data:
+            return [
+                beam_table_rows,
+                advanced_support_table_rows,
+                basic_support_table_rows,
+                point_load_table_rows,
+                point_torque_table_rows,
+                distributed_load_table_rows,
+                query_table_rows,
+                option_support_input,
+                option_positive_direction_y,
+                option_result_table,
+                option_data_points,
+                dummy_div
+            ]
 
+        if ctx.triggered[0]['prop_id'].split('.')[0] == 'upload-data':
+            data = upload_data.encode("utf8").split(b";base64,")[1]
+            data = base64.b64decode(data)
+            data = data.decode('utf-8')
+            data = data.split('--')[1]
+            data.replace('null', 'True')
+            data.replace('None', 'True')
+            data = json.loads(data)
+        else:
+            data = json.loads(input_json_data)
+
+        dummy_div = True
+
+        beam_table_rows = data['beam']
+        basic_support_table_rows =data['basic_supports']
+        advanced_support_table_rows = data['advanced_supports']
+        point_load_table_rows = data['point_loads']
+        point_torque_table_rows = data['point_torques']
+        distributed_load_table_rows = data['distributed_loads']
+        query_table_rows = data['querys']
+        option_support_input = data['adv_sup']
+        option_positive_direction_y = data['y']
+        option_result_table = data['result_table']
+        option_data_points = data['data_points']
+
+        return [
+            beam_table_rows,
+            advanced_support_table_rows,
+            basic_support_table_rows,
+            point_load_table_rows,
+            point_torque_table_rows,
+            distributed_load_table_rows,
+            query_table_rows,
+            option_support_input,
+            option_positive_direction_y,
+            option_result_table,
+            option_data_points,
+            dummy_div,
+        ]
+
+    else:
+        button_id = ctx.triggered[0]['prop_id'].split('.')[0]
+    
+    if button_id == 'support-rows-button':
+        advanced_support_table_rows.append(support_table_init)
+    elif button_id == 'basic-support-rows-button':
+        basic_support_table_rows.append(basic_support_table_init)
+    elif button_id == 'point-load-rows-button':
+        point_load_table_rows.append(point_load_table_init)
+
+    elif button_id == 'point-torque-rows-button':
+        point_torque_table_rows.append(point_torque_table_init)
+    elif button_id == 'distributed-load-rows-button':
+       distributed_load_table_rows.append(distributed_load_table_init)
+    elif button_id == 'query-rows-button':
+       query_table_rows.append(query_table_init)
+    elif button_id == 'clear-inputs-button':
+        return [
+            [beam_table_init],
+            [support_table_init],
+            [basic_support_table_init],
+            [point_load_table_init],
+            [point_torque_table_init],
+            [distributed_load_table_init],
+            [],
+            'basic',
+            'down',
+            'show',
+            50,
+            True,
+        ]
+        
+    return [
+        beam_table_rows,
+        advanced_support_table_rows,
+        basic_support_table_rows,
+        point_load_table_rows,
+        point_torque_table_rows,
+        distributed_load_table_rows,
+        query_table_rows,
+        option_support_input,
+        option_positive_direction_y,
+        option_result_table,
+        option_data_points,
+        dummy_div
+    ]
+
+# options - support mode
 @app.callback(
-    Output('basic-support-table', 'data'),
-    Input('basic-support-rows-button', 'n_clicks'),
-    State('basic-support-table', 'data'),
-    State('basic-support-table', 'columns'))
-def add_row2b(n_clicks, rows, columns):
-    if n_clicks > 0:
-        rows.append(basic_support_table_init)
-    return rows
-# Add button to add row for point loads
+    [Output('advanced-support', 'is_open'),
+     Output('basic-support', 'is_open')],
+    Input('option_support_input', 'value')
+)
+def support_setup(mode):
+    if mode == 'basic':
+        return False, True
+    else:
+        return True, False
 
-
+# option - result data (to be query data in future really)
 @app.callback(
-    Output('point-load-table', 'data'),
-    Input('point-load-rows-button', 'n_clicks'),
-    State('point-load-table', 'data'),
-    State('point-load-table', 'columns'))
-def add_row3(n_clicks, rows, columns):
-    if n_clicks > 0:
-        rows.append(point_load_table_init)
-    return rows
-
-# Add button to add row for point torques
+    Output('results-collapse', 'is_open'),
+    Input('option_result_table', 'value')
+)
+def results_setup(mode):
+    if mode == 'hide':
+        return False
+    else:
+        return True
 
 
-@app.callback(
-    Output('point-torque-table', 'data'),
-    Input('point-torque-rows-button', 'n_clicks'),
-    State('point-torque-table', 'data'),
-    State('point-torque-table', 'columns'))
-def add_row4(n_clicks, rows, columns):
-    if n_clicks > 0:
-        rows.append(point_torque_table_init)
-    return rows
-
-# Add button to add row for distributed loads
-
-
-@app.callback(
-    Output('distributed-load-table', 'data'),
-    Input('distributed-load-rows-button', 'n_clicks'),
-    State('distributed-load-table', 'data'),
-    State('distributed-load-table', 'columns'))
-def add_row5(n_clicks, rows, columns):
-    if n_clicks > 0:
-        rows.append(distributed_load_table_init)
-    return rows
-
-# Add button to add row for querys
-
-
-@app.callback(
-    Output('query-table', 'data'),
-    Input('query-rows-button', 'n_clicks'),
-    State('query-table', 'data'),
-    State('query-table', 'columns'))
-def add_row6(n_clicks, rows, columns):
-    if n_clicks > 0:
-        rows.append(query_table_data)
-    return rows
-
-
+#instructions open
 @app.callback(
     [Output("beam_instructions", "is_open"),
      Output("support_instructions", "is_open"),
@@ -1294,16 +1476,19 @@ def toggle_collapse(n, is_open):
     return a, a, a, a, a, a, a, a
 
 
+# Generate Report
 @app.callback(
     Output("report", "data"),
     Input('report-button', 'n_clicks'),
     [State("graph_1", "figure"),
      State("graph_2", "figure"),
-     State('results-table', 'data')]
+     State('results-table', 'data'),
+     State('input-json','data')]
 )
-def report(n, graph_1, graph_2, results):
+def report(n, graph_1, graph_2, results, json):
     date = datetime.now().strftime("%d/%m/%Y")
     #if the botton has been clicked.
+    beam_data = "<!--" + json + "-->"
     if n > 0:
         # for each row in the results table,
         # write html table row
@@ -1328,6 +1513,8 @@ def report(n, graph_1, graph_2, results):
         # table format appropriated from an online generator.
         # added page-break-after:always for formatting when print to pdf
         content = [
+            "<!DOCTYPE html><html>",
+            beam_data,
             to_html(fig=graph_1, full_html=False, include_plotlyjs='cdn'),
             """
             <style type="text/css">
@@ -1353,7 +1540,8 @@ def report(n, graph_1, graph_2, results):
             </table>
             """,
             to_html(fig=graph_2, full_html=False, include_plotlyjs='cdn'),
-            f'<i>Report generated at https://indeterminate-beam.herokuapp.com/ on {date}</i>'
+            f'<i>Report generated at https://indeterminate-beam.herokuapp.com/ on {date}</i>',
+            "</html>"
         ]
 
         content = "<br>".join(content)
@@ -1362,4 +1550,4 @@ def report(n, graph_1, graph_2, results):
 
 
 if __name__ == '__main__':
-    app.run_server()
+    app.run_server(debug=True)
