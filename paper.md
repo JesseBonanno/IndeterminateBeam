@@ -17,7 +17,7 @@ authors:
 affiliations:
 - name: No affiliation
   index: 1
-date: 15 December 2020
+date: 02 April 2021
 bibliography: paper.bib
 nocite: | 
   @beamguru, @structuralbeam, @skyciv, @mechanicalc, @webstructural, @beamcalculatoronline, @steelbeamcalculator
@@ -25,12 +25,12 @@ nocite: |
 
 # Summary
 
-IndeterminateBeam is a Python package aiming to serve as a foundation for civil and structural engineering projects in Python. The module can also serve as a stand-alone program and is useful for determining:
+`IndeterminateBeam` is a Python package aiming to serve as a foundation for civil and structural engineering projects in Python. The package can also serve as a standalone program and is useful for determining: 
 
   - reaction forces for indeterminate beams
   - internal forces for indeterminate beams (shear, bending, axial)
-  - deflections of beams due to resulting forces
-  - axial force, shear force, bending moment and deflection diagrams.
+  - deflection of beams due to resulting forces
+  - axial force, shear force, bending moment and deflection diagrams
 
 The module is based primarily on engineering concepts of statics as described in [@HibbelerRussell2013MoM], and Python packages Sympy [@sympy2017] and Matplotlib [@Hunter2007]. The [package documentation](https://indeterminatebeam.readthedocs.io/en/main/) provides a brief overview of the theory behind the solutions used to calculate the forces on the indeterminate beam.
 
@@ -41,9 +41,7 @@ The package can be used by:
    - students who want to observe the effect minor geometry changes can have on forces
    - students, teachers or engineers who want to create higher order engineering projects using this project as a starting point
 
-
-The `indeterminatebeam` package is ready for installation using `pip` or can be tested online using the provided [Jupyter notebook](https://colab.research.google.com/github/JesseBonanno/IndeterminateBeam/blob/main/docs/examples/readme_example.ipynb).
-
+The `IndeterminateBeam` [package repository](https://github.com/JesseBonanno/IndeterminateBeam) can be found on Github and is ready for installation using `pip`. A text-based example of the package can be found on this [Jupyter Notebook](https://colab.research.google.com/github/JesseBonanno/IndeterminateBeam/blob/main/docs/examples/readme_example.ipynb) and a web-based graphical user interface (GUI) is available at https://indeterminate-beam.herokuapp.com/.
 
 # Statement of Need
 Statics is fundamental to many fields of engineering such as civil, structural and mechanical engineering. This package aims to help student understanding in two ways:
@@ -65,41 +63,38 @@ There are five main differences between the ```indeterminatebeam``` package and 
 * Any degree of freedom combination can be constructed for supports 
 
 
+## Functionality and Usage
 
-# Functionality and Usage
-
-A typical use case of the `indeterminatebeam` package involves the following steps:
+A typical use case of the `IndeterminateBeam` package involves the following steps:
 
 1. Create a `Beam` object
 2. Create `Support` objects and assign to `Beam`
-3. Create `load` objects and assign to `Beam`
+3. Create `Load` objects and assign to `Beam`
 4. Solve for forces on `Beam` object
 5. Plot results
 
-Units and load direction conventions are described in the [package documentation](https://indeterminatebeam.readthedocs.io/en/main/).
+You can follow along with the example below in this web-based [Jupyter Notebook](https://colab.research.google.com/github/JesseBonanno/IndeterminateBeam/blob/main/docs/examples/readme_example.ipynb). Units and load direction conventions are described in the [package documentation](https://indeterminatebeam.readthedocs.io/en/main/theory.html).
 
-You can follow along with the example below in this [web based notebook.](https://colab.research.google.com/github/JesseBonanno/IndeterminateBeam/blob/main/docs/examples/readme_example.ipynb)
+### Creating a Beam
 
-##### Creating Beam
+The creation of a `Beam` instance involves the input of the beam length (m) and optionally the input of the Young's Modulus (E), second moment of area (I), and cross-sectional area (A). E, I and A are optional and by default are the properties of a steel 150UB18.0. For a beam with constant properties, these parameters will only affect the deflections calculated and not the distribution of forces, unless spring supports are specified.
 
-The creation of a beam instance involves the input of the beam length, and optionally: the input of the young's modulus (E), second moment of area (I), and cross-sectional area (A). E, I and A are optional and by default are the properties of a steel 150UB18.0. For a beam with constant properties, these parameters will only affect the deflections calculated and not the distribution of forces, unless spring supports are specified.
 ```python
 from indeterminatebeam import Beam
- # Initialize a Beam object of length 7 m with E and I as defaults
-beam = Beam(7)                       
-# Initialize a Beam object of length 9 m with E, I, and A assigned by user
-beam_2 = Beam(9,E=2000, I =10**6, A = 3000)      
+# Create 7 m beam with E, I, A as defaults
+beam = Beam(7)                          
+# Create 9 m beam with E, I, and A assigned by user
+beam_2 = Beam(9,E=2000, I =10**6, A = 3000)     
 ```
 
-##### Defining Supports
-Support objects are created separately from the beam object, and are defined by an x-coordinate (m) and the supports translational and rotational degrees of freedom.
+### Defining Supports
+`Support` objects are created separately from the `Beam` object, and are defined by an x-coordinate (m) and the beams translational and rotational degrees of freedom.
 
 Degrees of freedom are represented by a tuple of 3 booleans, representing the x , y , and m directions respectively. A `1` indicates the support is fixed in a direction and a `0` indicates it is free.
 
 Optionally, stiffness can be specified in either of the translational directions, which overrides the boolean specified.
 
 ```python
-#import Support
 from indeterminatebeam import Support
 # Defines a pin support at location x = 5m  
 a = Support(5,(1,1,0))      
@@ -110,44 +105,44 @@ c = Support(7,(1,1,1))
 # Assign the support objects to a beam object created earlier
 beam.add_supports(a,b,c)    
 ```
-##### Defining loads
-Load objects are created separately from the beam object, and are generally defined by a force value and then a coordinate value. This varies slightly for different types of loading classes.
+
+### Defining loads
+`Load` objects are created separately from the `Beam` object, and are generally defined by a force value and then a coordinate value, however this varies slightly for different types of loading classes.
 
 ```python
-#import load objects
 from indeterminatebeam import PointLoadV, PointTorque, DistributedLoadV
-# Defines a point load of 1kn acting up, at location x = 2m
-load_1 = PointLoadV(1,2)                
-# Defines a 2kN UDL from location x = 1m to x = 4m 
-load_2 = DistributedLoadV(2,(1,4))     
- # Defines a 2kN.m point torque at location x = 3.5m
-load_3 = PointTorque(2, 3.5)           
-# Assign the support objects to a beam object created earlier
-beam.add_loads(load_1,load_2,load_3)    
+# Create 1kN point load at x = 2m
+load_1 = PointLoadV(1,2)
+# Create a 2kN UDL from x = 1m to x = 4m
+load_2 = DistributedLoadV(2,(1,4))
+# Defines a 2kN.m point torque at x = 3.5m
+load_3 = PointTorque(2, 3.5)
+# Assign the load objects to the beam object
+beam.add_loads(load_1,load_2,load_3)
 ```
 
-##### Solving for Forces
-Once the beam object has been assigned with loads and supports, it can be solved. To solve for reactions and internal forces the analyse function is called.
+### Solving for Forces
+Once the `Beam` object has been assigned with `Load` and `Support` objects it can then be solved. To solve for reactions and internal forces we call the analyse function.
 
 ```python
 beam.analyse()  
 ```
 
-##### Plot results
-After the beam has been analysed the results can be plotted.
+### Plotting results
+After the beam has been analysed we can plot the results.
 
 ```python
-beam.plot_beam_diagram()
-beam.plot_beam_internal()                            
+beam.plot_beam_external()
+beam.plot_beam_internal()
 ```
 
-The `plot_beam_internal` method is actually a wrapper that combines these four methods: `plot_normal_force`, `plot_shear_force`, `plot_bending_moment` and `plot_deflection` into a single A4-sized printer-friendly plot.
+The `plot_beam_external` and `plot_beam_internal` methods collate otherwise seperate plots.
 
-The script above produces Figure 1 and Figure 2 below.
+The script above produces the following figures:
 
-![Example beam diagram plot](docs/examples/readme_example_diagram.png)
+![example_1_e](https://github.com/JesseBonanno/IndeterminateBeam/raw/main/docs/examples/ss/readme_example_external.svg) 
 
-![Example beam internal forces plot](docs/examples/readme_example_internal.png)
+![example_1_i](https://github.com/JesseBonanno/IndeterminateBeam/raw/main/docs/examples/readme_example_internal.png)
 
 
 # References
