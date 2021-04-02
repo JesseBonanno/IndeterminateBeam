@@ -140,9 +140,9 @@ The `plot_beam_external` and `plot_beam_internal` methods collate otherwise sepe
 
 The script above produces the following figures:
 
-![example_1_e](https://github.com/JesseBonanno/IndeterminateBeam/raw/main/docs/examples/readme_example_external.png)
+![Beam Schematic and Reactions](https://github.com/JesseBonanno/IndeterminateBeam/raw/main/docs/examples/readme_example_external_600.png)
 
-![example_1_i](https://github.com/JesseBonanno/IndeterminateBeam/raw/main/docs/examples/readme_example_internal.png)
+![Analysis Results](https://github.com/JesseBonanno/IndeterminateBeam/raw/main/docs/examples/readme_example_internal_600.png)
 
 
 # References
