@@ -1,5 +1,6 @@
 # Modified from BeamBending https://raw.githubusercontent.com/alfredocarella/simplebendingpractice/master/.travis.yml
 # ----------------------------------------------------------------------------------------------------------------------
+#Main reference for codecoverage addition https://blog.travis-ci.com/2019-08-07-extensive-python-testing-on-travis-ci 
 
 # ref: https://docs.travis-ci.com/user/languages/python/
 dist: xenial   # required for Python >= 3.7
@@ -17,15 +18,15 @@ branches:
   - main
 
 install:
-  - pip install pytest-cov
+  - pip install codecov
   - pip install -r requirements.txt
   - pip install .
 
 # command to test examples and then run tests
 script:
   # run tests
-  - pytest --cov=./
+  - pytest
 
 # Push the results back to codecov
 after_success:
-  - codecov
+  - codecov #submit coverage

@@ -815,8 +815,7 @@ class Beam:
 
         # if no direction is specified return a list of all the reaction
         # forces.
-        else:
-            return self._reactions[x_coord]
+        return self._reactions[x_coord]
 
     def _get_query_value(self, x_coord, func, return_max=False,
                          return_min=False, return_absmax=False):
