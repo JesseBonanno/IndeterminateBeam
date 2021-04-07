@@ -18,14 +18,14 @@ branches:
   - main
 
 install:
-  - pip install coverage
+  - pip install pytest-cov
   - pip install -r requirements.txt
   - pip install .
 
 # command to test examples and then run tests
 script:
-  - coverage run tests/test_indeterminatebeam.py
+  - pytest --cov=./
 
 # Push the results back to codecov
 after_success:
-  - codecov #submit coverage
+  - bash <(curl -s https://codecov.io/bash)
