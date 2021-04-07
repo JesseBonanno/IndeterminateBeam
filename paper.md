@@ -25,7 +25,7 @@ nocite: |
 
 # Summary
 
-`IndeterminateBeam` is a Python package aiming to serve as a foundation for civil and structural engineering projects in Python. The package can also serve as a standalone program and is useful for determining: 
+```IndeterminateBeam``` is a Python package aiming to serve as a foundation for civil and structural engineering projects in Python. The package can also serve as a standalone program and is useful for determining: 
 
   - reaction forces for indeterminate beams
   - internal forces for indeterminate beams (shear, bending, axial)
@@ -41,7 +41,7 @@ The package can be used by:
    - students who want to observe the effect minor geometry changes can have on forces
    - students, teachers or engineers who want to create higher order engineering projects using this project as a starting point
 
-The `IndeterminateBeam` [package repository](https://github.com/JesseBonanno/IndeterminateBeam) can be found on Github and is ready for installation using `pip`. A text-based example of the package can be found on this [Jupyter Notebook](https://colab.research.google.com/github/JesseBonanno/IndeterminateBeam/blob/main/docs/examples/readme_example.ipynb) and a web-based graphical user interface (GUI) is available at https://indeterminate-beam.herokuapp.com/.
+The ```IndeterminateBeam``` [package repository](https://github.com/JesseBonanno/IndeterminateBeam) can be found on Github and is ready for installation using `pip`. A text-based example of the package can be found on this [Jupyter Notebook](https://colab.research.google.com/github/JesseBonanno/IndeterminateBeam/blob/main/docs/examples/readme_example.ipynb) and a web-based graphical user interface (GUI) is available at https://indeterminate-beam.herokuapp.com/.
 
 # Statement of Need
 Statics is fundamental to many fields of engineering such as civil, structural and mechanical engineering. This package aims to help student understanding in two ways:
@@ -54,18 +54,21 @@ A feature comparison in Table 1 below has been taken from @Carella2019 and modif
 
 ![](tool_comparison_table.png)
 
-There are five main differences between the ```indeterminatebeam``` package and the rest of the reviewed tools:
+There are six main strengths for the ```IndeterminateBeam``` package:
 
 * Arbitrary distributed load functions are accepted
-* The package can be called from regular Python code, which makes it easy to implement higher order engineering solutions
-* It is free and open source
+* The package features a full GUI web-application
+* It is free and open source, forming a basis for higher order engineering python projects.
 * Spring supports can be modelled
-* Any degree of freedom combination can be constructed for supports 
+* Any degree of freedom combination can be constructed for supports
+* Indeterminate Beams can be solved (Any number of supports) 
+
+Although most observed tools share some of these features, no other tool shares more than three of the listed strengths with ```IndeterminateBeam```.
 
 
 ## Functionality and Usage
 
-A typical use case of the `IndeterminateBeam` package involves the following steps:
+A typical use case of the ```IndeterminateBeam``` package involves the following steps:
 
 1. Create a `Beam` object
 2. Create `Support` objects and assign to `Beam`
