@@ -20,7 +20,7 @@ affiliations:
 date: 02 April 2021
 bibliography: paper.bib
 nocite: | 
-  @beamguru, @structuralbeam, @skyciv, @mechanicalc, @webstructural, @beamcalculatoronline, @steelbeamcalculator
+  @beamguru, @structuralbeam, @skyciv, @mechanicalc, @webstructural, @beamcalculatoronline, @steelbeamcalculator, @symbeam
 ---
 
 # Summary
@@ -132,17 +132,20 @@ beam.analyse()
 After the beam has been analysed we can plot the results.
 
 ```python
-beam.plot_beam_external()
-beam.plot_beam_internal()
+fig_1 = beam.plot_beam_external()
+fig_1.show()
+
+fig_2 = beam.plot_beam_internal()
+fig_2.show()
 ```
 
 The `plot_beam_external` and `plot_beam_internal` methods collate otherwise seperate plots.
 
 The script above produces the following figures:
 
-![Beam Schematic and Reactions](https://github.com/JesseBonanno/IndeterminateBeam/raw/main/docs/examples/readme_example_external_600.png)
+![Beam Schematic and Reactions](https://github.com/JesseBonanno/IndeterminateBeam/raw/main/docs/examples/readme_example_external_HD.png)
 
-![Analysis Results](https://github.com/JesseBonanno/IndeterminateBeam/raw/main/docs/examples/readme_example_internal_600.png)
+![Analysis Results](https://github.com/JesseBonanno/IndeterminateBeam/raw/main/docs/examples/readme_example_internal_HD.png)
 
 
 # References
