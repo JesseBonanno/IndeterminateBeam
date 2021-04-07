@@ -811,8 +811,7 @@ class Beam:
                 raise ValueError(
                     "direction should be the value 'x', 'y' or 'm'")
             # if direction valid return appropriate reaction fore
-            else:
-                return self._reactions[x_coord][directions.index(direction)]
+            return self._reactions[x_coord][directions.index(direction)]
 
         # if no direction is specified return a list of all the reaction
         # forces.
@@ -893,8 +892,7 @@ class Beam:
             # data type return from previous versions.
             if len(x_) == 1:
                 return x_[0]
-            else:
-                return x_
+            return x_
 
         min_ = float(y_vec.min())
         max_ = float(y_vec.max())
@@ -903,7 +901,7 @@ class Beam:
             return round(max_, 3)
         elif return_min:
             return round(min_, 3)
-        elif return_absmax:
+        else:
             return round(max(abs(min_), max_), 3)
 
     def get_bending_moment(self, *x_coord, return_max=False,

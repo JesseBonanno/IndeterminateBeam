@@ -17,17 +17,19 @@ branches:
   - main
 
 install:
+  - pip install pytest-cov
   - pip install -r requirements.txt
   - pip install .
-
-# set up the display port to generate figures
-# ref: https://docs.travis-ci.com/user/gui-and-headless-browsers/#using-xvfb-directly
-# before_script:
-#   - "export DISPLAY=:99.0"
-#   - "sh -e /etc/init.d/xvfb start"
-#   - sleep 3 # give xvfb some time to start
 
 # command to test examples and then run tests
 script:
   # run tests
-  - pytest
+  - pytest --cov=./
+
+# Run the unit test
+script:
+  - coverage run tests.py
+
+# Push the results back to codecov
+after_success:
+  - codecov

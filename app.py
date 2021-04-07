@@ -1031,7 +1031,7 @@ def analyse_beam(
     button_id = ctx.triggered[0]['prop_id'].split('.')[0]
 
     # if an update was raised by button, and that was by a additional row, dont run.
-    if dummy_div == False and button_id == 'dummy-div':
+    if dummy_div is False and button_id == 'dummy-div':
         raise PreventUpdate
 
     t1 = time.perf_counter()
@@ -1350,7 +1350,7 @@ def update_tables(
                 dummy_div
             ]
 
-        if ctx.triggered[0]['prop_id'].split('.')[0] == 'upload-data':
+        elif ctx.triggered[0]['prop_id'].split('.')[0] == 'upload-data':
             data = upload_data.encode("utf8").split(b";base64,")[1]
             data = base64.b64decode(data)
             data = data.decode('utf-8')
@@ -1446,8 +1446,7 @@ def update_tables(
 def support_setup(mode):
     if mode == 'basic':
         return False, True
-    else:
-        return True, False
+    return True, False
 
 # option - result data (to be query data in future really)
 @app.callback(
@@ -1457,8 +1456,7 @@ def support_setup(mode):
 def results_setup(mode):
     if mode == 'hide':
         return False
-    else:
-        return True
+    return True
 
 
 #instructions open
