@@ -58,7 +58,7 @@ There are six main strengths for the ```IndeterminateBeam``` package:
 
 * Arbitrary distributed load functions are accepted
 * The package features a full GUI web-application
-* It is free and open source, forming a basis for higher order engineering python projects.
+* It is free and open source
 * Spring supports can be modelled
 * Any degree of freedom combination can be constructed for supports
 * Indeterminate Beams can be solved (Any number of supports) 
