@@ -26,10 +26,6 @@ script:
   # run tests
   - pytest --cov=./
 
-# Run the unit test
-script:
-  - coverage run tests.py
-
 # Push the results back to codecov
 after_success:
   - codecov
