@@ -14,3 +14,4 @@ dash-table==4.11.1
 gunicorn
 dash-extensions>=0.0.44
 pytest
+jupyter>=1.0.0
