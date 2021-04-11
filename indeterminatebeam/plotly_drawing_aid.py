@@ -621,7 +621,7 @@ def draw_load_hoverlabel(fig, load, row=None, col=None):
         elif isinstance(load, PointLoad):
             meta.append(load.angle)
             hovertemplate = 'x: %{meta[1]} m<br>Force: %{meta[0]} kN\
-                <br>Angle: %{meta[2]} deg'
+            <br>Angle: %{meta[2]} deg'
             name = 'Point<br>Load'
 
         # Define hoverlabel as a marker with 0 opacity and a hovertemplate that
@@ -678,8 +678,8 @@ def draw_load_hoverlabel(fig, load, row=None, col=None):
             ]
         
         
-        hovertemplate = 'x: %{meta[0]} m<br>Force: %{meta[1]} kN/m<br>\
-            Angle: %{meta[2]} deg'
+        hovertemplate = 'x: %{meta[0]} m<br>Force: %{meta[1]} kN/m\
+        <br>Angle: %{meta[2]} deg'
 
         for x_, y_, a_ in meta:
             trace = go.Scatter(

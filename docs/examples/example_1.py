@@ -10,7 +10,7 @@ a = Support(0,(1,1,1))
 b = Support(3,(0,1,0))
 
 load_1 = PointLoadV(-8,1.5)
-load_2 = DistributedLoadV(-6, (0,3))
+load_2 = UDLV(-6, (0,3))
 
 beam.add_supports(a,b)
 beam.add_loads(load_1,load_2)
@@ -21,5 +21,8 @@ print(f"The beam has an absolute maximum shear force of: {beam.get_shear_force(r
 print(f"The beam has an absolute maximum bending moment of: {beam.get_bending_moment(return_absmax=True)} kN.m")
 print(f"The beam has a vertical reaction at B of: {beam.get_reaction(3,'y')} kN")
 
-beam.plot_beam_external()
-beam.plot_beam_internal()
+fig1 = beam.plot_beam_external()  
+fig1.show()
+
+fig2 = beam.plot_beam_internal()  
+fig2.show()

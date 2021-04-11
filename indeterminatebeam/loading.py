@@ -5,7 +5,7 @@ from math import radians
 
 # Third Party Imports
 from sympy.abc import x
-from sympy import oo, integrate, SingularityFunction, sympify, cos, sin
+from sympy import oo, integrate, SingularityFunction, sympify, cos, sin, Piecewise
 
 # Local application imports
 from indeterminatebeam.data_validation import (
@@ -20,6 +20,19 @@ class Load:
     """Load class from which all other types of loads inherit."""
 
     def _add_load_functions(self, angle, expr):
+        """Convert the load as a function of x (w(x)) into:
+        - Total vertical force
+        - Total moment (about x = 0)
+        - Shear force as a function of x
+        - Normal force as a function of x
+
+        Parameters
+        ----------
+        angle : float
+            load angle
+        expr : float
+            value of load as function of x
+        """
         # x and y vectors for force
         force_x = cos(radians(angle))
         force_y = sin(radians(angle))
@@ -314,6 +327,8 @@ class DistributedLoad(Load):
         # Validate expr.
         try:
             expr = sympify(expr)
+            expr = Piecewise((0, x < span[0]), (0, x > span[1]), (expr, True))
+            
         except BaseException:
             print("Can not convert expression to sympy function. \
             Function should only contain variable x, should be \
@@ -343,58 +358,177 @@ class DistributedLoad(Load):
 
 # simplified load types- vertical and horizontal direction classes
 
-
 class PointLoadV(PointLoad):
-    """Vertical Point Load."""
+    """Vertical Point Load.
+
+    Parameters:
+    -----------
+    Force: float
+        Force in kN
+    coord: float
+        x coordinate of load on beam
+
+    Examples
+    --------
+    >>> # 10 kN towards the right at x=9 m
+    >>> external_force = PointLoad(10, 9)
+    """
 
     def __init__(self, force=0, coord=0):
         super().__init__(force, coord, angle=90)
 
 
 class PointLoadH(PointLoad):
-    """Horizontal Point Load."""
+    """Horizontal Point Load.
+
+    Parameters:
+    -----------
+    Force: float
+        Force in kN
+    coord: float
+        x coordinate of load on beam
+
+    Examples
+    --------
+    >>> # 10 kN up at x=9 m
+    >>> external_force = PointLoad(10, 9)
+    """
 
     def __init__(self, force=0, coord=0):
         super().__init__(force, coord, angle=0)
 
 
 class UDLV(UDL):
-    """Vertical Uniformly Distributed Load."""
+    """Vertical Uniformly Distributed Load.
+    
+    Parameters
+    ----------
+    force : int, optional
+        UDL load in kN/m, by default 0
+    span: tuple of floats
+        A tuple containing the starting and ending coordinate that
+        the UDL is applied to.
+
+    Examples
+    --------
+    >>> # load of 1 kN/m (acting down) from 1 <= x <= 4 
+    >>> self_weight = UDL(-1, (1, 4))
+    """
 
     def __init__(self, force=0, span=(0, 0)):
         super().__init__(force, span, angle=90)
 
 
 class UDLH(UDL):
-    """Horizontal Uniformly Distributed Load."""
+    """Horizontal Uniformly Distributed Load.
+    
+    Parameters
+    ----------
+    force : int, optional
+        UDL load in kN/m, by default 0
+    span: tuple of floats
+        A tuple containing the starting and ending coordinate that
+        the UDL is applied to.
+
+    Examples
+    --------
+    >>> # load of 2 kN/m (acting right) from 1 <= x <= 4 (vertical)
+    >>> self_weight = UDL(2, (1, 4))
+    """
 
     def __init__(self, force=0, span=(0, 0)):
         super().__init__(force, span, angle=0)
 
 
 class TrapezoidalLoadV(TrapezoidalLoad):
-    """Vertical Trapezoidal Distributed Load."""
+    """Vertical Trapezoidal Distributed Load.
+
+    Parameters
+    ----------
+    force : tuple of floats
+        A tuple containing the starting and ending loads of
+        the trapezoidal load in kN/m.
+    span: tuple of floats
+        A tuple containing the starting and ending coordinate that
+        the trapezoidal load is applied to.
+
+    Examples
+    --------
+    >>> # trapezoidal load starting at 2 kN/m at 1 m and ending at 3 kN/m
+    >>> # at 4 m (acting down)
+    >>> self_weight = UDL((-2,-3), (1, 4), 90)
+    """
 
     def __init__(self, force=(0, 0), span=(0, 0)):
         super().__init__(force, span, angle=90)
 
 
 class TrapezoidalLoadH(TrapezoidalLoad):
-    """Horizontal Trapezoidal Distributed Load."""
+    """Horizontal Trapezoidal Distributed Load.
+    
+    Parameters
+    ----------
+    force : tuple of floats
+        A tuple containing the starting and ending loads of
+        the trapezoidal load in kN/m.
+    span: tuple of floats
+        A tuple containing the starting and ending coordinate that
+        the trapezoidal load is applied to.
+
+    Examples
+    --------
+    >>> # trapezoidal load starting at 2 kN/m at 1 m and ending at 3 kN/m
+    >>> # at 4 m (acting right)
+    >>> self_weight = UDL((2,3), (1, 4))
+    """
 
     def __init__(self, force=(0, 0), span=(0, 0)):
         super().__init__(force, span, angle=0)
 
 
 class DistributedLoadV(DistributedLoad):
-    """Vertical Distributed Load."""
+    """Vertical distributed load, described by its functional form, 
+    application interval and the angle of the load relative to the beam.
+
+    Parameters:
+    -----------
+    expr: sympy expression
+        Sympy expression of the distributed load function expressed
+        using variable x which represents the beam x-coordinate.
+        Requires quotation marks around expression.
+    span: tuple of floats
+        A tuple containing the starting and ending coordinate that
+         the function is applied to.
+   
+    Examples
+    --------
+    >>> # Linearly growing load (acting down) for 0<x<2 m
+    >>> snow_load = DistributedLoad("-10*x-5", (0, 2))
+    """
 
     def __init__(self, expr=0, span=(0, 0)):
         super().__init__(expr, span, angle=90)
 
 
 class DistributedLoadH(DistributedLoad):
-    """Horizontal Distributed Load."""
+    """Horizontal distributed load, described by its functional form, 
+    application interval and the angle of the load relative to the beam.
+
+    Parameters:
+    -----------
+    expr: sympy expression
+        Sympy expression of the distributed load function expressed
+        using variable x which represents the beam x-coordinate.
+        Requires quotation marks around expression.
+    span: tuple of floats
+        A tuple containing the starting and ending coordinate that
+         the function is applied to.
+   
+    Examples
+    --------
+    >>> # Linearly growing load (acting right) for 0<x<2 m
+    >>> snow_load = DistributedLoad("10*x+5", (0, 2))
+    """
 
     def __init__(self, expr=0, span=(0, 0)):
         super().__init__(expr, span, angle=0)

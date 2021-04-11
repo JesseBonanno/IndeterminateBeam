@@ -452,7 +452,17 @@ class Beam:
 
     def analyse(self):
         """Solve the beam structure for reaction and internal forces  """
-
+        # Foreword: As a result of sympify not working on SingularityFunctions
+        # for the current version of sympy the solution had to become more
+        # abstract, with the use of a conversion from singualaritys to piecewise
+        # functions. As all the functions use SingularityFunction, except for
+        # distributed load functions which are Piecewise functions, these two
+        # different types of loads had to be grouped (so the equations for
+        # shear force, bending moment etc. are split into a component 1 and 
+        # component 2). Then at the end of this function where the conversion
+        # takes place it only takes place for the singularity functions.
+        # This code can be made a lot more succint given that Sympy updates
+        # to allow for sympify on singularity functions.
         x1 = self._x1
 
         # initialised with position and stiffness.
@@ -552,8 +562,12 @@ class Beam:
         unknowns_ym += [C1, C2]
 
         # normal forces, same concept as shear forces
-        N_i = sum(load._x1 for load in self._loads) \
+        N_i_1 = sum(load._x1 for load in self._loads if not isinstance(load, DistributedLoad)) \
             + sum([a['force'] for a in unknowns['x']])
+        
+        N_i_2 = sum(load._x1 for load in self._loads if isinstance(load, DistributedLoad))
+
+        N_i = N_i_1 + N_i_2
 
         # integrate to get NF * x as a function of x. Needed
         # later for displacement which is used if x springs are present
@@ -566,8 +580,12 @@ class Beam:
         # However when considering the difference in load convention (for loads
         # upwards is positive, whereas for shear forces down is postive), this
         # becomes F_i = load._y1 + reactions
-        F_i = sum(load._y1 for load in self._loads) \
+        F_i_1 = sum(load._y1 for load in self._loads if not isinstance(load,DistributedLoad)) \
             + sum([a['force'] for a in unknowns['y']])
+        
+        F_i_2 = sum(load._y1 for load in self._loads if isinstance(load,DistributedLoad)) \
+
+        F_i = F_i_1 + F_i_2
 
         # bending moments at internal point means we are now looking left
         # along the beam when we take our moments (vs when we did external
@@ -578,14 +596,22 @@ class Beam:
         # of point torques through load._y1 which represents moments
         # as a SingularityFunction of power -1 (the point moments are
         # therefore only considered once the integration below takes place)
-        M_i = integrate(F_i, x) \
+        M_i_1 = integrate(F_i_1, x) \
             - sum([a['torque'] for a in unknowns['m']])
 
+        M_i_2 = integrate(F_i_2, x)
+
+        M_i = M_i_1 + M_i_2
+
         # integrate M_i for beam slope equation
-        dv_EI = integrate(M_i, x) + C1
+        dv_EI_1 = integrate(M_i_1, x) + C1
+        dv_EI_2 = integrate(M_i_2, x)
+        dv_EI = dv_EI_1 + dv_EI_2
 
         # integrate M_i twice for deflection equation
-        v_EI = integrate(dv_EI, x) + C2
+        v_EI_1 = integrate(dv_EI_1, x) + C2
+        v_EI_2 = integrate(dv_EI_2, x)
+        v_EI = v_EI_1 + v_EI_2
 
         # create a list of equations for tangential direction
         equations_ym = [F_Ry, M_R]
@@ -654,11 +680,23 @@ class Beam:
         # substitue in value inplace of variable in functions
         for var, ans in solution_dict.items():
             ans = float(ans)
-            v_EI = v_EI.subs(var, ans)  # complete deflection equation
-            M_i = M_i.subs(var, ans)  # complete moment equation
-            F_i = F_i.subs(var, ans)  # complete shear force equation
-            N_i = N_i.subs(var, ans)  # complete normal force equation
+            
+            
+           
+            
+            
+            
+            N_i_1 = N_i_1.subs(var, ans)  # complete normal force equation
+            F_i_1 = F_i_1.subs(var, ans)  # complete shear force equation
+            M_i_1 = M_i_1.subs(var, ans)  # complete moment equation
+            v_EI_1 = v_EI_1.subs(var, ans)  # complete deflection equation
             Nv_EA = Nv_EA.subs(var, ans)  # complete axial deformation equation
+            if N_i_2:
+                N_i_2 = N_i_2.subs(var, ans)  # complete normal force equation
+            if F_i_2:
+                F_i_2 = F_i_2.subs(var, ans)  # complete shear force 
+                M_i_2 = M_i_2.subs(var, ans)  # complete moment equation
+                v_EI_2 = v_EI_2.subs(var, ans)  # complete deflection equation
 
             # create self._reactions to allow for plotting of reaction
             # forces if wanted and for use with get_reaction method.
@@ -682,15 +720,16 @@ class Beam:
         # set calculated beam equations on beam changing all singularity
         # functions to piecewise functions (see sympy_expr_to_piecewise
         # for more details.)
-        self._normal_forces = self.sympy_expr_to_piecewise(N_i)
-        self._shear_forces = self.sympy_expr_to_piecewise(F_i)
-        self._bending_moments = self.sympy_expr_to_piecewise(M_i)
-
+        self._normal_forces = self.sympy_expr_to_piecewise(N_i_1) + N_i_2
+        self._shear_forces = self.sympy_expr_to_piecewise(F_i_1) + F_i_2
+        self._bending_moments = self.sympy_expr_to_piecewise(M_i_1) + M_i_2
+        
         # moment unit is kn.m, dv_EI kn.m2, v_EI Kn.m3 --> *10^3, *10^9
         # to get base units. E and I are already base units.
-        self._deflection_equation = self.sympy_expr_to_piecewise(
-            v_EI * 10 ** 12 / (self._E * self._I)
-        )
+        self._deflection_equation = (
+            self.sympy_expr_to_piecewise(v_EI_1) 
+            + v_EI_2
+        ) * 10 ** 12 / (self._E * self._I)
 
         # inefficient, user might not want to plot or want max or min.
         # They might also only be interested in a particular component, 
