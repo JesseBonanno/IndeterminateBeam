@@ -28,12 +28,12 @@ from plotly.subplots import make_subplots
 import plotly.graph_objects as go
 
 # Local Application Imports
-from indeterminatebeam.data_validation import (
+from .data_validation import (
     assert_number,
     assert_positive_number,
     assert_strictly_positive_number, assert_length
 )
-from indeterminatebeam.loading import (
+from .loading import (
     PointLoad,
     PointLoadV,
     PointLoadH,
@@ -48,7 +48,7 @@ from indeterminatebeam.loading import (
     UDLH,
     UDLV
 )
-from indeterminatebeam.plotly_drawing_aid import (
+from .plotly_drawing_aid import (
     draw_line,
     draw_arrowhead,
     draw_arrow,
