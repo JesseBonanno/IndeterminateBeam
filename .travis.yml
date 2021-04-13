@@ -24,7 +24,7 @@ install:
 
 # command to test examples and then run tests
 script:
-  - pytest --cov=./
+  - pytest --cov=indeterminatebeam tests/
 
 # Push the results back to codecov
 after_success:
