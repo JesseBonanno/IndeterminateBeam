@@ -545,11 +545,11 @@ class Beam:
         # sum contribution of loads and contribution of supports.
         # for loads ._x1 represents the load distribution integrated,
         # thereby giving the total load by the end of the support.
-        F_Rx = sum([load._x1.subs(x, x1) for load in self._loads]) \
+        F_Rx = sum([load._x1.subs(x, x1) for load in self._loads if not isinstance(load,PointTorque)]) \
             + sum([a['variable'] for a in unknowns['x']])
 
         # similiar to F_Rx
-        F_Ry = sum([load._y1.subs(x, x1) for load in self._loads]) \
+        F_Ry = sum([load._y1.subs(x, x1) for load in self._loads if not isinstance(load,PointTorque)]) \
             + sum([a['variable'] for a in unknowns['y']])
 
         # moments taken at the left of the beam, anti-clockwise is positive
@@ -1865,9 +1865,6 @@ if __name__ == "__main__":
     # import sys, os
     # sys.path.insert(0, os.path.abspath('../'))
 
-    beam = Beam(3, E=(200)*10**3, I=(4.6875*10**-6)*10**12)
-    a = Support(0, (1,1,0), ky = 45*10**-3)   
-    b = Support(3, (0,1,0), ky = 45*10**-3)
 
     load_1 = PointLoad(-3,1,90)
 
