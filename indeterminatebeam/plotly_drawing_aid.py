@@ -11,7 +11,7 @@ from plotly.subplots import make_subplots
 import plotly.graph_objects as go
 
 # Local Application Imports
-from .loading import(
+from indeterminatebeam.loading import(
     PointLoad,
     PointLoadH,
     PointLoadV,

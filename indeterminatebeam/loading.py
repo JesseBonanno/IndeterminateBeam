@@ -8,7 +8,7 @@ from sympy.abc import x
 from sympy import oo, integrate, SingularityFunction, sympify, cos, sin, Piecewise
 
 # Local application imports
-from .data_validation import (
+from indeterminatebeam.data_validation import (
     assert_length,
     assert_number,
     assert_positive_number,

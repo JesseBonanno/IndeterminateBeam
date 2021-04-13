@@ -1,5 +1,5 @@
-from .indeterminatebeam import Support, Beam
-from .loading import (
+from indeterminatebeam.indeterminatebeam import Support, Beam
+from indeterminatebeam.loading import (
     PointLoad,
     PointLoadV,
     PointLoadH,
@@ -14,4 +14,4 @@ from .loading import (
     UDLH,
     UDLV
 )
-from .data_validation import assert_length
+from indeterminatebeam.data_validation import assert_length
