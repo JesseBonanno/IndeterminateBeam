@@ -24,10 +24,8 @@ install:
 
 # command to test examples and then run tests
 script:
-  - pytest --cov=tests/test_indeterminatebeam.py
-  - pytest --cov=indeterminatebeam/__init__.py
-  - pytest --cov=docs/examples/readme_example.py
-
+  - pytest --cov=./
+  
 # Push the results back to codecov
 after_success:
   - bash <(curl -s https://codecov.io/bash)

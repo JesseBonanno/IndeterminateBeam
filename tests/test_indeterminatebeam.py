@@ -1,3 +1,8 @@
+import os
+import sys
+sys.path.insert(0, os.path.abspath('../'))
+
+from sympy import oo
 from indeterminatebeam.indeterminatebeam import (
     Support, 
     Beam, 
@@ -11,7 +16,6 @@ from indeterminatebeam.indeterminatebeam import (
     TrapezoidalLoad,
     TrapezoidalLoadV,
     TrapezoidalLoadH,
-    oo
 )
 import unittest
 

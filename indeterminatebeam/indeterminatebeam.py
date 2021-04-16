@@ -682,10 +682,6 @@ class Beam:
             ans = float(ans)
             
             
-           
-            
-            
-            
             N_i_1 = N_i_1.subs(var, ans)  # complete normal force equation
             F_i_1 = F_i_1.subs(var, ans)  # complete shear force equation
             M_i_1 = M_i_1.subs(var, ans)  # complete moment equation
@@ -1807,9 +1803,9 @@ class Beam:
         # Function can be:
         # 1. a single Singularity Function
         # 2. a add function
-        # containing multiplication functions,
-        # containing non-SingularityFunction items,
-        # containing SingularityFunction
+        # a.containing multiplication functions,
+        # b.containing non-SingularityFunction items,
+        # c.containing SingularityFunction
         # 3. a Multiplication function
         # containing sf and other functions
         # containing other functions (ie piecewise)
@@ -1839,9 +1835,11 @@ class Beam:
             else:
                 temp = 0
                 for a in func.args:
+                    # case 2 b
                     if isinstance(a, SingularityFunction):
                         temp += a._eval_rewrite_as_Piecewise()
-                    if a.is_Mul:
+                    # case 2 a
+                    elif a.is_Mul:
                         temp_mul = 1
                         for m in a.args:
                             if isinstance(m, SingularityFunction):
@@ -1849,6 +1847,7 @@ class Beam:
                             else:
                                 temp_mul *= m
                         temp += temp_mul
+                    # case 2 c
                     else:
                         temp += a
                 return temp
@@ -1865,17 +1864,8 @@ if __name__ == "__main__":
     # import sys, os
     # sys.path.insert(0, os.path.abspath('../'))
 
-
-    load_1 = PointLoad(-3,1,90)
-
-    beam.add_supports(a,b)
-    beam.add_loads(load_1)
-
-    beam.analyse()
-
-    beam.get_bending_moment(1)
-    
-    beam.get_deflection(1)
-
-    beam.plot_beam_external()
-    beam.plot_beam_internal()
+    beam2 = Beam(10)
+    beam2.add_loads(PointLoadH(1,10))
+    beam2.add_supports(Support(0, (1, 1, 1)),
+                    Support(5, (0, 1, 0)))
+    beam2.analyse()
