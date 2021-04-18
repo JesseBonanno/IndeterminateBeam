@@ -9,7 +9,8 @@ Example
 >>> beam.add_supports(a,c)
 >>> beam.add_loads(PointLoadV(-15,3))
 >>> beam.analyse()
->>> beam.plot()
+>>> beam.plot_beam_external()
+>>> beam.plot_beam_internal()
 
 """
 
@@ -132,15 +133,15 @@ class Support:
         for a in fixed:
             if a not in [0, 1]:
                 raise ValueError(
-                    "The provided fixed parameter, must be a tuple of \
-                    booleans of length 3"
+                    "The provided fixed parameter, must be a tuple of " +
+                    "booleans of length 3"
                 )
 
         # validate fixed tuple length
         if len(fixed) != 3:
             raise ValueError(
-                "The provided fixed parameter, must be a tuple of \
-                booleans of length 3"
+                "The provided fixed parameter, must be a tuple of " +
+                "booleans of length 3"
             )
 
         # Spring representation, set rigid to infinity instead of 1.
@@ -532,13 +533,15 @@ class Beam:
         # load.
         if len(unknowns_xx) < 1:
             raise ValueError(
-                'You need at least one x restraint, even if there are \
-                no x forces')
+                'You need at least one x restraint, even if there are ' +
+                'no x forces'
+            )
 
         if len(unknowns_ym) < 2:
             raise ValueError(
-                'You need at least two y or m restraints, even if there \
-                are no y or m forces')
+                'You need at least two y or m restraints, even if there ' +
+                'are no y or m forces'
+            )
 
         # external reaction equations
 

@@ -1,12 +1,10 @@
 # Indeterminate Beam
 
-
-[![Version](https://img.shields.io/badge/version-v2.0.3-blue.svg)](https://github.com/JesseBonanno/IndeterminateBeam/releases/tag/v2.0.3)
+[![Version](https://img.shields.io/badge/version-v2.0.4-blue.svg)](https://github.com/JesseBonanno/IndeterminateBeam/releases/tag/v2.0.4)
 [![License](https://img.shields.io/badge/license-MIT-lightgreen.svg)](https://github.com/JesseBonanno/IndeterminateBeam/blob/main/LICENSE.txt)
 [![Documentation Status](https://readthedocs.org/projects/indeterminatebeam/badge/?version=main)](https://indeterminatebeam.readthedocs.io/en/main/?badge=main)
 [![Build Status](https://travis-ci.org/JesseBonanno/IndeterminateBeam.svg?branch=main)](https://travis-ci.org/JesseBonanno/IndeterminateBeam)
 [![CodeFactor](https://www.codefactor.io/repository/github/jessebonanno/indeterminatebeam/badge)](https://www.codefactor.io/repository/github/jessebonanno/indeterminatebeam)
-[![codecov](https://codecov.io/gh/JesseBonanno/IndeterminateBeam/branch/main/graph/badge.svg?token=VPN022HBRA)](https://codecov.io/gh/JesseBonanno/IndeterminateBeam)
 [![Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/JesseBonanno/IndeterminateBeam/blob/main/docs/examples/simple_demo.ipynb)
 [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/JesseBonanno/IndeterminateBeam/main?filepath=docs%2Fexamples%2Fsimple_demo.ipynb)
 [![Website](https://img.shields.io/website?down_color=lightgrey&down_message=offline&up_color=green&up_message=up&url=https%3A%2F%2Findeterminate-beam.herokuapp.com%2F)](https://indeterminate-beam.herokuapp.com/)
@@ -18,19 +16,23 @@ IndeterminateBeam is a Python Package aiming to serve as a foundation for civil 
   - deflections of beams due to resulting forces
   - axial force, shear force, bending moment and deflection diagrams.
 
-The package documentation can be accessed [here](https://indeterminatebeam.readthedocs.io/en/main/).
+The package is based mainly on engineering concepts of statics as described in (Hibbeler, 2013), and Python packages Sympy (Meurer et al., 2017) and Plotly (Plotly Technologies Inc, 2015). 
 
+The [package documentation](https://indeterminatebeam.readthedocs.io/en/main/theory.html) provides a brief overview of the theory behind the solutions used to calculate the forces on the indeterminate beam. The full package documentation can be accessed [here](https://indeterminatebeam.readthedocs.io/en/main/).
 
-## Statement of Need
+A text-based example of the package can be found on this [Jupyter Notebook](https://colab.research.google.com/github/JesseBonanno/IndeterminateBeam/blob/main/docs/examples/readme_example.ipynb) and a web-based graphical user interface (GUI) is available at https://indeterminate-beam.herokuapp.com/.
 
-In the civil and structural engineering industry in-house software generally consists of numerous stand-alone spreadsheet files. Different spreadsheet files often share similar engineering calculations, but the programming style of these spreadsheets does not allow for an easy way to reliably share these calculations.
+## Project Purpose
 
-Python can be utilised to address this problem, allowing for the adoption of previous work as a Python module. This will allow for in-house engineering software to be more uniform, readable, manageable, and reliable.
+The purpose of this project is two-fold:
+1.	Create a [free website](https://indeterminate-beam.herokuapp.com/) that has more features than paid and free beam calculators that exist on the web.
+2.	Provide a foundation for civil and structural engineers who want to create higher order engineering Python programs.
 
-The demand for such a calculation module in the engineering industry can be observed with the existence of many websites that perform such a calculation. Most of these websites require payment for full access to the software and only displays a graphical user interface, preventing the creation of higher order engineering programming projects.
+Several (mostly paid) beam calculator websites currently exist online, providing the same service as this package, with web traffic in the hundreds of thousands per month (Similiarweb, 2021). Despite this, no online service exists (to the authors knowledge) that has all the features of `IndeterminateBeam` and is also free.
 
-This python package was heavily inspired by [simplebendingpractice](https://github.com/alfredocarella/simplebendingpractice), a module created by [Alfredo Carella](https://github.com/alfredocarella) of the Oslo Metropolitan University
-for educational purposes. The beambending module, although well documented, can only solve for simply supported beams. The full documentation for this project can be found [here](https://alfredocarella.github.io/simplebendingpractice/index.html).
+Similiarly, there are no well-documented indeterminate beam solving Python packages (to the authors knowledge) despite the importance of such a calculation in engineering. Several python finite element analysis (FEA) packages do exist, however they are vastly overcomplicated for someone wanting to only solve for forces on a one-dimensional beam.
+
+This python package was heavily inspired by [beambending](https://github.com/alfredocarella/simplebendingpractice) (Carella, 2019), a module created for educational purposes by Alfredo Carella of the Oslo Metropolitan University. The beambending module, although well documented, can only solve for simply supported beams consisting of a pin and roller support. The [package documentation](https://simplebendingpractice.readthedocs.io/en/latest/?badge=latest)  for this project includes a more rigorous overview of the theory behind the basics for solving determinate structures.
 
 ## Functionality and Usage
 
@@ -42,7 +44,11 @@ A typical use case of the ```IndeterminateBeam``` package involves the following
 4. Solve for forces on `Beam` object
 5. Plot results
 
-You can follow along with the example below in this web-based [Jupyter Notebook](https://colab.research.google.com/github/JesseBonanno/IndeterminateBeam/blob/main/docs/examples/readme_example.ipynb). Units and load direction conventions are described in the [package documentation](https://indeterminatebeam.readthedocs.io/en/main/theory.html).
+You can follow along with the example below in this web-based [Jupyter Notebook](https://colab.research.google.com/github/JesseBonanno/IndeterminateBeam/blob/main/docs/examples/readme_example.ipynb). 
+Alternatively, you can download the jupyter-notebook for this example [here](https://raw.githubusercontent.com/JesseBonanno/IndeterminateBeam/main/docs/examples/readme_example.ipynb), or the python file for this code [here](https://raw.githubusercontent.com/JesseBonanno/IndeterminateBeam/main/docs/examples/readme_example.py).
+
+Units and load direction conventions are described in the [package documentation](https://indeterminatebeam.readthedocs.io/en/main/theory.html).
+
 
 ### Creating a Beam
 
@@ -140,8 +146,27 @@ The following are areas that can be implemented in future:
 
 The guidelines for contributing are specified [here](https://github.com/JesseBonanno/IndeterminateBeam/blob/main/CONTRIBUTING.md).
 
+## Support
+
+The guidelines for support are specified [here](https://github.com/JesseBonanno/IndeterminateBeam/blob/main/SUPPORT.md).
+
+
 ## License
 
 [![License](https://img.shields.io/badge/license-MIT-lightgreen.svg)](https://github.com/JesseBonanno/IndeterminateBeam/blob/main/LICENSE.txt)
 
 Copyright (c) 2020, Jesse Bonanno
+
+## References
+
+1. Carella, A. (2019). BeamBending: A teaching aid for 1-d shear force and bending moment
+diagrams. *Journal of Open Source Education, 2*(16), 65. https://doi.org/10.21105/
+jose.00065
+2. Hibbeler, R. (2013). *Mechanics of materials*. P.Ed Australia. ISBN: 9810694369
+3. Meurer, A., Smith, C. P., Paprocki, M., Čertík, O., Kirpichev, S. B., Rocklin, M., Kumar,
+A., Ivanov, S., Moore, J. K., Singh, S., Rathnayake, T., Vig, S., Granger, B. E., Muller,
+R. P., Bonazzi, F., Gupta, H., Vats, S., Johansson, F., Pedregosa, F., … Scopatz, A.
+(2017). SymPy: symbolic computing in Python. *PeerJ Computer Science, 3*, e103.
+https://doi.org/10.7717/peerj-cs.103
+4. *Similiarweb*, 2021, https://www.similarweb.com/. Accessed 1 Mar 2021.
+5. Plotly Technologies Inc. *Collaborative data science*. Montréal, QC, 2015. https://plot.ly."
