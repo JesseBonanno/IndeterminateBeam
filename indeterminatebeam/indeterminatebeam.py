@@ -680,8 +680,6 @@ class Beam:
         # substitue in value inplace of variable in functions
         for var, ans in solution_dict.items():
             ans = float(ans)
-            
-            
             N_i_1 = N_i_1.subs(var, ans)  # complete normal force equation
             F_i_1 = F_i_1.subs(var, ans)  # complete shear force equation
             M_i_1 = M_i_1.subs(var, ans)  # complete moment equation

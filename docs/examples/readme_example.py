@@ -1,6 +1,4 @@
 # arbritrary example defined in README.md
-import sys, os
-sys.path.insert(0, os.path.abspath('../../'))
 from indeterminatebeam import Beam, Support, PointLoadV, PointTorque, UDLV, DistributedLoadV
 beam = Beam(7)                          # Initialize a Beam object of length 9m with E and I as defaults
 beam_2 = Beam(9,E=2000, I =100000)      # Initializa a Beam specifying some beam parameters
