@@ -2,7 +2,7 @@
 ## Determine the reactions at the roller support B of the beam described below: 
 ## 3m long, fixed at A (x = 0m), roller support at B (x=3m), vertical point load at midpan of 8kN, UDL of 6kN/m, EI constant.
 
-from indeterminatebeam import Beam, Support, PointLoadV, DistributedLoadV
+from indeterminatebeam import Beam, Support, PointLoadV, UDLV
 
 beam = Beam(3)
 
