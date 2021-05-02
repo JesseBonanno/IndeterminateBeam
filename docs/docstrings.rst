@@ -38,9 +38,17 @@ PointLoads
 -----------
 .. autoclass:: indeterminatebeam.PointTorque
 .. autoclass:: indeterminatebeam.PointLoad
+.. autoclass:: indeterminatebeam.PointLoadV
+.. autoclass:: indeterminatebeam.PointLoadH
 
 DistributedLoads
 -----------------
 .. autoclass:: indeterminatebeam.UDL
+.. autoclass:: indeterminatebeam.UDLV
+.. autoclass:: indeterminatebeam.UDLH
 .. autoclass:: indeterminatebeam.TrapezoidalLoad
+.. autoclass:: indeterminatebeam.TrapezoidalLoadV
+.. autoclass:: indeterminatebeam.TrapezoidalLoadH
 .. autoclass:: indeterminatebeam.DistributedLoad
+.. autoclass:: indeterminatebeam.DistributedLoadV
+.. autoclass:: indeterminatebeam.DistributedLoadH
