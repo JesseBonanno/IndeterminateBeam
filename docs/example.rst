@@ -19,9 +19,9 @@ Try it in online: |colab| |binder| |website|
 Specifications
 --------------
 
-A 3m long propped cantilever AB is fixed at A (x = 0 m), and supported on a roller at B (x = 3 m).
+A 3000 mm long propped cantilever AB is fixed at A (x = 0 mm), and supported on a roller at B (x = 3000 mm).
 
-The beam is subject to a load of 8kN acting downwards at the midspan, and a UDL of 6kN/m across the length of the support.
+The beam is subject to a load of 8kN acting downwards at the midspan, and a UDL of 6 N/mm across the length of the support.
 
 E and I are constant.
 
@@ -30,9 +30,9 @@ Results
 
 The following values can be directly extracted using the `get_shear_force`, `get_bending_moment` and `get_reaction` methods:
 
-   #. The absolute maximum shear force 	  --> 16.75 kN
-   #. The absolute maximum bending moment --> 11.25 kN.m
-   #. The reaction at B         	  --> 9.25 kN
+   #. The absolute maximum shear force 	  --> 16750 N
+   #. The absolute maximum bending moment --> 11.25*10**6 N.mm
+   #. The reaction at B         	  --> 9250 N
 
 A plot of the axial force, shear force, and bending moments is shown below. A deflection graph is also presented however this depends on the beam properties E and I which werent included in this question.
 As a default the values E and I are taken as the values for a 150UB18.0 steel beam. 

@@ -169,8 +169,8 @@ For angled point loads (assuming a positive force is used):
 Unit Convention
 ------------------
 
-The units used throughout the python package are not the SI Units or homogeneous. The following units are adopted in their respective sections of the application.
+The units used throughout the python package are the base SI Units. The following units are adopted in their respective sections of the application.
 
-   * The default units for length, force and bending moment (torque) are in kN and m (m, kN, kN·m)
+   * The default units for length, force and bending moment (torque) are in N and mm (mm, N, N·mm)
    * The default units for beam properties (E, I, A) are in N and mm (N/mm2, mm4, mm2)
-   * The default unit for spring supports is KN/mm
+   * The default unit for spring supports is N/mm
