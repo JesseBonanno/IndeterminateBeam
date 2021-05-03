@@ -3,17 +3,16 @@ and auxillary class for Support.
 
 Example
 --------
->>> beam = Beam(6)
+>>> beam = Beam(6000)
 >>> a = Support()
->>> c = Support(6,(0,1,0))
+>>> c = Support(6000,(0,1,0))
 >>> beam.add_supports(a,c)
->>> beam.add_loads(PointLoadV(-15,3))
+>>> beam.add_loads(PointLoadV(-150,3000))
 >>> beam.analyse()
 >>> beam.plot_beam_external()
 >>> beam.plot_beam_internal()
 
 """
-
 
 # Standard Library Imports
 from collections import namedtuple
@@ -73,30 +72,30 @@ class Support:
     Attributes:
     -------------
         _position: float
-            x coordinate of support on a beam (default 0)
+            x coordinate of support on a beam (mm) (default 0)
         _stiffness: tuple of 3 floats or infinity
-            stiffness K (kN/mm) for movement in x, y and bending, oo
+            stiffness K (N/mm) for movement in x, y and bending. oo
             represents infinity in sympy and means a completely fixed
             conventional support, and 0 means free to move.
         _DOF : tuple of 3 booleans
             Degrees of freedom that are restraint on a beam for
-            movement in x, y and bending, 1 represents that a reaction
+            movement in x, y and bending. 1 represents that a reaction
             force exists and 0 represents free (default (1,1,1))
         _fixed: tuple of 3 booleans
             Degrees of freedom that are completely fixed on a beam for
-            movement in x, y and bending, 1 represents fixed and 0
+            movement in x, y and bending. 1 represents fixed and 0
             represents free or spring  (default (1,1,1))
 
     Examples
     --------
     >>> # Creates a fixed suppot at location 0
     >>> Support(0, (1,1,1))
-    >>> # Creates a pinned support at location 5
-    >>> Support(5, (1,1,0))
-    >>> # Creates a roller support at location 5.54
-    >>> Support(5.54, (0,1,0))
-    >>> # Creates a y direction spring support at location 7.5
-    >>> Support(7.5, (0,1,0), ky = 5)
+    >>> # Creates a pinned support at location 5000 mm
+    >>> Support(5000, (1,1,0))
+    >>> # Creates a roller support at location 5540 mm
+    >>> Support(5540, (0,1,0))
+    >>> # Creates a y direction spring support at location 7500 mm
+    >>> Support(7500, (0,1,0), ky = 5000)
     """
 
     def __init__(self, coord=0, fixed=(1, 1, 1), kx=None, ky=None):
@@ -106,18 +105,18 @@ class Support:
         Parameters:
         -----------
         coord: float
-            x coordinate of support on a beam (default 0)
+            x coordinate of support on a beam (mm) (default 0)
             (default not 0.0 due to a float precision error that
             previously occured)
         fixed: tuple of 3 booleans
             Degrees of freedom that are fixed on a beam for movement in
-            x, y and bending, 1 represents fixed and 0 represents free
+            x, y and bending. 1 represents fixed and 0 represents free
             (default (1,1,1))
         kx :
-            stiffness of x support (kN/mm), if set will overide the
+            stiffness of x support (N/mm), if set will overide the
             value placed in the fixed tuple. (default = None)
         ky : (positive number)
-            stiffness of y support (kN/mm), if set will overide the
+            stiffness of y support (N/mm), if set will overide the
             value placed in the fixed tuple. (default = None)
         """
         # validate coordinate
@@ -182,7 +181,7 @@ class Beam:
     _x0 :float
         Left end coordinate of beam (always defined as 0).
     _x1 :float
-        Right end coordinate of beam.
+        Right end coordinate of beam (in mm).
 
     _E: float
         Young's Modulus of the beam (N/mm2 or MPa)
@@ -200,17 +199,17 @@ class Beam:
         explicitly written on graphs.
 
     _normal_forces: sympy piecewise function
-        A sympy function representing the internal axial force as a
-        function of x.
+        A sympy function representing the internal axial force (N) as a
+        function of x (mm).
     _shear_forces: sympy piecewise function
-        A sympy function representing the internal shear force as a
-        function of x.
+        A sympy function representing the internal shear force (N) as a
+        function of x (mm).
     _bending_moments: sympy piecewise function
-        A sympy function representing the internal bending moments
-        as a function of x.
+        A sympy function representing the internal bending moments (N.mm)
+        as a function of x (mm).
     _deflection_equation: sympy piecewise function
-        A sympy function representing the tangential deflection as
-        a function of x.
+        A sympy function representing the tangential deflection (mm) as
+        a function of x (mm).
 
     _reactions: dictionary of lists
         A dictionary with keys for support positions. Each key is
@@ -220,31 +219,32 @@ class Beam:
 
     Notes
     -----
-    * The default units for length, force and bending moment (torque)
-      are in kN and m (m, kN, kN·m)
-    * The default units for beam properties (E, I, A) are in N and mm
+    * All units are the SI base units
+    * The units for length, force and bending moment (torque)
+      are in N and mm (mm, N, N·mm)
+    * The units for beam properties (E, I, A) are in N and mm
       (N/mm2, mm4, mm2)
-    * The default unit for spring supports is kN/mm
+    * The unit for spring supports is N/mm
     """
 
-    def __init__(self, span: float = 5, E=2 * 10**5, I=9.05 * 10**6,
+    def __init__(self, span: float = 5000, E=2 * 10**5, I=9.05 * 10**6,
                  A=2300):
         """Initializes a Beam object of a given length.
 
         Parameters
         ----------
         span : float
-            Length of the beam span. Must be positive, and the pinned
+            Length of the beam span (in mm). Must be positive, and the pinned
             and rolling supports can only be placed within this span.
-            The default value is 5.
+            The default value is 5000 mm.
         E: float
-            Youngs modulus for the beam. The default value is
+            Youngs modulus for the beam (in MPa). The default value is
             200 000 MPa, which is the youngs modulus for steel.
         I: float
-            Second moment of area for the beam about the z axis.
+            Second moment of area for the beam about the z axis (in mm4).
             The default value is 905 000 000 mm4.
         A: float
-            Cross-sectional area for the beam about the z axis.
+            Cross-sectional area for the beam about the z axis (in mm2).
             The default value is 2300 mm4.
 
         Notes
@@ -655,13 +655,13 @@ class Beam:
                 # axial deformation between start and end =
                 #   (NV_EA(end) - NV_EA(start)) / (EA)
                 # Note: NV_EA is a term representing the deflection divided
-                # by EA (represents N*L), where N is in kN and L is in m -->
-                # * 10 ** 6 tp change to base units.
+                # by EA (represents N*L), with everything as base SI units.
                 # The following code represents all of the above ideas.
                 equations_xx.append(
-                    (Nv_EA.subs(x, end['position']) -
-                     Nv_EA.subs(x, start['position']))
-                    * 10**6 / (self._E * self._A)
+                    (
+                        Nv_EA.subs(x, end['position']) -
+                        Nv_EA.subs(x, start['position'])
+                    ) / (self._E * self._A)
                     + start['variable'] / start['stiffness']
                     # represents elongation displacment on right
                     - end['variable'] / end['stiffness']
@@ -719,16 +719,12 @@ class Beam:
         self._shear_forces = self.sympy_expr_to_piecewise(F_i_1) + F_i_2
         self._bending_moments = self.sympy_expr_to_piecewise(M_i_1) + M_i_2
         
-        # moment unit is kn.m, dv_EI kn.m2, v_EI Kn.m3 --> *10^3, *10^9
-        # to get base units. E and I are already base units.
+        # moment unit is in base units. E and I are already base units.
         self._deflection_equation = (
             self.sympy_expr_to_piecewise(v_EI_1) 
-            + v_EI_2
-        ) * 10 ** 12 / (self._E * self._I)
+            + v_EI_2 
+            ) / (self._E * self._I)
 
-        # inefficient, user might not want to plot or want max or min.
-        # They might also only be interested in a particular component, 
-        # such as Bending Moment.
         self._set_plotting_vectors()
 
     def _set_plotting_vectors(self):
@@ -805,7 +801,7 @@ class Beam:
         Parameters
         ----------
         x_coord: float
-            The x_coordinates on the beam to be substituted into the
+            The x_coordinates on the beam (in mm) to be substituted into the
             equation. List returned (if bools all false)
         direction: str ('x','y' or 'm')
             The direction of the reaction force to be returned.
@@ -1108,7 +1104,7 @@ class Beam:
         Parameters
         ----------
         x_coord: list
-            The x_coordinates on the beam to be queried on plot.
+            The x_coordinates on the beam (in mm) to be queried on plot.
 
         """
         # Add query points to self._query if the point exists
@@ -1125,10 +1121,10 @@ class Beam:
         Parameters
         ----------
         x_coord: list
-            The x_coordinates on the beam to be removed from query on
-            plot.
+            The x_coordinates on the beam (in mm) to be removed from query
+            on plot.
         remove_all: boolean
-            if true all query points will be removed.
+            If true all query points will be removed.
 
         """
         # if remove all set reinitialize self._query to empty list
@@ -1175,7 +1171,7 @@ class Beam:
         fig = self.plot_reaction_force(fig=fig, row=2, col=1)
 
         # update shared axis title and place at bottom of plot
-        fig.update_xaxes(title_text='Beam Length (m)', row=2, col=1)
+        fig.update_xaxes(title_text='Beam Length (mm)', row=2, col=1)
 
         # update layout of plot
         fig.update_layout(
@@ -1255,7 +1251,7 @@ class Beam:
         )
 
         # update shared x axis
-        fig.update_xaxes(title_text='Beam Length (m)', row=4, col=1)
+        fig.update_xaxes(title_text='Beam Length (mm)', row=4, col=1)
 
         # update layout
         fig.update_layout(
@@ -1294,7 +1290,7 @@ class Beam:
             mode='lines',
             name="Beam_",
             line=dict(color='purple', width=2),
-            hovertemplate="%{x} m",
+            hovertemplate="%{x} mm",
             hoverinfo='skip'
         )
 
@@ -1314,7 +1310,7 @@ class Beam:
                 showlegend=False,
                 hovermode='x',
                 title_x=0.5)
-            fig.update_xaxes(title_text='Beam Length (m)')
+            fig.update_xaxes(title_text='Beam Length (mm)')
             # visible false means y axis doesnt show, fixing range
             # means wont zoom in y direction
 
@@ -1365,7 +1361,7 @@ class Beam:
             mode='lines',
             name="Beam",
             line=dict(color='purple', width=2),
-            hovertemplate="%{x} m",
+            hovertemplate="%{x} mm",
             hoverinfo='skip'
         )
 
@@ -1388,7 +1384,7 @@ class Beam:
                 hovermode='x',
                 title_x=0.5)
 
-            fig.update_xaxes(title_text='Beam Length (m)')
+            fig.update_xaxes(title_text='Beam Length (mm)')
 
         # visible false means y axis doesnt show, fixing range means
         # wont zoom in y direction
@@ -1476,8 +1472,8 @@ class Beam:
 
         xlabel = 'Beam Length'
         ylabel = 'Normal Force'
-        xunits = 'm'
-        yunits = 'kN'
+        xunits = 'mm'
+        yunits = 'N'
         title = "Normal Force Plot"
         color = "red"
 
@@ -1527,8 +1523,8 @@ class Beam:
 
         xlabel = 'Beam Length'
         ylabel = 'Shear Force'
-        xunits = 'm'
-        yunits = 'kN'
+        xunits = 'mm'
+        yunits = 'N'
         title = "Shear Force Plot"
         color = "aqua"
 
@@ -1579,8 +1575,8 @@ class Beam:
 
         xlabel = 'Beam Length'
         ylabel = 'Bending Moment'
-        xunits = 'm'
-        yunits = 'kN.m'
+        xunits = 'mm'
+        yunits = 'N.mm'
         title = "Bending Moment Plot"
         color = "lightgreen"
         fig = self.plot_analytical(
@@ -1629,7 +1625,7 @@ class Beam:
 
         xlabel = 'Beam Length'
         ylabel = 'Deflection'
-        xunits = 'm'
+        xunits = 'mm'
         yunits = 'mm'
         title = "Deflection Plot"
         color = "blue"
@@ -1722,7 +1718,7 @@ class Beam:
             line=dict(color=color, width=1),
             fill=fill,
             name=ylabel,
-            hovertemplate="x: %{x:.3f} m <br>f(x): %{y:.3f} "
+            hovertemplate="x: %{x:.3f} mm <br>f(x): %{y:.3f} "
         )
 
         if row and col and fig:
@@ -1874,8 +1870,23 @@ if __name__ == "__main__":
     # import sys, os
     # sys.path.insert(0, os.path.abspath('../'))
 
-    beam2 = Beam(10)
-    beam2.add_loads(PointLoadH(1,10))
-    beam2.add_supports(Support(0, (1, 1, 1)),
-                    Support(5, (0, 1, 0)))
-    beam2.analyse()
+    beam = Beam(7000)                          # Initialize a Beam object of length 9000 mm with E and I as defaults
+    beam_2 = Beam(9000,E=2000, I =100000)      # Initializa a Beam specifying some beam parameters
+
+    a = Support(5000,(1,1,0))                  # Defines a pin support at location x = 5000 mm  
+    b = Support(0,(0,1,0))                  # Defines a roller support at location x = 0 mm
+    c = Support(7000,(1,1,1))                  # Defines a fixed support at location x = 7000 mm
+    beam.add_supports(a,b,c)    
+
+    load_1 = PointLoadV(1000,2000)                # Defines a point load of 1000 N acting up, at location x = 2000 mm
+    load_2 = DistributedLoadV(2,(1000,4000))      # Defines a 2 N/mm UDL from location x = 1000 mm to x = 4000 mm 
+    load_3 = PointTorque(2*10**6, 3500)            # Defines a 2*10**6 N.mm point torque at location x = 3500 mm
+    beam.add_loads(load_1,load_2,load_3)    # Assign the support objects to a beam object created earlier
+
+    beam.analyse()
+
+    fig_1 = beam.plot_beam_external()
+    fig_1.show()
+
+    fig_2 = beam.plot_beam_internal()
+    fig_2.show()

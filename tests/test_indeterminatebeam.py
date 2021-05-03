@@ -51,13 +51,13 @@ class BeamTestCase(unittest.TestCase):
     
     def setUp(self):
         ##create example 1 problem
-        beam = Beam(6)
+        beam = Beam(6000)
 
         a = Support()
-        c = Support(6,(0,1,0))
+        c = Support(6000,(0,1,0))
 
         beam.add_supports(a,c)
-        beam.add_loads(PointLoad(-15,3,90))
+        beam.add_loads(PointLoad(-15000,3000,90))
 
         beam.analyse()
 
@@ -71,27 +71,27 @@ class BeamTestCase(unittest.TestCase):
         ##get reactions returns reaction force rounded to 5 dp
         #{'x': [(0.0, 0)], 'y': [(4.6875, 6), (10.3125, 0)], 'm': [(16.875, 0)]} if add_supports(c,a)
         self.assertEqual(beam.get_reaction(0,'x'),0)
-        self.assertEqual(beam.get_reaction(0,'y'),10.31250)
-        self.assertEqual(beam.get_reaction(0,'m'),16.87500)
-        self.assertEqual(beam.get_reaction(6,'x'),0)
-        self.assertEqual(beam.get_reaction(6,'y'),4.6875)
-        self.assertEqual(beam.get_reaction(6,'m'),0)
+        self.assertEqual(beam.get_reaction(0,'y'),10312.50)
+        self.assertEqual(beam.get_reaction(0,'m'),16875000)
+        self.assertEqual(beam.get_reaction(6000,'x'),0)
+        self.assertEqual(beam.get_reaction(6000,'y'),4687.5)
+        self.assertEqual(beam.get_reaction(6000,'m'),0)
 
         ##check the forces on the beam, round to 1 dp to reduce error chance
             ##normal forces
-        self.assertEqual(round(beam.get_normal_force(1),1), 0)
+        self.assertEqual(round(beam.get_normal_force(1000),1), 0)
         self.assertEqual(round(beam.get_normal_force(return_max=True),1), 0)
         self.assertEqual(round(beam.get_normal_force(return_min=True),1), 0)
             ##shear forces
-        self.assertEqual(round(beam.get_shear_force(1),1), 10.3)
-        self.assertEqual(round(beam.get_shear_force(return_max=True),1), 10.3)
-        self.assertEqual(round(beam.get_shear_force(return_min=True),1), -4.7)
+        self.assertEqual(round(beam.get_shear_force(1000),1), 10312.5)
+        self.assertEqual(round(beam.get_shear_force(return_max=True),1), 10312.5)
+        self.assertEqual(round(beam.get_shear_force(return_min=True),1), -4687.5)
             ##bending moments
-        self.assertEqual(round(beam.get_bending_moment(0),1), -16.9)   
-        self.assertEqual(round(beam.get_bending_moment(return_max=True),1), 14.1)
-        self.assertEqual(round(beam.get_bending_moment(return_min=True),1), -16.9)
+        self.assertEqual(round(beam.get_bending_moment(0),1), -16.875*10**6)   
+        self.assertEqual(round(beam.get_bending_moment(return_max=True),1), 14.0625*10**6)
+        self.assertEqual(round(beam.get_bending_moment(return_min=True),1), -16.875*10**6)
             ##deflection
-        self.assertEqual(round(beam.get_deflection(3),1), -16.3)
+        self.assertEqual(round(beam.get_deflection(3000),1), -16.3)
         self.assertEqual(round(beam.get_deflection(return_max=True),1), 0)
         self.assertEqual(round(beam.get_deflection(return_min=True),1), -16.7)
 
@@ -100,7 +100,7 @@ class BeamTestCase(unittest.TestCase):
 
         self.assertEqual(beam._E, 2*10**5)
         self.assertEqual(beam._x0,0)
-        self.assertEqual(beam._x1,6)
+        self.assertEqual(beam._x1,6000)
         self.assertEqual(beam._I,9.05*10**6)
 
         ##check there are two supports and 1 load
@@ -112,29 +112,29 @@ class BeamTestCase(unittest.TestCase):
         ##check initialised as empty
         self.assertEqual(beam._query, [])
         ##check can add points
-        beam.add_query_points(1,2)
-        beam.add_query_points(3)
-        self.assertEqual(beam._query, [1,2,3])
+        beam.add_query_points(1000,2000)
+        beam.add_query_points(3000)
+        self.assertEqual(beam._query, [1000,2000,3000])
 
         ##check can remove points
-        beam.remove_query_points(1,2)
-        self.assertEqual(beam._query, [3])
-        beam.remove_query_points(3)
+        beam.remove_query_points(1000,2000)
+        self.assertEqual(beam._query, [3000])
+        beam.remove_query_points(3000)
         self.assertEqual(beam._query, [])
 
     def test_loads(self):
-        load_beam = Beam(5)
+        load_beam = Beam(5000)
 
-        a = PointLoad(-15,1,0)      ##when use the add_load function this actually turns into c due to angle lol
-        b = PointLoadV(-15,1)
-        c = PointLoadH(-15,1)
-        d = PointTorque(-15,1)
-        e = DistributedLoad(5,(0,1),45)
-        f = DistributedLoadV(5,(0,1))
-        g = DistributedLoadH(5,(0,1))
-        h = TrapezoidalLoad((0,1),(0,1),45)
-        i = TrapezoidalLoadV((0,1),(0,1))
-        j = TrapezoidalLoadH((0,1),(0,1))
+        a = PointLoad(-15000,1000,0)      ##when use the add_load function this actually turns into c due to angle lol
+        b = PointLoadV(-15000,1000)
+        c = PointLoadH(-15000,1000)
+        d = PointTorque(-15000,1000)
+        e = DistributedLoad(5,(0,1000),45)
+        f = DistributedLoadV(5,(0,1000))
+        g = DistributedLoadH(5,(0,1000))
+        h = TrapezoidalLoad((0,1),(0,1000),45)
+        i = TrapezoidalLoadV((0,1),(0,1000))
+        j = TrapezoidalLoadH((0,1),(0,1000))
 
         load_beam.add_loads(a,b,c,d,e,f,g,h,i,j)
         load_beam.remove_loads(f,g,h,i,j)

@@ -242,12 +242,10 @@ def draw_arrow(fig, angle, force, x_sup, xoffset=0, yoffset=0, color='red',
         x0 = xoffset + x_sup
         y0 = yoffset
         x1 = (
-            x0
-            + int(sympify(-arrowlength * d * cos(radians(angle))).evalf(2))
+            int(sympify(-arrowlength * d * cos(radians(angle))).evalf(2))
             ) * 1.1
         y1 = (
-            y0
-            + int(sympify(-arrowlength * d * sin(radians(angle))).evalf(2))
+            int(sympify(-arrowlength * d * sin(radians(angle))).evalf(2))
             ) * 1.3
 
         # make so text doesnt intersect x axis
@@ -616,11 +614,11 @@ def draw_load_hoverlabel(fig, load, row=None, col=None):
 
         if isinstance(load, PointTorque):
             color = 'magenta'
-            hovertemplate = 'x: %{meta[1]} m<br>Moment: %{meta[0]} kN.m'
+            hovertemplate = 'x: %{meta[1]} mm<br>Moment: %{meta[0]} N.mm'
             name = 'Point<br>Torque'
         elif isinstance(load, PointLoad):
             meta.append(load.angle)
-            hovertemplate = 'x: %{meta[1]} m<br>Force: %{meta[0]} kN\
+            hovertemplate = 'x: %{meta[1]} mm<br>Force: %{meta[0]} N\
             <br>Angle: %{meta[2]} deg'
             name = 'Point<br>Load'
 
@@ -678,7 +676,7 @@ def draw_load_hoverlabel(fig, load, row=None, col=None):
             ]
         
         
-        hovertemplate = 'x: %{meta[0]} m<br>Force: %{meta[1]} kN/m\
+        hovertemplate = 'x: %{meta[0]} mm<br>Force: %{meta[1]} N/mm\
         <br>Angle: %{meta[2]} deg'
 
         for x_, y_, a_ in meta:
@@ -729,13 +727,13 @@ def draw_reaction_hoverlabel(fig, reactions, x_sup, row=None, col=None):
     x_, y_, m_ = reactions
 
     # Write hovertemplate depending on support restraints
-    hovertemplate = "Reactions<br>x coord: %{x} m"
+    hovertemplate = "Reactions<br>x coord: %{x} mm"
     if x_:
-        hovertemplate += "<br>x: %{meta[0]} kN"
+        hovertemplate += "<br>x: %{meta[0]} N"
     if y_:
-        hovertemplate += "<br>y: %{meta[1]} kN"
+        hovertemplate += "<br>y: %{meta[1]} N"
     if m_:
-        hovertemplate += "<br>m: %{meta[2]} kN.m"
+        hovertemplate += "<br>m: %{meta[2]} N.mm"
 
     # Create scatter object with opacity 0 for hovertemplate
     trace = go.Scatter(
@@ -801,11 +799,11 @@ def draw_support_hoverlabel(fig, support, kx=0, ky=0, row=None, col=None):
         name = "Spring"
         color = 'orange'
         meta = [kx, ky]
-        hovertemplate = "x: %{x} m"
+        hovertemplate = "x: %{x} mm"
         if kx:
-            hovertemplate += "<br>kx: %{meta[0]} kN/mm"
+            hovertemplate += "<br>kx: %{meta[0]} N/mm"
         if ky:
-            hovertemplate += "<br>ky: %{meta[1]} kN/mm"
+            hovertemplate += "<br>ky: %{meta[1]} N/mm"
 
     # Support
     else:

@@ -4,22 +4,22 @@
 
 from indeterminatebeam import Beam, Support, PointLoadV, UDLV
 
-beam = Beam(3)
+beam = Beam(3000)
 
 a = Support(0,(1,1,1))  
-b = Support(3,(0,1,0))
+b = Support(3000,(0,1,0))
 
-load_1 = PointLoadV(-8,1.5)
-load_2 = UDLV(-6, (0,3))
+load_1 = PointLoadV(-8000,1500)
+load_2 = UDLV(-6, (0,3000))
 
 beam.add_supports(a,b)
 beam.add_loads(load_1,load_2)
 
 beam.analyse()
 
-print(f"The beam has an absolute maximum shear force of: {beam.get_shear_force(return_absmax=True)} kN")
-print(f"The beam has an absolute maximum bending moment of: {beam.get_bending_moment(return_absmax=True)} kN.m")
-print(f"The beam has a vertical reaction at B of: {beam.get_reaction(3,'y')} kN")
+print(f"The beam has an absolute maximum shear force of: {beam.get_shear_force(return_absmax=True)} N")
+print(f"The beam has an absolute maximum bending moment of: {beam.get_bending_moment(return_absmax=True)} N.mm")
+print(f"The beam has a vertical reaction at B of: {beam.get_reaction(3000,'y')} N")
 
 fig1 = beam.plot_beam_external()  
 fig1.show()

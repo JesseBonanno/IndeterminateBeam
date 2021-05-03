@@ -110,8 +110,8 @@ copyright_ = dbc.Row(
 
 beam_table_data = {
     'Length': {
-        'init': 5,
-        'units': ' m',
+        'init': 5000,
+        'units': ' mm',
         'type': 'numeric'
     },
     "Young's Modulus (MPa)": {
@@ -184,24 +184,24 @@ beam_content = dbc.Card(
 # R - Restraint, F- Free, or number for spring, Spring not an option for m.
 
 support_table_data = {
-    'Coordinate (m)': {
+    'Coordinate (mm)': {
         'init': 0,
-        'units': ' m',
+        'units': ' mm',
         'type': 'numeric'
     },
     "X": {
         'init': 'R',
-        'units': ' kN/mm',
+        'units': ' N/mm',
         'type': 'any'
     },
     "Y": {
         'init': 'R',
-        'units': ' kN/mm',
+        'units': ' N/mm',
         'type': 'any'
     },
     "M": {
         'init': 'R',
-        'units': ' kN/mm',
+        'units': ' N/mm',
         'type': 'any',
     }
 }
@@ -234,7 +234,7 @@ support_instructions = dcc.Markdown('''
             2. For each direction specify one of the following:
                * f or F - Indicates a free support
                * r or R - Indicates a rigid support
-               * n - Indicates a spring stiffness of n kN /mm   
+               * n - Indicates a spring stiffness of n N/mm   
                  (where n is (generally) a positive number)
 
             ''')
@@ -260,7 +260,7 @@ support_content = dbc.Card(
 # Basic support
 
 basic_support_table_data = {
-    'Coordinate (m)': {
+    'Coordinate (mm)': {
         'init': 0,
         'type': 'numeric',
         'presentation': 'input'
@@ -338,14 +338,14 @@ basic_support_content = dbc.Card(
 # Properties for point_load Tab
 
 point_load_table_data = {
-    'Coordinate (m)': {
+    'Coordinate (mm)': {
         'init': 0,
-        'units': ' m',
+        'units': ' mm',
         'type': 'numeric'
     },
-    "Force (kN)": {
+    "Force (N)": {
         'init': 0,
-        'units': ' kN',
+        'units': ' N',
         'type': 'numeric'
     },
     "Angle (deg)": {
@@ -380,7 +380,7 @@ point_load_instructions = dcc.Markdown('''
             ###### **Instructions:**
 
             1. Specify the coodinate location of the point load.  
-            2. Specify the force applied in kN.
+            2. Specify the force applied in N.
             3. Specify the load angle where:  
                * A positive force with an angle of 0 points horizontally to the right.  
                * A positive force with an angle of 90 points vertically in the   
@@ -411,14 +411,14 @@ point_load_content = dbc.Card(
 
 # Properties for point_torque Tab
 point_torque_table_data = {
-    'Coordinate (m)': {
+    'Coordinate (mm)': {
         'init': 0,
-        'units': ' m',
+        'units': ' mm',
         'type': 'numeric'
     },
-    "Torque (kN.m)": {
+    "Torque (N.mm)": {
         'init': 0,
-        'units': ' kN',
+        'units': ' N',
         'type': 'numeric'
     },
 }
@@ -448,7 +448,7 @@ point_torque_instructions = dcc.Markdown('''
             ###### **Instructions:**
 
             1. Specify the coodinate location of the point torque.  
-            2. Specify the moment applied in kN.m.  
+            2. Specify the moment applied in N.mm.  
 
             Note: A positive moment indicates an anti-clockwise moment direction.  
 
@@ -478,24 +478,24 @@ point_torque_content = dbc.Card(
 # Properties for distributed_load Tab
 
 distributed_load_table_data = {
-    'Start x_coordinate (m)': {
+    'Start x_coordinate (mm)': {
+        'init': 0,
+        'units': ' mm',
+        'type': 'numeric'
+    },
+    'End x_coordinate (mm)': {
         'init': 0,
         'units': ' m',
         'type': 'numeric'
     },
-    'End x_coordinate (m)': {
+    'Start Load (N/mm)': {
         'init': 0,
-        'units': ' m',
+        'units': ' N/mm',
         'type': 'numeric'
     },
-    'Start Load (kN/m)': {
+    'End Load (N/mm)': {
         'init': 0,
-        'units': ' kN/m',
-        'type': 'numeric'
-    },
-    'End Load (kN/m)': {
-        'init': 0,
-        'units': ' kN/m',
+        'units': ' N/mm',
         'type': 'numeric'
     },
 
@@ -526,7 +526,7 @@ distributed_load_instructions = dcc.Markdown('''
             ###### **Instructions:**
 
             1. Specify the start and end locations of the distributed load.  
-            2. Specify the start and end loads in kN/m.  
+            2. Specify the start and end loads in N/mm.  
 
             Note: A positive load acts in the positive y direction chosen  
             in the options tab (default downwards).
@@ -558,7 +558,7 @@ distributed_load_content = dbc.Card(
 
 # Properties for query tab
 query_table_init = {
-    'Query coordinate (m)': 0,
+    'Query coordinate (mm)': 0,
 }
 
 query_table = dash_table.DataTable(
@@ -571,7 +571,7 @@ query_table = dash_table.DataTable(
         'type': 'numeric',
         'format': Format(
                 symbol=Symbol.yes,
-                symbol_suffix=' m')
+                symbol_suffix=' mm')
     } for i in query_table_init.keys()],
     data=[],
     editable=True,
@@ -608,9 +608,9 @@ query_content = dbc.Card(
 # Properties for results section
 results_columns = [
     {"name": "", "id": "val"},
-    {"name": 'Normal Force (kN)', "id": "NF"},
-    {"name": 'Shear Force (kN)', "id": "SF"},
-    {"name": 'Bending Moment (kN.m)', "id": "BM"},
+    {"name": 'Normal Force (N)', "id": "NF"},
+    {"name": 'Shear Force (N)', "id": "SF"},
+    {"name": 'Bending Moment (N.mm)', "id": "BM"},
     {"name": 'Deflection (mm)', "id": "D"},
 ]
 
@@ -1134,7 +1134,7 @@ def analyse_beam(
 
                 beam.add_supports(
                     Support(
-                        float(row['Coordinate (m)']),
+                        float(row['Coordinate (mm)']),
                         (
                             DOF_x,
                             DOF_y,
@@ -1151,12 +1151,12 @@ def analyse_beam(
                 beam.add_loads(
                     TrapezoidalLoad(
                         force=(
-                            float(row['Start Load (kN/m)']),
-                            float(row['End Load (kN/m)'])
+                            float(row['Start Load (N/mm)']),
+                            float(row['End Load (N/mm)'])
                         ),
                         span=(
-                            float(row['Start x_coordinate (m)']),
-                            float(row['End x_coordinate (m)'])
+                            float(row['Start x_coordinate (mm)']),
+                            float(row['End x_coordinate (mm)'])
                         ),
                         angle=(d_ * 90)
                     )
@@ -1166,8 +1166,8 @@ def analyse_beam(
             for row in point_loads:
                 beam.add_loads(
                     PointLoad(
-                        float(row['Force (kN)']),
-                        float(row['Coordinate (m)']),
+                        float(row['Force (N)']),
+                        float(row['Coordinate (mm)']),
                         d_ * float(row['Angle (deg)'])
                     )
                 )
@@ -1176,8 +1176,8 @@ def analyse_beam(
             for row in point_torques:
                 beam.add_loads(
                     PointTorque(
-                        float(row['Torque (kN.m)']),
-                        float(row['Coordinate (m)']),
+                        float(row['Torque (N.mm)']),
+                        float(row['Coordinate (mm)']),
                     )
                 )
 
@@ -1186,7 +1186,7 @@ def analyse_beam(
         if querys:
             for row in querys:
                 beam.add_query_points(
-                    float(row['Query coordinate (m)']),
+                    float(row['Query coordinate (mm)']),
                 )
 
         graph_1 = beam.plot_beam_external()
@@ -1217,10 +1217,10 @@ def analyse_beam(
 
         if querys:
             for row in querys:
-                x_ = row['Query coordinate (m)']
+                x_ = row['Query coordinate (mm)']
                 results_data.append(
                     {
-                        'val': f'x = {x_} m',
+                        'val': f'x = {x_} mm',
                         'NF': beam.get_normal_force(x_),
                         'SF': beam.get_shear_force(x_),
                         'BM': beam.get_bending_moment(x_),
@@ -1539,9 +1539,9 @@ def report(n, graph_1, graph_2, results, json):
             <thead>
             <tr>
                 <th class="tg-5gn2"></th>
-                <th class="tg-uqo3">Normal Force (kN)</th>
-                <th class="tg-uqo3">Shear Force (kN)</th>
-                <th class="tg-uqo3">Bending Moment (kN.m)</th>
+                <th class="tg-uqo3">Normal Force (N)</th>
+                <th class="tg-uqo3">Shear Force (N)</th>
+                <th class="tg-uqo3">Bending Moment (N.mm)</th>
                 <th class="tg-uqo3">Deflection (mm)</th>
             </tr>""" + table + """</tbody>
             </table>
@@ -1557,4 +1557,4 @@ def report(n, graph_1, graph_2, results, json):
 
 
 if __name__ == '__main__':
-    app.run_server()
+    app.run_server(debug=True)
