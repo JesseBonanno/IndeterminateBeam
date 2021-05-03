@@ -374,8 +374,6 @@ class Beam:
         # an issue if they dont properly recreate the load they were
         # trying to remove and dont notice that they didnt actually
         # delete it.
-        
-
 
     def add_supports(self, *supports):
         """Associate support objects with the beam object.
@@ -1798,9 +1796,20 @@ class Beam:
         return f"<Beam({self._x0})>"
 
     def sympy_expr_to_piecewise(self, func):
-        """ Takes sympy function with Singularity expressions and
-        changes any singularity expressions into Piecewise."""
+        """ Takes a sympy function with Singularity expressions and
+        changes any contained singularity expressions into Piecewise.
 
+        Parameters
+        ----------
+        func: Sympy Function
+            Sympy Function containing some SingularityFunction expressions.
+
+        Returns
+        -------
+        func: Sympy Function
+            Equivalent Sympy Function containing PieceWise functions in
+            place of Singularity Functions.
+        """
         # Function can be:
         # 1. a single Singularity Function
         # 2. a add function
