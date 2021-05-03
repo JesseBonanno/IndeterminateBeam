@@ -62,15 +62,15 @@ class PointTorque(Load):
     Parameters:
     -----------
     force: float
-        Torque in N.mm
+        Torque in kN.m
         Note: named force for simplicity.
     coord: float
-        x coordinate of torque on beam in mm
+        x coordinate of torque on beam
 
     Examples
     ---------
     >>> # 30 kN·m (clockwise) torque at x=4 m
-    >>> motor_torque = PointTorque(30*(10**6), 4)
+    >>> motor_torque = PointTorque(30, 4)
 
     """
 
@@ -104,9 +104,9 @@ class PointLoad(Load):
     Parameters:
     -----------
     Force: float
-        Force in Newtons (N)
+        Force in kN
     coord: float
-        x coordinate of load on beam in mm
+        x coordinate of load on beam
     angle: float
         angle of point load where:
         - 0 degrees is purely horizontal +ve
@@ -116,12 +116,13 @@ class PointLoad(Load):
 
     Examples
     --------
-    >>> # 100 N towards the right at x=9000 mm
-    >>> external_force = PointLoad(100, 9000, 90)
-    >>> # 300 N downwards at x=3000 mm
-    >>> external_force = PointLoad(-300, 3000, 0)
+    >>> # 10 kN towards the right at x=9 m
+    >>> external_force = PointLoad(10, 9, 90)
+    >>> # 30 kN downwards at x=3 m
+    >>> external_force = PointLoad(-30, 3, 0)
     >>> external_force
-        PointLoad(force=-300, coord=3000, angle=0)
+        PointLoad(force=-30, coord=3, angle=0)
+    
     """
 
     def __init__(self, force=0, coord=0, angle=0):
@@ -153,7 +154,7 @@ class UDL(Load):
     Parameters
     ----------
     force : int, optional
-        UDL load in N/mm, by default 0
+        UDL load in kN/m, by default 0
     span: tuple of floats
         A tuple containing the starting and ending coordinate that
         the UDL is applied to.
@@ -165,8 +166,8 @@ class UDL(Load):
 
     Examples
     --------
-    >>> # load of 1 N/mm from 1000 <= x <= 4000 mm (vertical)
-    >>> self_weight = UDL(1, (1000, 4000), 90)
+    >>> # load of 1 kN/m from 1 <= x <= 4 (vertical)
+    >>> self_weight = UDL(1, (1, 4), 90)
     """
 
     def __init__(self, force=0, span=(0, 0), angle=0):
@@ -215,7 +216,7 @@ class TrapezoidalLoad(Load):
     ----------
     force : tuple of floats
         A tuple containing the starting and ending loads of
-        the trapezoidal load in N/mm.
+        the trapezoidal load in kN/m.
     span: tuple of floats
         A tuple containing the starting and ending coordinate that
         the trapezoidal load is applied to.
@@ -227,9 +228,9 @@ class TrapezoidalLoad(Load):
 
     Examples
     --------
-    >>> # trapezoidal load starting at 2 N/mm at 1000 mm and ending at 3 N/mm
-    >>> # at 4000 mm (vertical)
-    >>> self_weight = UDL((2,3), (1000, 4000), 90)
+    >>> # trapezoidal load starting at 2 kN/m at 1 m and ending at 3 kN/m
+    >>> # at 4 m (vertical)
+    >>> self_weight = UDL((2,3), (1, 4), 90)
     """
 
     def __init__(self, force=(0, 0), span=(0, 0), angle=0):
@@ -318,8 +319,8 @@ class DistributedLoad(Load):
         - 180 degrees is purely horizontal -ve of force sign specified.
     Examples
     --------
-    >>> # Linearly growing load for 0<x<2000 mm
-    >>> snow_load = DistributedLoad("0.01*x+5", (0, 2000),90)
+    >>> # Linearly growing load for 0<x<2 m
+    >>> snow_load = DistributedLoad("10*x+5", (0, 2),90)
     """
 
     def __init__(self, expr, span=(0, 0), angle=0):
@@ -329,11 +330,10 @@ class DistributedLoad(Load):
             expr = Piecewise((0, x < span[0]), (0, x > span[1]), (expr, True))
             
         except BaseException:
-            print("Can not convert expression to sympy function. "+
-            "Function should only contain variable x, should be " +
-            "encapsulated by quotations, and should have * between x " +
-            "and coefficients i.e 2 * x rather than 2x"
-            )
+            print("Can not convert expression to sympy function. \
+            Function should only contain variable x, should be \
+            encapsulated by quotations, and should have * between x \
+            and coefficients i.e 2 * x rather than 2x")
 
         # Validate span input
         assert_length(span, 2, 'span')
@@ -364,14 +364,14 @@ class PointLoadV(PointLoad):
     Parameters:
     -----------
     Force: float
-        Force in Newtons (N)
+        Force in kN
     coord: float
-        x coordinate of load on beam in mm
+        x coordinate of load on beam
 
     Examples
     --------
-    >>> # 100 N towards the right at x=9000 mm
-    >>> external_force = PointLoad(100, 9000)
+    >>> # 10 kN towards the right at x=9 m
+    >>> external_force = PointLoad(10, 9)
     """
 
     def __init__(self, force=0, coord=0):
@@ -384,14 +384,14 @@ class PointLoadH(PointLoad):
     Parameters:
     -----------
     Force: float
-        Force in Newtons (N)
+        Force in kN
     coord: float
-        x coordinate of load on beam in mm
+        x coordinate of load on beam
 
     Examples
     --------
-    >>> # 100 N up at x=9000 mm
-    >>> external_force = PointLoad(100, 9000)
+    >>> # 10 kN up at x=9 m
+    >>> external_force = PointLoad(10, 9)
     """
 
     def __init__(self, force=0, coord=0):
@@ -403,16 +403,16 @@ class UDLV(UDL):
     
     Parameters
     ----------
-    Force: float
-        Force in Newtons (N)
+    force : int, optional
+        UDL load in kN/m, by default 0
     span: tuple of floats
         A tuple containing the starting and ending coordinate that
         the UDL is applied to.
 
     Examples
     --------
-    >>> # load of 1 N/mm (acting down) from 1000 <= x <= 4000 mm
-    >>> self_weight = UDL(-1, (1000, 4000))
+    >>> # load of 1 kN/m (acting down) from 1 <= x <= 4 
+    >>> self_weight = UDL(-1, (1, 4))
     """
 
     def __init__(self, force=0, span=(0, 0)):
@@ -424,16 +424,16 @@ class UDLH(UDL):
     
     Parameters
     ----------
-    Force: float
-        Force in Newtons (N)
+    force : int, optional
+        UDL load in kN/m, by default 0
     span: tuple of floats
         A tuple containing the starting and ending coordinate that
         the UDL is applied to.
 
     Examples
     --------
-    >>> # load of 1 N/mm (acting right) from 1000 <= x <= 4000 mm
-    >>> self_weight = UDL(-1, (1000, 4000))
+    >>> # load of 2 kN/m (acting right) from 1 <= x <= 4 (vertical)
+    >>> self_weight = UDL(2, (1, 4))
     """
 
     def __init__(self, force=0, span=(0, 0)):
@@ -447,16 +447,16 @@ class TrapezoidalLoadV(TrapezoidalLoad):
     ----------
     force : tuple of floats
         A tuple containing the starting and ending loads of
-        the trapezoidal load in N/mm.
+        the trapezoidal load in kN/m.
     span: tuple of floats
         A tuple containing the starting and ending coordinate that
         the trapezoidal load is applied to.
 
     Examples
     --------
-    >>> # trapezoidal load starting at 2 N/mm at 1000 mm and ending at 3 N/m
-    >>> # at 4000 mm (acting down)
-    >>> self_weight = UDL((-2,-3), (1000, 4000))
+    >>> # trapezoidal load starting at 2 kN/m at 1 m and ending at 3 kN/m
+    >>> # at 4 m (acting down)
+    >>> self_weight = UDL((-2,-3), (1, 4), 90)
     """
 
     def __init__(self, force=(0, 0), span=(0, 0)):
@@ -470,16 +470,16 @@ class TrapezoidalLoadH(TrapezoidalLoad):
     ----------
     force : tuple of floats
         A tuple containing the starting and ending loads of
-        the trapezoidal load in N/mm.
+        the trapezoidal load in kN/m.
     span: tuple of floats
         A tuple containing the starting and ending coordinate that
         the trapezoidal load is applied to.
 
     Examples
     --------
-    >>> # trapezoidal load starting at 2 N/mm at 1000 mm and ending at 3 N/mm
-    >>> # at 4000 m (acting right)
-    >>> self_weight = UDL((2,3), (1000, 4000))
+    >>> # trapezoidal load starting at 2 kN/m at 1 m and ending at 3 kN/m
+    >>> # at 4 m (acting right)
+    >>> self_weight = UDL((2,3), (1, 4))
     """
 
     def __init__(self, force=(0, 0), span=(0, 0)):
@@ -494,7 +494,7 @@ class DistributedLoadV(DistributedLoad):
     -----------
     expr: sympy expression
         Sympy expression of the distributed load function expressed
-        using variable x which represents the beam x-coordinate (mm).
+        using variable x which represents the beam x-coordinate.
         Requires quotation marks around expression.
     span: tuple of floats
         A tuple containing the starting and ending coordinate that
@@ -502,8 +502,8 @@ class DistributedLoadV(DistributedLoad):
    
     Examples
     --------
-    >>> # Linearly growing load (acting down) for 0<x<2000 mm
-    >>> snow_load = DistributedLoad("-0.01*x-5", (0, 2000))
+    >>> # Linearly growing load (acting down) for 0<x<2 m
+    >>> snow_load = DistributedLoad("-10*x-5", (0, 2))
     """
 
     def __init__(self, expr=0, span=(0, 0)):
@@ -518,7 +518,7 @@ class DistributedLoadH(DistributedLoad):
     -----------
     expr: sympy expression
         Sympy expression of the distributed load function expressed
-        using variable x which represents the beam x-coordinate (mm).
+        using variable x which represents the beam x-coordinate.
         Requires quotation marks around expression.
     span: tuple of floats
         A tuple containing the starting and ending coordinate that
@@ -526,8 +526,8 @@ class DistributedLoadH(DistributedLoad):
    
     Examples
     --------
-    >>> # Linearly growing load (acting right) for 0<x<2000 mm
-    >>> snow_load = DistributedLoad("-0.01*x-5", (0, 2000))
+    >>> # Linearly growing load (acting right) for 0<x<2 m
+    >>> snow_load = DistributedLoad("10*x+5", (0, 2))
     """
 
     def __init__(self, expr=0, span=(0, 0)):

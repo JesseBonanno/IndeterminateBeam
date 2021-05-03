@@ -28,7 +28,6 @@ Beam
 .. autofunction:: indeterminatebeam.Beam.remove_query_points
 .. autofunction:: indeterminatebeam.Beam.plot_beam_external
 .. autofunction:: indeterminatebeam.Beam.plot_beam_internal
-.. autofunction:: indeterminatebeam.Beam.plot_beam_diagram
 .. autofunction:: indeterminatebeam.Beam.plot_reaction_force
 .. autofunction:: indeterminatebeam.Beam.plot_normal_force
 .. autofunction:: indeterminatebeam.Beam.plot_shear_force
@@ -39,17 +38,9 @@ PointLoads
 -----------
 .. autoclass:: indeterminatebeam.PointTorque
 .. autoclass:: indeterminatebeam.PointLoad
-.. autoclass:: indeterminatebeam.PointLoadV
-.. autoclass:: indeterminatebeam.PointLoadH
 
 DistributedLoads
 -----------------
 .. autoclass:: indeterminatebeam.UDL
-.. autoclass:: indeterminatebeam.UDLV
-.. autoclass:: indeterminatebeam.UDLH
 .. autoclass:: indeterminatebeam.TrapezoidalLoad
-.. autoclass:: indeterminatebeam.TrapezoidalLoadV
-.. autoclass:: indeterminatebeam.TrapezoidalLoadH
 .. autoclass:: indeterminatebeam.DistributedLoad
-.. autoclass:: indeterminatebeam.DistributedLoadV
-.. autoclass:: indeterminatebeam.DistributedLoadH
