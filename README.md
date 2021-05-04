@@ -1,6 +1,6 @@
 # Indeterminate Beam
 
-[![Version](https://img.shields.io/badge/version-v2.0.4-blue.svg)](https://github.com/JesseBonanno/IndeterminateBeam/releases/tag/v2.0.4)
+[![Version](https://img.shields.io/badge/version-v2.0.5-blue.svg)](https://github.com/JesseBonanno/IndeterminateBeam/releases/tag/v2.0.5)
 [![License](https://img.shields.io/badge/license-MIT-lightgreen.svg)](https://github.com/JesseBonanno/IndeterminateBeam/blob/main/LICENSE.txt)
 [![Documentation Status](https://readthedocs.org/projects/indeterminatebeam/badge/?version=main)](https://indeterminatebeam.readthedocs.io/en/main/?badge=main)
 [![Build Status](https://travis-ci.org/JesseBonanno/IndeterminateBeam.svg?branch=main)](https://travis-ci.org/JesseBonanno/IndeterminateBeam)
