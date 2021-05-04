@@ -1305,6 +1305,7 @@ class Beam:
             # the same point (default setting means only see the last
             # updated point)
             fig.update_layout(
+                height = 350,
                 title_text="Beam Schematic",
                 title_font_size=24,
                 showlegend=False,
@@ -1378,6 +1379,7 @@ class Beam:
             # the same point (default setting means only see the last
             # updated point)
             fig.update_layout(
+                height = 350,
                 title_text="Reaction Forces",
                 title_font_size=24,
                 showlegend=False,

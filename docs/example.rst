@@ -25,6 +25,14 @@ The beam is subject to a load of 8kN acting downwards at the midspan, and a UDL 
 
 E and I are constant.
 
+A diagram of the problem is shown below.
+
+.. figure:: examples/example_1_diagram.png
+  :width: 700
+  :alt: example_1_ext
+
+
+
 Results
 --------
 
@@ -34,12 +42,18 @@ The following values can be directly extracted using the `get_shear_force`, `get
    #. The absolute maximum bending moment --> 11.25*10**6 N.mm
    #. The reaction at B         	  --> 9250 N
 
+A plot of the reactions is shown below.
+
+.. figure:: examples/example_1_reactions.png
+  :width: 700
+  :alt: example_1_reactions
+
 A plot of the axial force, shear force, and bending moments is shown below. A deflection graph is also presented however this depends on the beam properties E and I which werent included in this question.
 As a default the values E and I are taken as the values for a 150UB18.0 steel beam. 
 
 .. figure:: examples/example_1_internal.png
   :width: 700
-  :alt: example_1
+  :alt: example_1_int
 
 Code
 ----

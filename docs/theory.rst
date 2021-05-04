@@ -6,8 +6,6 @@ Theory
 A brief overview of the engineering theory and conventions used in this program are illustrated below. Theory is adapted from the Hibbeler textbook :cite:`HibbelerRussell2013MoM`.
 A more rigorous overview of the basic theory behind statically determinate structures is presented in the `beambending <https://github.com/alfredocarella/simplebendingpractice>`_ package documentation `here <https://simplebendingpractice.readthedocs.io/en/latest/background.html>`_ :cite:`Carella2019`.
 
-`beambending <https://github.com/alfredocarella/simplebendingpractice>`_
-
 Indeterminate vs Determinate structures
 ----------------------------------------
 

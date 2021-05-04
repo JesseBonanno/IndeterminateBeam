@@ -62,15 +62,17 @@ class PointTorque(Load):
     Parameters:
     -----------
     force: float
-        Torque in N.mm
-        Note: named force for simplicity.
+        Torque in N.mm, (named force for consistency 
+        with other load types)
     coord: float
         x coordinate of torque on beam in mm
 
     Examples
     ---------
-    >>> # 30 kN·m (clockwise) torque at x=4 m
+    >>> # 30 kN·m (anti-clockwise) torque at x=4 m
     >>> motor_torque = PointTorque(30*(10**6), 4)
+
+    Note: Anti-clockwise is positive
 
     """
 
@@ -122,6 +124,7 @@ class PointLoad(Load):
     >>> external_force = PointLoad(-300, 3000, 0)
     >>> external_force
         PointLoad(force=-300, coord=3000, angle=0)
+
     """
 
     def __init__(self, force=0, coord=0, angle=0):
@@ -316,6 +319,7 @@ class DistributedLoad(Load):
         - 0 degrees is purely horizontal +ve
         - 90 degrees is purely vertical +ve
         - 180 degrees is purely horizontal -ve of force sign specified.
+
     Examples
     --------
     >>> # Linearly growing load for 0<x<2000 mm
@@ -372,6 +376,8 @@ class PointLoadV(PointLoad):
     --------
     >>> # 100 N towards the right at x=9000 mm
     >>> external_force = PointLoad(100, 9000)
+
+    Note: Positive force acts up.
     """
 
     def __init__(self, force=0, coord=0):
@@ -392,6 +398,8 @@ class PointLoadH(PointLoad):
     --------
     >>> # 100 N up at x=9000 mm
     >>> external_force = PointLoad(100, 9000)
+
+    Note: Positive force acts right.
     """
 
     def __init__(self, force=0, coord=0):
@@ -413,6 +421,8 @@ class UDLV(UDL):
     --------
     >>> # load of 1 N/mm (acting down) from 1000 <= x <= 4000 mm
     >>> self_weight = UDL(-1, (1000, 4000))
+
+    Note: Positive force acts up.
     """
 
     def __init__(self, force=0, span=(0, 0)):
@@ -434,6 +444,8 @@ class UDLH(UDL):
     --------
     >>> # load of 1 N/mm (acting right) from 1000 <= x <= 4000 mm
     >>> self_weight = UDL(-1, (1000, 4000))
+
+    Note: Positive force acts right.
     """
 
     def __init__(self, force=0, span=(0, 0)):
@@ -457,6 +469,8 @@ class TrapezoidalLoadV(TrapezoidalLoad):
     >>> # trapezoidal load starting at 2 N/mm at 1000 mm and ending at 3 N/m
     >>> # at 4000 mm (acting down)
     >>> self_weight = UDL((-2,-3), (1000, 4000))
+
+    Note: Positive force acts up.
     """
 
     def __init__(self, force=(0, 0), span=(0, 0)):
@@ -480,6 +494,8 @@ class TrapezoidalLoadH(TrapezoidalLoad):
     >>> # trapezoidal load starting at 2 N/mm at 1000 mm and ending at 3 N/mm
     >>> # at 4000 m (acting right)
     >>> self_weight = UDL((2,3), (1000, 4000))
+
+    Note: Positive force acts right.
     """
 
     def __init__(self, force=(0, 0), span=(0, 0)):
@@ -504,6 +520,8 @@ class DistributedLoadV(DistributedLoad):
     --------
     >>> # Linearly growing load (acting down) for 0<x<2000 mm
     >>> snow_load = DistributedLoad("-0.01*x-5", (0, 2000))
+
+    Note: Positive force acts up.
     """
 
     def __init__(self, expr=0, span=(0, 0)):
@@ -528,6 +546,8 @@ class DistributedLoadH(DistributedLoad):
     --------
     >>> # Linearly growing load (acting right) for 0<x<2000 mm
     >>> snow_load = DistributedLoad("-0.01*x-5", (0, 2000))
+
+    Note: Positive force acts right.
     """
 
     def __init__(self, expr=0, span=(0, 0)):
