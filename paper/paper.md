@@ -76,10 +76,7 @@ A typical use case of the ```IndeterminateBeam``` package involves the following
 4. Solve for forces on `Beam` object
 5. Plot results
 
-You can follow along with the example below in this web-based [Jupyter Notebook](https://colab.research.google.com/github/JesseBonanno/IndeterminateBeam/blob/main/docs/examples/readme_example.ipynb). 
-Alternatively, you can download the jupyter-notebook for this example [here](https://raw.githubusercontent.com/JesseBonanno/IndeterminateBeam/main/docs/examples/readme_example.ipynb), or the python file for this code [here](https://raw.githubusercontent.com/JesseBonanno/IndeterminateBeam/main/docs/examples/readme_example.py).
-
-Units and load direction conventions are described in the [package documentation](https://indeterminatebeam.readthedocs.io/en/main/theory.html).
+You can follow along with the example below in this web-based [Jupyter Notebook](https://colab.research.google.com/github/JesseBonanno/IndeterminateBeam/blob/main/docs/examples/readme_example.ipynb). Units and load direction conventions are described in the [package documentation](https://indeterminatebeam.readthedocs.io/en/main/theory.html).
 
 
 ### Creating a Beam
