@@ -158,7 +158,7 @@ def draw_arrowhead(fig, angle, x_sup, length=5, xoffset=0, yoffset=0,
 
 def draw_arrow(fig, angle, force, x_sup, xoffset=0, yoffset=0, color='red',
                line_width=2, arrowhead=5, arrowlength=40, show_values=True,
-               row=None, col=None):
+               row=None, col=None,units="N"):
     """Draw an anchored arrow on a plotly figure.
 
     Parameters
@@ -194,8 +194,8 @@ def draw_arrow(fig, angle, force, x_sup, xoffset=0, yoffset=0, color='red',
     col : int or None,
         Column of subplot to draw line on. If None specified assumes a full
         plot, by default None.
-
-
+    units: str,
+        The units suffix drawn with the force value.
 
     Returns
     -------
@@ -261,7 +261,7 @@ def draw_arrow(fig, angle, force, x_sup, xoffset=0, yoffset=0, color='red',
             y=y0,
             xshift=x1,
             yshift=y1,
-            text=force,
+            text=str(force)+" "+units,
             font_color=color,
             showarrow=False,
         )
@@ -390,7 +390,8 @@ def draw_moment(
         color='magenta',
         show_values=True,
         row=None,
-        col=None):
+        col=None,
+        units="N.m"):
     """Draw a moment (torque) shape (circular arrow) on a plotly figure.
 
     Parameters
@@ -399,8 +400,8 @@ def draw_moment(
         plotly figure to append circular arrow shape to.
     x_sup : int
         The x position for the circular arrow to be anchored to.
-    direction : 'clockwise' or 'anti-clockwise', optional
-        direction for circular arrow to point in, default 'clockwise
+    moment: float,
+        magnitude of moment, used for direction and appending value.
     color : str, optional
         color of circular arrow, default 'magenta'
     show_values: bool,optional
@@ -411,6 +412,8 @@ def draw_moment(
     col : int or None,
         Column of subplot to draw line on. If None specified assumes a full
         plot, by default None.
+    units: str,
+        The units suffix drawn with the moment value. Default is 'N.m'.
 
     Returns
     -------
@@ -450,7 +453,7 @@ def draw_moment(
             x=x_sup,
             y=0,
             yshift=-20,
-            text=moment,
+            text=str(moment)+" "+units,
             font_color=color,
             showarrow=False,
         )
@@ -464,7 +467,7 @@ def draw_moment(
     return fig
 
 
-def draw_force(fig, load, row=None, col=None):
+def draw_force(fig, load, row=None, col=None, units={'moment':'N.m', 'force':'N','distributed':"N/m"}):
     """Draw a force (for load or reaction) on a plotly figure
 
     Parameters
@@ -479,6 +482,9 @@ def draw_force(fig, load, row=None, col=None):
     col : int or None,
         Column of subplot to draw line on. If None specified assumes a full
         plot, by default None.
+    units : dict,
+        unit dictionary associating the units with different properties of the beam.
+        default is {'moment':'N.m', 'force':'N','distributed':"N/m"}.
 
     Returns
     -------
@@ -494,7 +500,8 @@ def draw_force(fig, load, row=None, col=None):
             moment,
             x_sup,
             row=row,
-            col=col)
+            col=col,
+            units=units['moment'])
 
     elif isinstance(load, PointLoad):
         force, x_sup, angle = load.force, load.position, load.angle
@@ -505,7 +512,8 @@ def draw_force(fig, load, row=None, col=None):
             force,
             x_sup,
             row=row,
-            col=col)
+            col=col,
+            units=units['force'])
 
     elif isinstance(load, (DistributedLoad, UDL, TrapezoidalLoad)):
         angle = load.angle
@@ -578,12 +586,13 @@ def draw_force(fig, load, row=None, col=None):
                     color=color,
                     arrowlength=30 * abs(y_vec[a]),
                     row=row,
-                    col=col)
+                    col=col,
+                    units=units['distributed'])
 
     return fig
 
 
-def draw_load_hoverlabel(fig, load, row=None, col=None):
+def draw_load_hoverlabel(fig, load, row=None, col=None, units={'length':'m','moment':'N.m', 'force':'N','distributed':"N/m"} ):
     """Draw a load hoverlabel on a plotly figure
 
     Parameters
@@ -598,7 +607,9 @@ def draw_load_hoverlabel(fig, load, row=None, col=None):
     col : int or None,
         Column of subplot to draw line on. If None specified assumes a full
         plot, by default None.
-
+    units : dict,
+        unit dictionary associating the units with different properties of the beam.
+        default is {'length':'m','moment':'N.m', 'force':'N','distributed':"N/m"}.
 
     Returns
     -------
@@ -610,16 +621,16 @@ def draw_load_hoverlabel(fig, load, row=None, col=None):
     if isinstance(load, (PointLoad, PointTorque)):
         x_sup = load.position
         color = 'red'
-        meta = [load.force, load.position]  # load, position
+        meta = [load.force, load.position, units['length'], units['force'], units['moment']]  # load, position
 
         if isinstance(load, PointTorque):
             color = 'magenta'
-            hovertemplate = 'x: %{meta[1]} mm<br>Moment: %{meta[0]} N.mm'
+            hovertemplate = 'x: %{meta[1]} %{meta[2]}<br>Moment: %{meta[0]} %{meta[4]}'
             name = 'Point<br>Torque'
         elif isinstance(load, PointLoad):
             meta.append(load.angle)
-            hovertemplate = 'x: %{meta[1]} mm<br>Force: %{meta[0]} N\
-            <br>Angle: %{meta[2]} deg'
+            hovertemplate = 'x: %{meta[1]} %{meta[2]}<br>Force: %{meta[0]} %{meta[3]}\
+            <br>Angle: %{meta[5]} deg'
             name = 'Point<br>Load'
 
         # Define hoverlabel as a marker with 0 opacity and a hovertemplate that
@@ -676,7 +687,7 @@ def draw_load_hoverlabel(fig, load, row=None, col=None):
             ]
         
         
-        hovertemplate = 'x: %{meta[0]} mm<br>Force: %{meta[1]} N/mm\
+        hovertemplate = 'x: %{meta[0]} %{meta[3]}<br>Force: %{meta[1]} %{meta[4]}\
         <br>Angle: %{meta[2]} deg'
 
         for x_, y_, a_ in meta:
@@ -684,7 +695,7 @@ def draw_load_hoverlabel(fig, load, row=None, col=None):
                 x=[x_], y=[0],
                 showlegend=False, mode="markers",
                 name=name,
-                meta=[x_, y_, a_],
+                meta=[x_, y_, a_, units['length'], units['distributed']],
                 marker=dict(symbol="triangle-up", size=10, color=color),
                 hovertemplate=hovertemplate,
                 hoverinfo="skip",
@@ -699,7 +710,7 @@ def draw_load_hoverlabel(fig, load, row=None, col=None):
     return fig
 
 
-def draw_reaction_hoverlabel(fig, reactions, x_sup, row=None, col=None):
+def draw_reaction_hoverlabel(fig, reactions, x_sup, row=None, col=None, units={'length':'m','moment':'N.m', 'force':'N','distributed':"N/m"}):
     """Draw a reaction hoverlabel on a plotly figure
 
     Parameters
@@ -717,6 +728,9 @@ def draw_reaction_hoverlabel(fig, reactions, x_sup, row=None, col=None):
     col : int or None,
         Column of subplot to draw line on. If None specified assumes a full
         plot, by default None.
+    units : dict,
+        unit dictionary associating the units with different properties of the beam.
+        default is {'length':'m','moment':'N.m', 'force':'N','distributed':"N/m"}.
 
     Returns
     -------
@@ -727,20 +741,20 @@ def draw_reaction_hoverlabel(fig, reactions, x_sup, row=None, col=None):
     x_, y_, m_ = reactions
 
     # Write hovertemplate depending on support restraints
-    hovertemplate = "Reactions<br>x coord: %{x} mm"
+    hovertemplate = "Reactions<br>x coord: %{x} %{meta[3]}"
     if x_:
-        hovertemplate += "<br>x: %{meta[0]} N"
+        hovertemplate += "<br>x: %{meta[0]} %{meta[4]}"
     if y_:
-        hovertemplate += "<br>y: %{meta[1]} N"
+        hovertemplate += "<br>y: %{meta[1]} %{meta[4]}"
     if m_:
-        hovertemplate += "<br>m: %{meta[2]} N.mm"
+        hovertemplate += "<br>m: %{meta[2]} %{meta[5]}"
 
     # Create scatter object with opacity 0 for hovertemplate
     trace = go.Scatter(
         x=[x_sup], y=[0],
         showlegend=False, mode="markers",
         name="Reaction",
-        meta=reactions,
+        meta=[x_, y_, m_, units['length'], units['force'], units['moment']],
         marker=dict(symbol="triangle-up", size=10, color='red'),
         hovertemplate=hovertemplate,
         hoverinfo="skip",
@@ -756,7 +770,7 @@ def draw_reaction_hoverlabel(fig, reactions, x_sup, row=None, col=None):
     return fig
 
 
-def draw_support_hoverlabel(fig, support, kx=0, ky=0, row=None, col=None):
+def draw_support_hoverlabel(fig, support, kx=0, ky=0, row=None, col=None, units={'length':'m','spring stiffness':"N/m"}):
     """Draw a reaction hoverlabel on a plotly figure
 
     Parameters
@@ -775,7 +789,9 @@ def draw_support_hoverlabel(fig, support, kx=0, ky=0, row=None, col=None):
     col : int or None,
         Column of subplot to draw line on. If None specified assumes a full
         plot, by default None.
-
+    units : dict,
+        unit dictionary associating the units with different properties of the beam.
+        default is {'length':'m','spring stiffness':"N/m"}.
 
     Returns
     -------
@@ -798,19 +814,19 @@ def draw_support_hoverlabel(fig, support, kx=0, ky=0, row=None, col=None):
     if kx or ky:
         name = "Spring"
         color = 'orange'
-        meta = [kx, ky]
-        hovertemplate = "x: %{x} mm"
+        meta = [kx, ky, units['length'], units['distributed']]
+        hovertemplate = "x: %{x} %{meta[2]}"
         if kx:
-            hovertemplate += "<br>kx: %{meta[0]} N/mm"
+            hovertemplate += "<br>kx: %{meta[0]} %{meta[3]}"
         if ky:
-            hovertemplate += "<br>ky: %{meta[1]} N/mm"
+            hovertemplate += "<br>ky: %{meta[1]} %{meta[3]}"
 
     # Support
     else:
         name = "Support"
         color = 'blue'
-        meta = [str(fixed)]
-        hovertemplate = "x: %{x} m<br>Fixed: %{meta[0]}"
+        meta = [str(fixed), units['length']]
+        hovertemplate = "x: %{x} %{meta[1]}<br>Fixed: %{meta[0]}"
 
     # necessary for hover information, opacicity 0 so not visible otherwise
     # symbol is arbritrary since invisible
@@ -856,7 +872,6 @@ def draw_support_rollers(fig, x_sup, orientation='up', offset=1, row=None,
     col : int or None,
         Column of subplot to draw line on. If None specified assumes a full
         plot, by default None.
-
 
     Returns
     -------
@@ -910,7 +925,8 @@ def draw_support_spring(
         color='orange',
         show_values=True,
         row=None,
-        col=None):
+        col=None,
+        units="N/m"):
     """Draw an anchored spring shape on a plotly figure.
 
     Parameters
@@ -931,6 +947,8 @@ def draw_support_spring(
     col : int or None,
         Column of subplot to draw line on. If None specified assumes a full
         plot, by default None.
+    units: str,
+        The units suffix drawn with the spring stiffness value. Default is 'N/m'.
 
     Returns
     -------
@@ -994,7 +1012,7 @@ def draw_support_spring(
                 y=0,
                 yshift=y0 * 1.5,
                 xshift=x0 * 2,
-                text=stiffness,
+                text=str(stiffness)+" "+units,
                 font_color=color,
                 showarrow=False,
             )
@@ -1008,7 +1026,7 @@ def draw_support_spring(
     return fig
 
 
-def draw_support(fig, support, row=None, col=None):
+def draw_support(fig, support, row=None, col=None, units = {'length':'m', 'spring stiffness':'N/m'}):
     """Draw a support on a plotly figure.
 
     Parameters
@@ -1023,7 +1041,9 @@ def draw_support(fig, support, row=None, col=None):
     col : int or None,
         Column of subplot to draw line on. If None specified assumes a full
         plot, by default None.
-
+    units : dict,
+        unit dictionary associating the units with different properties of the beam.
+        default is {'length':'m', 'spring stiffness':'N/m'}.
 
     Returns
     -------
@@ -1146,14 +1166,22 @@ def draw_support(fig, support, row=None, col=None):
             support,
             orientation="right",
             row=row,
-            col=col)
+            col=col,
+            units=units['spring stiffness']
+        )
 
     # if springy then draw a spring with up orientation
     if springy:
         fig = draw_support_spring(
-            fig, support, orientation="up", row=row, col=col)
+            fig,
+            support,
+            orientation="up",
+            row=row,
+            col=col,
+            units=units['spring stiffness']
+        )
 
-    # draw hover lable for springs
+    # draw hover label for springs
     if springx or springy:
         fig = draw_support_hoverlabel(
             fig,
@@ -1161,6 +1189,7 @@ def draw_support(fig, support, row=None, col=None):
             kx=support._stiffness[0],
             ky=support._stiffness[1],
             row=row,
-            col=col)
+            col=col,
+            units=units)
 
     return fig

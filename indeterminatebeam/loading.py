@@ -62,15 +62,15 @@ class PointTorque(Load):
     Parameters:
     -----------
     force: float
-        Torque in N.mm, (named force for consistency 
+        Torque load (default units N.m), (named force for consistency 
         with other load types)
     coord: float
-        x coordinate of torque on beam in mm
+        x coordinate of torque on beam (default units m)
 
     Examples
     ---------
-    >>> # 30 kN·m (anti-clockwise) torque at x=4 m
-    >>> motor_torque = PointTorque(30*(10**6), 4)
+    >>> # 30 N·m (anti-clockwise) torque at x = 4 m
+    >>> motor_torque = PointTorque(30, 4)
 
     Note: Anti-clockwise is positive
 
@@ -106,25 +106,23 @@ class PointLoad(Load):
     Parameters:
     -----------
     Force: float
-        Force in Newtons (N)
+        Force load (default units m)
     coord: float
-        x coordinate of load on beam in mm
+        x coordinate of load on beam (default units m)
     angle: float
         angle of point load where:
         - 0 degrees is purely horizontal +ve
         - 90 degrees is purely vertical +ve
         - 180 degrees is purely horizontal -ve of force sign specified.
 
-
     Examples
     --------
-    >>> # 100 N towards the right at x=9000 mm
-    >>> external_force = PointLoad(100, 9000, 90)
-    >>> # 300 N downwards at x=3000 mm
-    >>> external_force = PointLoad(-300, 3000, 0)
+    >>> # 100 N towards the right at x = 9 m
+    >>> external_force = PointLoad(100, 9, 90)
+    >>> # 300 N downwards at x = 3 m
+    >>> external_force = PointLoad(-300, 3, 0)
     >>> external_force
-        PointLoad(force=-300, coord=3000, angle=0)
-
+        PointLoad(force=-300, coord=3, angle=0)
     """
 
     def __init__(self, force=0, coord=0, angle=0):
@@ -156,10 +154,10 @@ class UDL(Load):
     Parameters
     ----------
     force : int, optional
-        UDL load in N/mm, by default 0
+        UDL load (default units N/m), by default 0
     span: tuple of floats
         A tuple containing the starting and ending coordinate that
-        the UDL is applied to.
+        the UDL is applied to (default units m).
     angle: float
         angle of point load where:
         - 0 degrees is purely horizontal +ve
@@ -168,8 +166,8 @@ class UDL(Load):
 
     Examples
     --------
-    >>> # load of 1 N/mm from 1000 <= x <= 4000 mm (vertical)
-    >>> self_weight = UDL(1, (1000, 4000), 90)
+    >>> # load of 1000 N/m from 1 m <= x <= 4 m (vertical)
+    >>> self_weight = UDL(1000, (1, 4), 90)
     """
 
     def __init__(self, force=0, span=(0, 0), angle=0):
@@ -218,10 +216,10 @@ class TrapezoidalLoad(Load):
     ----------
     force : tuple of floats
         A tuple containing the starting and ending loads of
-        the trapezoidal load in N/mm.
+        the trapezoidal load (default units N/m).
     span: tuple of floats
         A tuple containing the starting and ending coordinate that
-        the trapezoidal load is applied to.
+        the trapezoidal load is applied to (default units m).
     angle: float
         angle of point load where:
         - 0 degrees is purely horizontal +ve
@@ -230,9 +228,9 @@ class TrapezoidalLoad(Load):
 
     Examples
     --------
-    >>> # trapezoidal load starting at 2 N/mm at 1000 mm and ending at 3 N/mm
-    >>> # at 4000 mm (vertical)
-    >>> self_weight = UDL((2,3), (1000, 4000), 90)
+    >>> # trapezoidal load starting at 2000 N/m at 1 m and ending at 3000 N/m
+    >>> # at 4 m (vertical)
+    >>> self_weight = UDL((2000, 3000), (1, 4), 90) 
     """
 
     def __init__(self, force=(0, 0), span=(0, 0), angle=0):
@@ -310,10 +308,10 @@ class DistributedLoad(Load):
     expr: sympy expression
         Sympy expression of the distributed load function expressed
         using variable x which represents the beam x-coordinate.
-        Requires quotation marks around expression.
+        Requires quotation marks around expression (default units in N/m).
     span: tuple of floats
         A tuple containing the starting and ending coordinate that
-         the function is applied to.
+         the function is applied to (default units m).
     angle: float
         angle of point load where:
         - 0 degrees is purely horizontal +ve
@@ -322,8 +320,8 @@ class DistributedLoad(Load):
 
     Examples
     --------
-    >>> # Linearly growing load for 0<x<2000 mm
-    >>> snow_load = DistributedLoad("0.01*x+5", (0, 2000),90)
+    >>> # Linearly growing load for 0 < x < 2 m
+    >>> snow_load = DistributedLoad("10 * x + 5", (0, 2), 90)
     """
 
     def __init__(self, expr, span=(0, 0), angle=0):
@@ -368,14 +366,14 @@ class PointLoadV(PointLoad):
     Parameters:
     -----------
     Force: float
-        Force in Newtons (N)
+        Force load (default units N)
     coord: float
-        x coordinate of load on beam in mm
+        x coordinate of load on beam (default units m)
 
     Examples
     --------
-    >>> # 100 N towards the right at x=9000 mm
-    >>> external_force = PointLoad(100, 9000)
+    >>> # 100 N towards the right at x = 9 m
+    >>> external_force = PointLoad(100, 9)
 
     Note: Positive force acts up.
     """
@@ -390,14 +388,14 @@ class PointLoadH(PointLoad):
     Parameters:
     -----------
     Force: float
-        Force in Newtons (N)
+        Force load (default units m)
     coord: float
-        x coordinate of load on beam in mm
+        x coordinate of load on beam (default units m)
 
     Examples
     --------
-    >>> # 100 N up at x=9000 mm
-    >>> external_force = PointLoad(100, 9000)
+    >>> # 100 N up at x = 9 m
+    >>> external_force = PointLoad(100, 9)
 
     Note: Positive force acts right.
     """
@@ -412,15 +410,15 @@ class UDLV(UDL):
     Parameters
     ----------
     Force: float
-        Force in Newtons (N)
+        Force load (default units N/m)
     span: tuple of floats
         A tuple containing the starting and ending coordinate that
-        the UDL is applied to.
+        the UDL is applied to (default units m).
 
     Examples
     --------
-    >>> # load of 1 N/mm (acting down) from 1000 <= x <= 4000 mm
-    >>> self_weight = UDL(-1, (1000, 4000))
+    >>> # load of 1000 N/m (acting down) from 1 <= x <= 4 m
+    >>> self_weight = UDL(-1000, (1, 4))
 
     Note: Positive force acts up.
     """
@@ -435,15 +433,15 @@ class UDLH(UDL):
     Parameters
     ----------
     Force: float
-        Force in Newtons (N)
+        Force load (default units N/m)
     span: tuple of floats
         A tuple containing the starting and ending coordinate that
-        the UDL is applied to.
+        the UDL is applied to (default units m).
 
     Examples
     --------
-    >>> # load of 1 N/mm (acting right) from 1000 <= x <= 4000 mm
-    >>> self_weight = UDL(-1, (1000, 4000))
+    >>> # load of 1000 N/m (acting right) from 1 <= x <= 4 m
+    >>> self_weight = UDL(-1000, (1, 4))
 
     Note: Positive force acts right.
     """
@@ -459,16 +457,16 @@ class TrapezoidalLoadV(TrapezoidalLoad):
     ----------
     force : tuple of floats
         A tuple containing the starting and ending loads of
-        the trapezoidal load in N/mm.
+        the trapezoidal load (default units N/m).
     span: tuple of floats
         A tuple containing the starting and ending coordinate that
-        the trapezoidal load is applied to.
+        the trapezoidal load is applied to (default units m).
 
     Examples
     --------
-    >>> # trapezoidal load starting at 2 N/mm at 1000 mm and ending at 3 N/m
-    >>> # at 4000 mm (acting down)
-    >>> self_weight = UDL((-2,-3), (1000, 4000))
+    >>> # trapezoidal load starting at 2000 N/m at 1 m and ending at 3000 N/m
+    >>> # at 4 m (acting down)
+    >>> self_weight = UDL((-2000,-3000), (1, 4))
 
     Note: Positive force acts up.
     """
@@ -484,16 +482,16 @@ class TrapezoidalLoadH(TrapezoidalLoad):
     ----------
     force : tuple of floats
         A tuple containing the starting and ending loads of
-        the trapezoidal load in N/mm.
+        the trapezoidal load (default units N/m).
     span: tuple of floats
         A tuple containing the starting and ending coordinate that
-        the trapezoidal load is applied to.
+        the trapezoidal load is applied to (default units m).
 
     Examples
     --------
-    >>> # trapezoidal load starting at 2 N/mm at 1000 mm and ending at 3 N/mm
-    >>> # at 4000 m (acting right)
-    >>> self_weight = UDL((2,3), (1000, 4000))
+    >>> # trapezoidal load starting at 2000 N/m at 1 m and ending at 3 N/m
+    >>> # at 4 m (acting right)
+    >>> self_weight = UDL((2000, 3000), (1, 4))
 
     Note: Positive force acts right.
     """
@@ -510,16 +508,16 @@ class DistributedLoadV(DistributedLoad):
     -----------
     expr: sympy expression
         Sympy expression of the distributed load function expressed
-        using variable x which represents the beam x-coordinate (mm).
-        Requires quotation marks around expression.
+        using variable x which represents the beam x-coordinate (default
+        units N/m).Requires quotation marks around expression.
     span: tuple of floats
         A tuple containing the starting and ending coordinate that
-         the function is applied to.
+         the function is applied to (default units m).
    
     Examples
     --------
-    >>> # Linearly growing load (acting down) for 0<x<2000 mm
-    >>> snow_load = DistributedLoad("-0.01*x-5", (0, 2000))
+    >>> # Linearly growing load (acting down) for 0 < x < 2 m
+    >>> snow_load = DistributedLoad("-10*x-5", (0, 2))
 
     Note: Positive force acts up.
     """
@@ -536,16 +534,16 @@ class DistributedLoadH(DistributedLoad):
     -----------
     expr: sympy expression
         Sympy expression of the distributed load function expressed
-        using variable x which represents the beam x-coordinate (mm).
-        Requires quotation marks around expression.
+        using variable x which represents the beam x-coordinate (default
+        units N/m). Requires quotation marks around expression.
     span: tuple of floats
         A tuple containing the starting and ending coordinate that
-         the function is applied to.
+         the function is applied to (default units m).
    
     Examples
     --------
-    >>> # Linearly growing load (acting right) for 0<x<2000 mm
-    >>> snow_load = DistributedLoad("-0.01*x-5", (0, 2000))
+    >>> # Linearly growing load (acting right) for 0 < x < 2 m
+    >>> snow_load = DistributedLoad("10*x+5", (0, 2))
 
     Note: Positive force acts right.
     """

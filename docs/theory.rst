@@ -169,6 +169,10 @@ Unit Convention
 
 The units used throughout the python package are the base SI Units. The following units are adopted in their respective sections of the application.
 
-   * The default units for length, force and bending moment (torque) are in N and mm (mm, N, N·mm)
-   * The default units for beam properties (E, I, A) are in N and mm (N/mm2, mm4, mm2)
-   * The default unit for spring supports is N/mm
+   * The default units for length, force and bending moment (torque) are in N and m (m, N, N·m)
+   * The default units for beam properties (E, I, A) are in N and m (N/m2, m4, m2)
+   * The default unit for spring stiffness and distributed loads is N/m
+
+Units can be updated on a beam by using the update_units() method. Adopting this method effects the way input units are considered in calculations and presents graphs dynamically based on the units that have been specified
+
+For example, if units for 'force' are changed to 'kN' then PointLoad object forces would be interpretted to have a force value in kN. The y-axis for shear force and normal force diagrams would also be in kN and reaction force and point load forces would also be presented in kN. This change would not however effect the presentation of moments which would still appear in N.m.

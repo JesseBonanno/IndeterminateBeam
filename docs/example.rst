@@ -19,9 +19,9 @@ Try it in online: |colab| |binder| |website|
 Specifications
 --------------
 
-A 3000 mm long propped cantilever AB is fixed at A (x = 0 mm), and supported on a roller at B (x = 3000 mm).
+A 3 m long propped cantilever AB is fixed at A (x = 0 m), and supported on a roller at B (x = 3 m).
 
-The beam is subject to a load of 8kN acting downwards at the midspan, and a UDL of 6 N/mm across the length of the support.
+The beam is subject to a load of 8000 N acting downwards at the midspan, and a UDL of 6000 N/m across the length of the support.
 
 E and I are constant.
 
@@ -39,7 +39,7 @@ Results
 The following values can be directly extracted using the `get_shear_force`, `get_bending_moment` and `get_reaction` methods:
 
    #. The absolute maximum shear force 	  --> 16750 N
-   #. The absolute maximum bending moment --> 11.25*10**6 N.mm
+   #. The absolute maximum bending moment --> 11250 N.m
    #. The reaction at B         	  --> 9250 N
 
 A plot of the reactions is shown below.

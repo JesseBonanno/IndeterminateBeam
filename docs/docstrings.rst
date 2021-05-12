@@ -14,6 +14,7 @@ Beam
 ----
 .. autoclass:: indeterminatebeam.Beam
 .. autofunction:: indeterminatebeam.Beam.__init__
+.. autofunction:: indeterminatebeam.Beam.update_units
 .. autofunction:: indeterminatebeam.Beam.add_loads
 .. autofunction:: indeterminatebeam.Beam.remove_loads
 .. autofunction:: indeterminatebeam.Beam.add_supports

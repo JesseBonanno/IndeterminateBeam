@@ -20,12 +20,12 @@ from indeterminatebeam.loading import (
 from datetime import datetime
 import time
 from indeterminatebeam.version import __version__
+from indeterminatebeam.units import IMPERIAL_UNITS, METRIC_UNITS
 
 from dash_extensions import Download
 from dash.exceptions import PreventUpdate
 from plotly.io import to_html
 import plotly.graph_objects as go
-
 
 # the style arguments for the sidebar.
 SIDEBAR_STYLE = {
@@ -158,11 +158,11 @@ beam_instructions = dcc.Markdown('''
             2. Specify the beam sectional properties as indicated for:
                * Young's Modulus (E)
                * Second Moment of Area (I)
-               * Cross-sectional Area (A)  
+               * Cross-sectional Area (A)
 
-            Note: E and I will only affect the deflection unless a spring in the y direction is specified  
-            in which case they will also affect the load distribution. Where a spring in the x direction  
-            is specified E and A will affect the load distribution for the horizontal loads only.   
+            Note: E and I will only affect the deflection unless a spring in the y direction is specified
+            in which case they will also affect the load distribution. Where a spring in the x direction
+            is specified E and A will affect the load distribution for the horizontal loads only.
             ''')
 
 beam_content = dbc.Card(
@@ -234,7 +234,7 @@ support_instructions = dcc.Markdown('''
             2. For each direction specify one of the following:
                * f or F - Indicates a free support
                * r or R - Indicates a rigid support
-               * n - Indicates a spring stiffness of n N/mm   
+               * n - Indicates a spring stiffness of n N/mm
                  (where n is (generally) a positive number)
 
             ''')
@@ -299,7 +299,7 @@ basic_support_table = dash_table.DataTable(
         }
     },
     # dropdowns arent visible unless you add the code below.
-    # solution taken from https://github.com/plotly/dash-table/issues/221 
+    # solution taken from https://github.com/plotly/dash-table/issues/221
     # - reesehopkins commented on 29 Sep 2020
     css=[{"selector": ".Select-menu-outer", "rule": "display: block !important"}],
 )
@@ -308,9 +308,9 @@ basic_support_instructions = dcc.Markdown('''
 
             ###### **Instructions:**
 
-            1. Specify the coodinate location of the support  
-            2. For each direction specify the conventional 
-               support type from the dropdown.  
+            1. Specify the coodinate location of the support
+            2. For each direction specify the conventional
+               support type from the dropdown.
 
             ''')
 
@@ -379,12 +379,12 @@ point_load_instructions = dcc.Markdown('''
 
             ###### **Instructions:**
 
-            1. Specify the coodinate location of the point load.  
+            1. Specify the coodinate location of the point load.
             2. Specify the force applied in N.
-            3. Specify the load angle where:  
-               * A positive force with an angle of 0 points horizontally to the right.  
-               * A positive force with an angle of 90 points vertically in the   
-                 positive y direction chosen in the options tab (default downwards).  
+            3. Specify the load angle where:
+               * A positive force with an angle of 0 points horizontally to the right.
+               * A positive force with an angle of 90 points vertically in the
+                 positive y direction chosen in the options tab (default downwards).
 
             ''')
 
@@ -447,10 +447,10 @@ point_torque_instructions = dcc.Markdown('''
 
             ###### **Instructions:**
 
-            1. Specify the coodinate location of the point torque.  
-            2. Specify the moment applied in N.mm.  
+            1. Specify the coodinate location of the point torque.
+            2. Specify the moment applied in N.mm.
 
-            Note: A positive moment indicates an anti-clockwise moment direction.  
+            Note: A positive moment indicates an anti-clockwise moment direction.
 
             ''')
 
@@ -525,10 +525,10 @@ distributed_load_instructions = dcc.Markdown('''
 
             ###### **Instructions:**
 
-            1. Specify the start and end locations of the distributed load.  
-            2. Specify the start and end loads in N/mm.  
+            1. Specify the start and end locations of the distributed load.
+            2. Specify the start and end loads in N/mm.
 
-            Note: A positive load acts in the positive y direction chosen  
+            Note: A positive load acts in the positive y direction chosen
             in the options tab (default downwards).
 
             ''')
@@ -646,6 +646,23 @@ results_content = dbc.Collapse(
 )
 
 # Options
+
+#button to reset options
+#
+reset_setting_button = dbc.Col(
+    [
+        dbc.Button(
+            "Reset Options",
+            id="reset-options-button",
+            className="mb-3",
+            color="info",
+            n_clicks=0,
+            block=True,
+        ),
+    ],
+    width=12
+)
+
 option_instructions = dcc.Markdown('''
 
             ###### **Instructions:**
@@ -653,24 +670,24 @@ option_instructions = dcc.Markdown('''
             Toggle options as desired.
 
             1. Results Table:
-               - Choose to show or hide the table that summarises the maximum  
-               and minimum effects determined over the beam  
+               - Choose to show or hide the table that summarises the maximum
+               and minimum effects determined over the beam
             2. Support Input:
-               - Choose mode to use for support input where:  
-                  - Basic: Provides a dropdown for conventional supports  
-                  - Advanced: Allows for custom support configurations, as well  
-                  as spring supports  
+               - Choose mode to use for support input where:
+                  - Basic: Provides a dropdown for conventional supports
+                  - Advanced: Allows for custom support configurations, as well
+                  as spring supports
             3. Positive y direction:
-               - Choose the positive y direction.  
-               - Note: The python package conventionally takes `UP` as being the  
-               direction for positive forces, as indicated in the package   
-               documentaion. Due to popular request the option to change the  
-               positive direction for y forces to be downwards has been allowed.  
-               This is actually achieved by reversing the angle direction  
-               of loading behind the scenes, (multiplying by negative 1)  
-               which can be revealed by hoverlabels.  
+               - Choose the positive y direction.
+               - Note: The python package conventionally takes `UP` as being the
+               direction for positive forces, as indicated in the package
+               documentaion. Due to popular request the option to change the
+               positive direction for y forces to be downwards has been allowed.
+               This is actually achieved by reversing the angle direction
+               of loading behind the scenes, (multiplying by negative 1)
+               which can be revealed by hoverlabels.
             4. Data points:
-               - Number of increments used for plotting graphs, higher number  
+               - Number of increments used for plotting graphs, higher number
                results in longer calculation speeds.
             ''')
 
@@ -756,38 +773,428 @@ option_data_point = dbc.FormGroup(
     row=True,
 )
 
+# metric_editor = []
+# for a in METRIC_UNITS.keys():
+#     options = [{'label':str(b), 'value':str(b)} for b in METRIC_UNITS[a].keys()]
+
+#     metric_editor.append(dbc.FormGroup(
+#         [
+#             dbc.Label(a, html_for="metric_"+a, width=3),
+#             dbc.Col(
+#                 dbc.RadioItems(
+#                     id="metric_"+a,
+#                     options=options,
+#                     inline=True,
+#                 ),
+#                 width=8,
+#             ),
+#         ],
+#         row=True,
+#     ))
+
+SI_editor = [
+    dbc.FormGroup(
+        [
+            dbc.Label('length', html_for="SI_length", width=3),
+            dbc.Col(
+                dbc.RadioItems(
+                    id="SI_length",
+                    options=[{'label':'m','value':'m'}],
+                    value='m',
+                    inline=True,
+                ),
+                width=8,
+            ),
+        ],
+        row=True,
+    ),
+    dbc.FormGroup(
+        [
+            dbc.Label('force', html_for="SI_force", width=3),
+            dbc.Col(
+                dbc.RadioItems(
+                    id="SI_force",
+                    options=[{'label':'N','value':'N'}],
+                    value='N',
+                    inline=True,
+                ),
+                width=8,
+            ),
+        ],
+        row=True,
+    ),
+    dbc.FormGroup(
+        [
+            dbc.Label('moment', html_for="SI_moment", width=3),
+            dbc.Col(
+                dbc.RadioItems(
+                    id="SI_moment",
+                    options=[{'label':'N.m','value':'N.m'}],
+                    value='N.m',
+                    inline=True,
+                ),
+                width=8,
+            ),
+        ],
+        row=True,
+    ),
+    dbc.FormGroup(
+        [
+            dbc.Label('distributed', html_for="SI_distributed", width=3),
+            dbc.Col(
+                dbc.RadioItems(
+                    id="SI_distributed",
+                    options=[{'label':'N/m','value':'N/m'}],
+                    value='N/m',
+                    inline=True,
+                ),
+                width=8,
+            ),
+        ],
+        row=True,
+    ),
+    dbc.FormGroup(
+        [
+            dbc.Label('spring stiffness', html_for="SI_spring stiffness", width=3),
+            dbc.Col(
+                dbc.RadioItems(
+                    id="SI_spring stiffness",
+                    options=[{'label':'N/m','value':'N/m'}],
+                    value='N/m',
+                    inline=True,
+                ),
+                width=8,
+            ),
+        ],
+        row=True,
+    ),
+    dbc.FormGroup(
+        [
+            dbc.Label('A', html_for="SI_A", width=3),
+            dbc.Col(
+                dbc.RadioItems(
+                    id="SI_A",
+                    options=[{'label':'m2','value':'m2'}],
+                    value='m2',
+                    inline=True,
+                ),
+                width=8,
+            ),
+        ],
+        row=True,
+    ),
+    dbc.FormGroup(
+        [
+            dbc.Label('E', html_for="SI_E", width=3),
+            dbc.Col(
+                dbc.RadioItems(
+                    id="SI_E",
+                    options=[{'label':'Pa','value':'Pa'}],
+                    value='Pa',
+                    inline=True,
+                ),
+                width=8,
+            ),
+        ],
+        row=True,
+    ),
+    dbc.FormGroup(
+        [
+            dbc.Label('I', html_for="SI_I", width=3),
+            dbc.Col(
+                dbc.RadioItems(
+                    id="SI_I",
+                    options=[{'label':'m4','value':'m4'}],
+                    value='m4',
+                    inline=True,
+                ),
+                width=8,
+            ),
+        ],
+        row=True,
+    ),
+    dbc.FormGroup(
+        [
+            dbc.Label('deflection', html_for="SI_deflection", width=3),
+            dbc.Col(
+                dbc.RadioItems(
+                    id="SI_deflection",
+                    options=[{'label':'m','value':'m'}],
+                    value='m',
+                    inline=True,
+                ),
+                width=8,
+            ),
+        ],
+        row=True,
+    ),
+]
+
+metric_editor = [
+    dbc.FormGroup(
+        [
+            dbc.Label('length', html_for="metric_length", width=3),
+            dbc.Col(
+                dbc.RadioItems(
+                    id="metric_length",
+                    options=[{'label':a,'value':a} for a in METRIC_UNITS['length']],
+                    value='m',
+                    inline=True,
+                ),
+                width=8,
+            ),
+        ],
+        row=True,
+    ),
+    dbc.FormGroup(
+        [
+            dbc.Label('force', html_for="metric_force", width=3),
+            dbc.Col(
+                dbc.RadioItems(
+                    id="metric_force",
+                    options=[{'label':a,'value':a} for a in METRIC_UNITS['force']],
+                    value='kN',
+                    inline=True,
+                ),
+                width=8,
+            ),
+        ],
+        row=True,
+    ),
+    dbc.FormGroup(
+        [
+            dbc.Label('moment', html_for="metric_moment", width=3),
+            dbc.Col(
+                dbc.RadioItems(
+                    id="metric_moment",
+                    options=[{'label':a,'value':a} for a in METRIC_UNITS['moment']],
+                    value='kN.m',
+                    inline=True,
+                ),
+                width=8,
+            ),
+        ],
+        row=True,
+    ),
+    dbc.FormGroup(
+        [
+            dbc.Label('distributed', html_for="metric_distributed", width=3),
+            dbc.Col(
+                dbc.RadioItems(
+                    id="metric_distributed",
+                    options=[{'label':a,'value':a} for a in METRIC_UNITS['distributed']],
+                    value='kN/m',
+                    inline=True,
+                ),
+                width=8,
+            ),
+        ],
+        row=True,
+    ),
+    dbc.FormGroup(
+        [
+            dbc.Label('spring stiffness', html_for="metric_spring stiffness", width=3),
+            dbc.Col(
+                dbc.RadioItems(
+                    id="metric_spring stiffness",
+                    options=[{'label':a,'value':a} for a in METRIC_UNITS['spring stiffness']],
+                    value='kN/mm',
+                    inline=True,
+                ),
+                width=8,
+            ),
+        ],
+        row=True,
+    ),
+    dbc.FormGroup(
+        [
+            dbc.Label('A', html_for="metric_A", width=3),
+            dbc.Col(
+                dbc.RadioItems(
+                    id="metric_A",
+                    options=[{'label':a,'value':a} for a in METRIC_UNITS['A']],
+                    value='mm2',
+                    inline=True,
+                ),
+                width=8,
+            ),
+        ],
+        row=True,
+    ),
+    dbc.FormGroup(
+        [
+            dbc.Label('E', html_for="metric_E", width=3),
+            dbc.Col(
+                dbc.RadioItems(
+                    id="metric_E",
+                    options=[{'label':a,'value':a} for a in METRIC_UNITS["E"]],
+                    value='MPa',
+                    inline=True,
+                ),
+                width=8,
+            ),
+        ],
+        row=True,
+    ),
+    dbc.FormGroup(
+        [
+            dbc.Label('I', html_for="metric_I", width=3),
+            dbc.Col(
+                dbc.RadioItems(
+                    id="metric_I",
+                    options=[{'label':a,'value':a} for a in METRIC_UNITS['I']],
+                    value='mm4',
+                    inline=True,
+                ),
+                width=8,
+            ),
+        ],
+        row=True,
+    ),
+    dbc.FormGroup(
+        [
+            dbc.Label('deflection', html_for="metric_deflection", width=3),
+            dbc.Col(
+                dbc.RadioItems(
+                    id="metric_deflection",
+                    options=[{'label':a,'value':a} for a in METRIC_UNITS['deflection']],
+                    value='mm',
+                    inline=True,
+                ),
+                width=8,
+            ),
+        ],
+        row=True,
+    ),
+]
+
+imperial_editor = []
+for a in IMPERIAL_UNITS.keys():
+    options = [{'label':str(b), 'value':str(b)} for b in IMPERIAL_UNITS[a].keys()]
+
+    imperial_editor.append(dbc.FormGroup(
+        [
+            dbc.Label(a, html_for="imperial_"+a, width=3),
+            dbc.Col(
+                dbc.RadioItems(
+                    id="imperial_"+a,
+                    options=options,
+                    inline=True,
+                ),
+                width=8,
+            ),
+        ],
+        row=True,
+    ))
+
+
+#option to change units for inputs and outputs
+option_units = dbc.FormGroup(
+    [
+        dbc.Label("Units", html_for='option_units', width=3),
+        dbc.Col(
+            [
+                dbc.RadioItems(
+                    id='option_units',
+                    options=[
+                        {'label': 'SI', 'value': 'SI'},
+                        {'label': 'Metric (Custom)', 'value': 'metric'},
+                        {'label': 'Imperial (Custom)', 'value': 'imperial'},
+                    ],
+                    value='SI',
+                    inline=True,
+                ),
+            ],
+            width=8,
+        ),
+    ],
+    row=True,
+)
+
+# custom units settings
+
+# inputs: length, force, moment, distributed_load, deflection, spring
+# beam properties: A, I, E
+
+# length: mm, cm, m, in, ft
+# force: N, kN, kips
+# moment: N.mm, kN.mm, N.m, kN.m, ft.
+# distributed_load: N/mm, kN/mm, N/m, kN/m
+# deflection: mm, cm, m, in ft.
+# Spring: N/mm, kN/mm, N/m, kN/m
+# A: mm2, cm2, m2
+# E: MPa, kPa, Pa
+# I: mm4, cm4, m4
+
+# units are used to:
+# 1. convert input loads into SI base units by multiplying
+#    by the value associated with the unit
+# 2. convert beam SI calculated values to display units by
+#    dividing by the value associate with unit
+# ie. for a selection of 'm' the input of 1 m is multiplied
+# by 1000 to go to mm, then after calculation the value is
+# divided by 1000 in order to move back to the display unit
+
+#how will this affect plot, mainly for plot_external ??
+
+
+# custom_units = dbc.FormGroup(
+#         [
+#             dbc.Label("Units", html_for='option_units', width=3),
+#             dbc.Col(
+#                 dbc.RadioItems(
+#                     id='option_units',
+#                     options=[
+#                         {'label': 'Metric', 'value': 'SI'},
+#                         {'label': 'Imperial', 'value': 'imp'},
+#                         {'label': 'Custom', 'value': 'cust'},
+#                     ],
+#                     value='mm',
+#                     inline=True,
+#                 ),
+#                 width=8,
+#             ),
+#         ],
+#     row=True,
+# )
+
+# dbc.Tab(
+#     dbc.Collapse(
+#         custom_units,
+#         id='custom-units',
+#         is_open = False,
+#     ),
+#     label="Supports",
+# )
+
 option_combined = dbc.Form([
     option_result_table,
     option_support_input,
     option_positive_direction_y,
     option_data_point,
-    html.Br(),
-    dbc.Row(
+    option_units,
+    dbc.Tab(
         [
-            dbc.Label("Work from Report", width=3),
-            html.Div([
-                dcc.Upload(
-                    id='upload-data',
-                    children=html.Div([
-                        'Drag and Drop or ',
-                        html.A('Select Files'),
-                    ]),
-                    style={
-                        'width': '100%',
-                        'height': '60px',
-                        'lineHeight': '60px',
-                        'borderWidth': '1px',
-                        'borderStyle': 'dashed',
-                        'borderRadius': '5px',
-                        'textAlign': 'center',
-                        'margin': '5px'
-                    },
-                    # Allow multiple files to be uploaded
-                    multiple=False
-                ),
-            ])
-        ]
-    )
+            dbc.Collapse(
+                SI_editor,
+                id='SI-editor',
+                is_open = True,
+            ),
+            dbc.Collapse(
+                metric_editor,
+                id='metric-editor',
+                is_open=False
+            ),
+            dbc.Collapse(
+                imperial_editor,
+                id='imperial-editor',
+                is_open=False
+            ),
+        ],
+        #label="Supports",
+    ),
+    html.Br(),
+    reset_setting_button,
 ])
 
 option_content = dbc.Card(
@@ -855,6 +1262,32 @@ calc_status = dbc.Alert(
     color='danger',
 )
 
+report_upload_section = dbc.Row(
+    [
+        dbc.Label("Work from Report", width=3),
+        html.Div([
+            dcc.Upload(
+                id='upload-data',
+                children=html.Div([
+                    'Drag and Drop or ',
+                    html.A('Select Files'),
+                ]),
+                style={
+                    'width': '150%',
+                    'height': '60px',
+                    'lineHeight': '60px',
+                    'borderWidth': '1px',
+                    'borderStyle': 'dashed',
+                    'borderRadius': '5px',
+                    'textAlign': 'center',
+                    'margin': '5px'
+                },
+                # Allow multiple files to be uploaded
+                multiple=False
+            ),
+        ])
+    ]
+)
 # Assemble main application content
 content_first_row = html.Div(
     dbc.Row(
@@ -874,6 +1307,13 @@ content_first_row = html.Div(
                             width=12,
                         )
                     ),
+                    dbc.Row(
+                        dbc.Col(
+                            report_upload_section,
+                            width=12
+                        )
+                    ),
+                    html.Br(),
                     dbc.Row(
                         [
                             dbc.Col(
@@ -923,6 +1363,7 @@ content_first_row = html.Div(
                         )
                     ),
                     html.Br(),
+                    
                 ],
                 width={"size": 5.5, "offset": 0},
                 style={'padding': '5px'}
@@ -945,7 +1386,7 @@ content_first_row = html.Div(
 content = html.Div(
     [
         html.H2(
-            'IndeterminateBeam Calculator', 
+            'IndeterminateBeam Calculator',
             style={
                 'textAlign': 'center',
                 'color': '#191970',
@@ -956,6 +1397,7 @@ content = html.Div(
         calc_status,
         dcc.Store(id='input-json', storage_type='local'),
         html.Div(id='dummy-div', style=dict(display='none')),
+        html.Div(id='dummy-units', style=dict(display='none')),
         content_first_row,
         html.Hr(),
         copyright_
@@ -974,10 +1416,10 @@ server = app.server
 app.layout = html.Div([sidebar, content])
 
 
-# add tab title 
+# add tab title
 app.title = "IndeterminateBeam"
 
-# ANALYSIS 
+# ANALYSIS
 @app.callback(
     [
         Output('graph_1', 'figure'),
@@ -987,7 +1429,7 @@ app.title = "IndeterminateBeam"
         Output('alert-fade', 'is_open'),
         Output('results-table', 'data'),
         Output('input-json', 'data'),
-        Output('submit_button', 'disabled')
+        Output('submit_button', 'disabled'),
     ],
     [
         Input('submit_button', 'n_clicks'),
@@ -1007,7 +1449,9 @@ app.title = "IndeterminateBeam"
         State('option_support_input', 'value'),
         State('option_positive_direction_y', 'value'),
         State('option_data_points', 'value'),
-        State('option_result_table', 'value')
+        State('option_result_table', 'value'),
+        State('option_units', 'value'),
+        State('dummy-units','children')
     ])
 def analyse_beam(
         click,
@@ -1025,8 +1469,12 @@ def analyse_beam(
         option_support,
         positive_y_direction,
         data_points,
-        option_result_table):
-
+        option_result_table,
+        option_units,
+        units):
+    units = json.loads(units)
+    print(units)
+    
     ctx = dash.callback_context
     button_id = ctx.triggered[0]['prop_id'].split('.')[0]
 
@@ -1050,9 +1498,19 @@ def analyse_beam(
             'y': positive_y_direction,
             'data_points': data_points,
             'result_table': option_result_table,
+            # 'unit_option':option_units,
+            # 'length':units['length'],
+            # 'force':units['force'],
+            # 'moment':units['moment'],
+            # 'distributed':units['distributed'],
+            # 'spring':units['spring'],
+            # 'A':units['A'],
+            # 'E':units['E'],
+            # 'I':units['I'],
+            # 'deflection':units['deflection'],
         }
     )
-  
+
     for i, s in enumerate(basic_supports):
         sup = s.pop('Support')
         if sup == 'Fixed':
@@ -1277,7 +1735,8 @@ def analyse_beam(
         Input('distributed-load-rows-button', 'n_clicks'),
         Input('query-rows-button', 'n_clicks'),
         Input('clear-inputs-button', 'n_clicks'),
-        Input('upload-data', 'contents'),        
+        Input('reset-options-button', 'n_clicks'),
+        Input('upload-data', 'contents'),
     ],
     [
         State('beam-table', 'data'),
@@ -1302,6 +1761,7 @@ def update_tables(
     distributed_load_table_clicks,
     query_table_clicks,
     clear_inputs_clicks,
+    reset_settings_clicks,
     upload_data,
     beam_table_rows,
     advanced_support_table_rows,
@@ -1321,14 +1781,14 @@ def update_tables(
     # it is necessary to use the same function to add table rows and to add the past information
     # as graphs are produced from clicking analysis, a dummy variable was created that triggers
     # an analysis run. In order to make the model not run every time a row is added, the value is set to
-    # FALSE which makes the analysis not run as per the analysis function. As the data in the function 
+    # FALSE which makes the analysis not run as per the analysis function. As the data in the function
     # can remain FALSE or TRUE while data is changed and analysis is re run, a check on the trigger context
     # is also needed in the analysis function.
     # Also, as data is now always automatically added from previous, it is useful to be able to clear data
     # so a clear inputs button and functionality was added.
     if not input_json_data:
         raise PreventUpdate
-        
+
 
     ctx = dash.callback_context
     dummy_div = False
@@ -1392,7 +1852,7 @@ def update_tables(
 
     else:
         button_id = ctx.triggered[0]['prop_id'].split('.')[0]
-    
+
     if button_id == 'support-rows-button':
         advanced_support_table_rows.append(support_table_init)
     elif button_id == 'basic-support-rows-button':
@@ -1415,13 +1875,29 @@ def update_tables(
             [point_torque_table_init],
             [distributed_load_table_init],
             [],
+            option_support_input,
+            option_positive_direction_y,
+            option_result_table,
+            option_data_points,
+            True,
+        ]
+
+    elif button_id == 'reset-options-button':
+        return [
+            [beam_table_init],
+            [support_table_init],
+            [basic_support_table_init],
+            [point_load_table_init],
+            [point_torque_table_init],
+            [distributed_load_table_init],
+            [],
             'basic',
             'down',
             'show',
             50,
             True,
         ]
-        
+
     return [
         beam_table_rows,
         advanced_support_table_rows,
@@ -1447,6 +1923,23 @@ def support_setup(mode):
     if mode == 'basic':
         return False, True
     return True, False
+
+# options - units mode
+@app.callback(
+    [
+        Output('SI-editor', 'is_open'),
+        Output('metric-editor', 'is_open'),
+        Output('imperial-editor', 'is_open')
+    ],
+    Input('option_units', 'value')
+)
+def support_setup(mode):
+    if mode == 'SI':
+        return True, False, False
+    elif mode == 'metric':
+        return False, True, False
+    else:
+        return False, False, True
 
 # option - result data (to be query data in future really)
 @app.callback(
@@ -1479,6 +1972,85 @@ def toggle_collapse(n, is_open):
         a = is_open
     return a, a, a, a, a, a, a, a
 
+# update units store
+unit_callback_input = [Input('option_units', 'value')]
+unit_callback_input += [Input('SI_'+a,'value') for a in METRIC_UNITS.keys()]
+unit_callback_input += [Input('metric_'+a,'value') for a in METRIC_UNITS.keys()]
+unit_callback_input += [Input('imperial_'+a,'value') for a in IMPERIAL_UNITS.keys()]
+
+@app.callback(
+    Output('dummy-units', 'children'),
+    unit_callback_input,    
+)
+def results_setup(
+    option,
+    SI_length,
+    SI_force,
+    SI_moment,
+    SI_distributed,
+    SI_spring,
+    SI_A,
+    SI_E,
+    SI_I,
+    SI_deflection,
+    metric_length,
+    metric_force,
+    metric_moment,
+    metric_distributed,
+    metric_spring,
+    metric_A,
+    metric_E,
+    metric_I,
+    metric_deflection,
+    imperial_length,
+    imperial_force,
+    imperial_moment,
+    imperial_distributed,
+    imperial_spring,
+    imperial_A,
+    imperial_E,
+    imperial_I,
+    imperial_deflection,
+    ):
+    if option == 'SI':
+        units = json.dumps({
+            'length':SI_length,
+            'force':SI_force,
+            'moment':SI_moment,
+            'distributed':SI_distributed,
+            'spring':SI_spring,
+            'A':SI_A,
+            'E':SI_E,
+            'I':SI_I,
+            'deflection':SI_deflection,
+        })
+        return units
+    elif option == 'metric':
+        units = json.dumps({
+            'length':metric_length,
+            'force':metric_force,
+            'moment':metric_moment,
+            'distributed':metric_distributed,
+            'spring':metric_spring,
+            'A':metric_A,
+            'E':metric_E,
+            'I':metric_I,
+            'deflection':metric_deflection,
+        })
+        return units
+    else:
+        units = json.dumps({
+            'length':imperial_length,
+            'force':imperial_force,
+            'moment':imperial_moment,
+            'distributed':imperial_distributed,
+            'spring':imperial_spring,
+            'A':imperial_A,
+            'E':imperial_E,
+            'I':imperial_I,
+            'deflection':imperial_deflection,
+        })
+        return units
 
 # Generate Report
 @app.callback(
@@ -1510,7 +2082,7 @@ def report(n, graph_1, graph_2, results, json):
 
         # join all the strings for each table row
         table = ''.join(table)
-        
+
         #help graph 2 fit better on the second page.
         graph_2 = go.Figure(graph_2)
         graph_2.update_layout(height=950)
@@ -1557,4 +2129,4 @@ def report(n, graph_1, graph_2, results, json):
 
 
 if __name__ == '__main__':
-    app.run_server()
+    app.run_server(debug=True)
