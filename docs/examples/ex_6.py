@@ -3,8 +3,6 @@
 # 3 m long, fixed at A (x = 0 m), roller support at B (x=3 m), 
 # vertical point load at midpan of 8000 N, UDL of 6000 N/m, EI constant.
 
-from indeterminatebeam import Beam, Support, PointLoadV, UDLV
-
 beam = Beam(3)
 
 a = Support(0,(1,1,1))  
@@ -23,10 +21,11 @@ print(f"The beam has an absolute maximum bending moment of: {beam.get_bending_mo
 print(f"The beam has a vertical reaction at B of: {beam.get_reaction(3,'y')} N")
 
 fig1 = beam.plot_beam_external()  
-fig1.show()
 
 fig2 = beam.plot_beam_internal()  
-fig2.show()
 
-# fig1.write_image("./example_1_external.png")
-# fig2.write_image("./example_1_internal.png")
+fig1.update_layout(width=600)
+fig2.update_layout(width=600)
+
+fig_1.write_html("./example_1_external.html")
+fig_2.write_html("./example_1_internal.html")

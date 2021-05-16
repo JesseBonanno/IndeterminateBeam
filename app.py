@@ -20,7 +20,15 @@ from indeterminatebeam.loading import (
 from datetime import datetime
 import time
 from indeterminatebeam.version import __version__
-from indeterminatebeam.units import IMPERIAL_UNITS, METRIC_UNITS
+from indeterminatebeam.units import IMPERIAL_UNITS, METRIC_UNITS, UNIT_KEYS, UNIT_VALUES
+from indeterminatebeam.data_validation import (
+    assert_number,
+    assert_positive_number,
+    assert_strictly_positive_number,
+    assert_length,
+    assert_list_contents,
+    assert_contents,
+)
 
 from dash_extensions import Download
 from dash.exceptions import PreventUpdate
@@ -110,23 +118,23 @@ copyright_ = dbc.Row(
 
 beam_table_data = {
     'Length': {
-        'init': 5000,
-        'units': ' mm',
+        'init': 5,
+        'units': ' m',
         'type': 'numeric'
     },
-    "Young's Modulus (MPa)": {
-        'init': 2 * 10**5,
-        'units': ' MPa',
+    "Young's Modulus": {
+        'init': 200 * 10**9,
+        'units': ' Pa',
         'type': 'numeric'
     },
-    "Second Moment of Area (mm4)": {
-        'init': 9.05 * 10**6,
-        'units': ' mm4',
+    "Second Moment of Area": {
+        'init': 9.05 * 10**-6,
+        'units': ' m4',
         'type': 'numeric'
     },
-    "Cross-Sectional Area (mm2)": {
-        'init': 2300,
-        'units': ' mm2',
+    "Cross-Sectional Area": {
+        'init': 0.23,
+        'units': ' m2',
         'type': 'numeric'
     },
 }
@@ -184,24 +192,24 @@ beam_content = dbc.Card(
 # R - Restraint, F- Free, or number for spring, Spring not an option for m.
 
 support_table_data = {
-    'Coordinate (mm)': {
+    'Coordinate': {
         'init': 0,
-        'units': ' mm',
+        'units': ' m',
         'type': 'numeric'
     },
     "X": {
         'init': 'R',
-        'units': ' N/mm',
+        'units': ' N/m',
         'type': 'any'
     },
     "Y": {
         'init': 'R',
-        'units': ' N/mm',
+        'units': ' N/m',
         'type': 'any'
     },
     "M": {
         'init': 'R',
-        'units': ' N/mm',
+        'units': ' N/m',
         'type': 'any',
     }
 }
@@ -234,7 +242,7 @@ support_instructions = dcc.Markdown('''
             2. For each direction specify one of the following:
                * f or F - Indicates a free support
                * r or R - Indicates a rigid support
-               * n - Indicates a spring stiffness of n N/mm
+               * n - Indicates a stiffness of n (default unit N/m)
                  (where n is (generally) a positive number)
 
             ''')
@@ -260,15 +268,15 @@ support_content = dbc.Card(
 # Basic support
 
 basic_support_table_data = {
-    'Coordinate (mm)': {
+    'Coordinate': {
         'init': 0,
         'type': 'numeric',
-        'presentation': 'input'
+        'presentation': 'input',
     },
     "Support": {
         'init': 'Fixed',
         'type': 'any',
-        'presentation': 'dropdown'
+        'presentation': 'dropdown',
     }
 }
 
@@ -338,12 +346,12 @@ basic_support_content = dbc.Card(
 # Properties for point_load Tab
 
 point_load_table_data = {
-    'Coordinate (mm)': {
+    'Coordinate': {
         'init': 0,
-        'units': ' mm',
+        'units': ' m',
         'type': 'numeric'
     },
-    "Force (N)": {
+    "Force": {
         'init': 0,
         'units': ' N',
         'type': 'numeric'
@@ -380,7 +388,7 @@ point_load_instructions = dcc.Markdown('''
             ###### **Instructions:**
 
             1. Specify the coodinate location of the point load.
-            2. Specify the force applied in N.
+            2. Specify the force (default units N)
             3. Specify the load angle where:
                * A positive force with an angle of 0 points horizontally to the right.
                * A positive force with an angle of 90 points vertically in the
@@ -411,14 +419,14 @@ point_load_content = dbc.Card(
 
 # Properties for point_torque Tab
 point_torque_table_data = {
-    'Coordinate (mm)': {
+    'Coordinate': {
         'init': 0,
-        'units': ' mm',
+        'units': ' m',
         'type': 'numeric'
     },
-    "Torque (N.mm)": {
+    "Torque": {
         'init': 0,
-        'units': ' N',
+        'units': ' N.m',
         'type': 'numeric'
     },
 }
@@ -448,7 +456,7 @@ point_torque_instructions = dcc.Markdown('''
             ###### **Instructions:**
 
             1. Specify the coodinate location of the point torque.
-            2. Specify the moment applied in N.mm.
+            2. Specify the moment (default units N.m)
 
             Note: A positive moment indicates an anti-clockwise moment direction.
 
@@ -478,24 +486,24 @@ point_torque_content = dbc.Card(
 # Properties for distributed_load Tab
 
 distributed_load_table_data = {
-    'Start x_coordinate (mm)': {
-        'init': 0,
-        'units': ' mm',
-        'type': 'numeric'
-    },
-    'End x_coordinate (mm)': {
+    'Start Coordinate': {
         'init': 0,
         'units': ' m',
         'type': 'numeric'
     },
-    'Start Load (N/mm)': {
+    'End Coordinate': {
         'init': 0,
-        'units': ' N/mm',
+        'units': ' m',
         'type': 'numeric'
     },
-    'End Load (N/mm)': {
+    'Start Load': {
         'init': 0,
-        'units': ' N/mm',
+        'units': ' N/m',
+        'type': 'numeric'
+    },
+    'End Load': {
+        'init': 0,
+        'units': ' N/m',
         'type': 'numeric'
     },
 
@@ -526,7 +534,7 @@ distributed_load_instructions = dcc.Markdown('''
             ###### **Instructions:**
 
             1. Specify the start and end locations of the distributed load.
-            2. Specify the start and end loads in N/mm.
+            2. Specify the start and end loads (default units N/m)
 
             Note: A positive load acts in the positive y direction chosen
             in the options tab (default downwards).
@@ -558,7 +566,7 @@ distributed_load_content = dbc.Card(
 
 # Properties for query tab
 query_table_init = {
-    'Query coordinate (mm)': 0,
+    'Query coordinate': 0
 }
 
 query_table = dash_table.DataTable(
@@ -570,8 +578,8 @@ query_table = dash_table.DataTable(
         'renamable': False,
         'type': 'numeric',
         'format': Format(
-                symbol=Symbol.yes,
-                symbol_suffix=' mm')
+            symbol=Symbol.yes,
+            symbol_suffix=' m')
     } for i in query_table_init.keys()],
     data=[],
     editable=True,
@@ -608,10 +616,10 @@ query_content = dbc.Card(
 # Properties for results section
 results_columns = [
     {"name": "", "id": "val"},
-    {"name": 'Normal Force (N)', "id": "NF"},
-    {"name": 'Shear Force (N)', "id": "SF"},
-    {"name": 'Bending Moment (N.mm)', "id": "BM"},
-    {"name": 'Deflection (mm)', "id": "D"},
+    {"name": 'Normal Force', "id": "NF"},
+    {"name": 'Shear Force', "id": "SF"},
+    {"name": 'Bending Moment', "id": "BM"},
+    {"name": 'Deflection', "id": "D"},
 ]
 
 
@@ -773,320 +781,100 @@ option_data_point = dbc.FormGroup(
     row=True,
 )
 
-# metric_editor = []
-# for a in METRIC_UNITS.keys():
-#     options = [{'label':str(b), 'value':str(b)} for b in METRIC_UNITS[a].keys()]
+# unit option implementation
+default_units = {}
 
-#     metric_editor.append(dbc.FormGroup(
-#         [
-#             dbc.Label(a, html_for="metric_"+a, width=3),
-#             dbc.Col(
-#                 dbc.RadioItems(
-#                     id="metric_"+a,
-#                     options=options,
-#                     inline=True,
-#                 ),
-#                 width=8,
-#             ),
-#         ],
-#         row=True,
-#     ))
+default_units['SI'] = {
+    'length': 'm',
+    'force': 'N',
+    'moment': 'N.m',
+    'distributed': 'N/m',
+    'stiffness': 'N/m',
+    'A': 'm2',
+    'E': 'Pa',
+    'I': 'm4',
+    'deflection': 'm',
+}
 
-SI_editor = [
-    dbc.FormGroup(
-        [
-            dbc.Label('length', html_for="SI_length", width=3),
-            dbc.Col(
-                dbc.RadioItems(
-                    id="SI_length",
-                    options=[{'label':'m','value':'m'}],
-                    value='m',
-                    inline=True,
-                ),
-                width=8,
-            ),
-        ],
-        row=True,
-    ),
-    dbc.FormGroup(
-        [
-            dbc.Label('force', html_for="SI_force", width=3),
-            dbc.Col(
-                dbc.RadioItems(
-                    id="SI_force",
-                    options=[{'label':'N','value':'N'}],
-                    value='N',
-                    inline=True,
-                ),
-                width=8,
-            ),
-        ],
-        row=True,
-    ),
-    dbc.FormGroup(
-        [
-            dbc.Label('moment', html_for="SI_moment", width=3),
-            dbc.Col(
-                dbc.RadioItems(
-                    id="SI_moment",
-                    options=[{'label':'N.m','value':'N.m'}],
-                    value='N.m',
-                    inline=True,
-                ),
-                width=8,
-            ),
-        ],
-        row=True,
-    ),
-    dbc.FormGroup(
-        [
-            dbc.Label('distributed', html_for="SI_distributed", width=3),
-            dbc.Col(
-                dbc.RadioItems(
-                    id="SI_distributed",
-                    options=[{'label':'N/m','value':'N/m'}],
-                    value='N/m',
-                    inline=True,
-                ),
-                width=8,
-            ),
-        ],
-        row=True,
-    ),
-    dbc.FormGroup(
-        [
-            dbc.Label('spring stiffness', html_for="SI_spring stiffness", width=3),
-            dbc.Col(
-                dbc.RadioItems(
-                    id="SI_spring stiffness",
-                    options=[{'label':'N/m','value':'N/m'}],
-                    value='N/m',
-                    inline=True,
-                ),
-                width=8,
-            ),
-        ],
-        row=True,
-    ),
-    dbc.FormGroup(
-        [
-            dbc.Label('A', html_for="SI_A", width=3),
-            dbc.Col(
-                dbc.RadioItems(
-                    id="SI_A",
-                    options=[{'label':'m2','value':'m2'}],
-                    value='m2',
-                    inline=True,
-                ),
-                width=8,
-            ),
-        ],
-        row=True,
-    ),
-    dbc.FormGroup(
-        [
-            dbc.Label('E', html_for="SI_E", width=3),
-            dbc.Col(
-                dbc.RadioItems(
-                    id="SI_E",
-                    options=[{'label':'Pa','value':'Pa'}],
-                    value='Pa',
-                    inline=True,
-                ),
-                width=8,
-            ),
-        ],
-        row=True,
-    ),
-    dbc.FormGroup(
-        [
-            dbc.Label('I', html_for="SI_I", width=3),
-            dbc.Col(
-                dbc.RadioItems(
-                    id="SI_I",
-                    options=[{'label':'m4','value':'m4'}],
-                    value='m4',
-                    inline=True,
-                ),
-                width=8,
-            ),
-        ],
-        row=True,
-    ),
-    dbc.FormGroup(
-        [
-            dbc.Label('deflection', html_for="SI_deflection", width=3),
-            dbc.Col(
-                dbc.RadioItems(
-                    id="SI_deflection",
-                    options=[{'label':'m','value':'m'}],
-                    value='m',
-                    inline=True,
-                ),
-                width=8,
-            ),
-        ],
-        row=True,
-    ),
-]
+default_units['metric'] = {
+    'length': 'm',
+    'force': 'kN',
+    'moment': 'kN.m',
+    'distributed': 'kN/m',
+    'stiffness': 'kN/mm',
+    'A': 'mm2',
+    'E': 'MPa',
+    'I': 'mm4',
+    'deflection': 'mm',
+}
 
-metric_editor = [
-    dbc.FormGroup(
+default_units['imperial'] = {
+    'length': 'ft',
+    'force': 'kip',
+    'moment': 'kip.ft',
+    'distributed': 'kip/ft',
+    'stiffness': 'kip/ft',
+    'A': 'in2',
+    'E': 'kip/in2',
+    'I': 'in4',
+    'deflection': 'in',    
+}
+
+def unit_option_formgroup(group='SI',label='length',units=('m'),default ='m'):
+    """Define formgroup for a single unit option"""
+    
+    assert_contents(group, ("SI","metric","imperial"), "group")
+    assert_contents(label, UNIT_KEYS, "label")
+    assert_list_contents(units, UNIT_VALUES[label], "units")
+    assert_contents(default, units, "default")
+
+    id_ = group + "_" + label
+    options = [{'label':a, 'value':a} for a in units]
+
+    _ = dbc.FormGroup(
         [
-            dbc.Label('length', html_for="metric_length", width=3),
+            dbc.Label(label, html_for=id_, width=3),
             dbc.Col(
                 dbc.RadioItems(
-                    id="metric_length",
-                    options=[{'label':a,'value':a} for a in METRIC_UNITS['length']],
-                    value='m',
+                    id=id_,
+                    options=options,
+                    value=default,
                     inline=True,
                 ),
                 width=8,
             ),
         ],
         row=True,
-    ),
-    dbc.FormGroup(
-        [
-            dbc.Label('force', html_for="metric_force", width=3),
-            dbc.Col(
-                dbc.RadioItems(
-                    id="metric_force",
-                    options=[{'label':a,'value':a} for a in METRIC_UNITS['force']],
-                    value='kN',
-                    inline=True,
-                ),
-                width=8,
-            ),
-        ],
-        row=True,
-    ),
-    dbc.FormGroup(
-        [
-            dbc.Label('moment', html_for="metric_moment", width=3),
-            dbc.Col(
-                dbc.RadioItems(
-                    id="metric_moment",
-                    options=[{'label':a,'value':a} for a in METRIC_UNITS['moment']],
-                    value='kN.m',
-                    inline=True,
-                ),
-                width=8,
-            ),
-        ],
-        row=True,
-    ),
-    dbc.FormGroup(
-        [
-            dbc.Label('distributed', html_for="metric_distributed", width=3),
-            dbc.Col(
-                dbc.RadioItems(
-                    id="metric_distributed",
-                    options=[{'label':a,'value':a} for a in METRIC_UNITS['distributed']],
-                    value='kN/m',
-                    inline=True,
-                ),
-                width=8,
-            ),
-        ],
-        row=True,
-    ),
-    dbc.FormGroup(
-        [
-            dbc.Label('spring stiffness', html_for="metric_spring stiffness", width=3),
-            dbc.Col(
-                dbc.RadioItems(
-                    id="metric_spring stiffness",
-                    options=[{'label':a,'value':a} for a in METRIC_UNITS['spring stiffness']],
-                    value='kN/mm',
-                    inline=True,
-                ),
-                width=8,
-            ),
-        ],
-        row=True,
-    ),
-    dbc.FormGroup(
-        [
-            dbc.Label('A', html_for="metric_A", width=3),
-            dbc.Col(
-                dbc.RadioItems(
-                    id="metric_A",
-                    options=[{'label':a,'value':a} for a in METRIC_UNITS['A']],
-                    value='mm2',
-                    inline=True,
-                ),
-                width=8,
-            ),
-        ],
-        row=True,
-    ),
-    dbc.FormGroup(
-        [
-            dbc.Label('E', html_for="metric_E", width=3),
-            dbc.Col(
-                dbc.RadioItems(
-                    id="metric_E",
-                    options=[{'label':a,'value':a} for a in METRIC_UNITS["E"]],
-                    value='MPa',
-                    inline=True,
-                ),
-                width=8,
-            ),
-        ],
-        row=True,
-    ),
-    dbc.FormGroup(
-        [
-            dbc.Label('I', html_for="metric_I", width=3),
-            dbc.Col(
-                dbc.RadioItems(
-                    id="metric_I",
-                    options=[{'label':a,'value':a} for a in METRIC_UNITS['I']],
-                    value='mm4',
-                    inline=True,
-                ),
-                width=8,
-            ),
-        ],
-        row=True,
-    ),
-    dbc.FormGroup(
-        [
-            dbc.Label('deflection', html_for="metric_deflection", width=3),
-            dbc.Col(
-                dbc.RadioItems(
-                    id="metric_deflection",
-                    options=[{'label':a,'value':a} for a in METRIC_UNITS['deflection']],
-                    value='mm',
-                    inline=True,
-                ),
-                width=8,
-            ),
-        ],
-        row=True,
-    ),
-]
+    )
+    
+    return _
+
+# create a simplified method to write the SI_editor
+SI_editor = []
+group = "SI"
+for label in UNIT_KEYS:
+    units = [a for a in METRIC_UNITS[label].keys()]
+    SI_editor.append(
+        unit_option_formgroup(group, label, [default_units[group][label]], default_units[group][label])
+    )
+
+metric_editor = []
+group = "metric"
+for label in UNIT_KEYS:
+    units = [a for a in METRIC_UNITS[label].keys()]
+    id_ = group + "_" + label
+    metric_editor.append(
+        unit_option_formgroup(group, label, units, default_units[group][label])
+    )
 
 imperial_editor = []
-for a in IMPERIAL_UNITS.keys():
-    options = [{'label':str(b), 'value':str(b)} for b in IMPERIAL_UNITS[a].keys()]
-
-    imperial_editor.append(dbc.FormGroup(
-        [
-            dbc.Label(a, html_for="imperial_"+a, width=3),
-            dbc.Col(
-                dbc.RadioItems(
-                    id="imperial_"+a,
-                    options=options,
-                    inline=True,
-                ),
-                width=8,
-            ),
-        ],
-        row=True,
-    ))
-
+group = "imperial"
+for label in UNIT_KEYS:
+    units = [a for a in IMPERIAL_UNITS[label].keys()]
+    id_ = group + "_" + label
+    imperial_editor.append(
+        unit_option_formgroup(group, label, units, default_units[group][label])
+    )
 
 #option to change units for inputs and outputs
 option_units = dbc.FormGroup(
@@ -1111,67 +899,16 @@ option_units = dbc.FormGroup(
     row=True,
 )
 
-# custom units settings
-
-# inputs: length, force, moment, distributed_load, deflection, spring
-# beam properties: A, I, E
-
-# length: mm, cm, m, in, ft
-# force: N, kN, kips
-# moment: N.mm, kN.mm, N.m, kN.m, ft.
-# distributed_load: N/mm, kN/mm, N/m, kN/m
-# deflection: mm, cm, m, in ft.
-# Spring: N/mm, kN/mm, N/m, kN/m
-# A: mm2, cm2, m2
-# E: MPa, kPa, Pa
-# I: mm4, cm4, m4
-
-# units are used to:
-# 1. convert input loads into SI base units by multiplying
-#    by the value associated with the unit
-# 2. convert beam SI calculated values to display units by
-#    dividing by the value associate with unit
-# ie. for a selection of 'm' the input of 1 m is multiplied
-# by 1000 to go to mm, then after calculation the value is
-# divided by 1000 in order to move back to the display unit
-
-#how will this affect plot, mainly for plot_external ??
-
-
-# custom_units = dbc.FormGroup(
-#         [
-#             dbc.Label("Units", html_for='option_units', width=3),
-#             dbc.Col(
-#                 dbc.RadioItems(
-#                     id='option_units',
-#                     options=[
-#                         {'label': 'Metric', 'value': 'SI'},
-#                         {'label': 'Imperial', 'value': 'imp'},
-#                         {'label': 'Custom', 'value': 'cust'},
-#                     ],
-#                     value='mm',
-#                     inline=True,
-#                 ),
-#                 width=8,
-#             ),
-#         ],
-#     row=True,
-# )
-
-# dbc.Tab(
-#     dbc.Collapse(
-#         custom_units,
-#         id='custom-units',
-#         is_open = False,
-#     ),
-#     label="Supports",
-# )
-
-option_combined = dbc.Form([
+option_general_tab = dbc.Form([
+    html.Br(),
     option_result_table,
     option_support_input,
     option_positive_direction_y,
     option_data_point,
+])
+
+option_unit_tab = dbc.Form([
+    html.Br(),
     option_units,
     dbc.Tab(
         [
@@ -1193,14 +930,17 @@ option_combined = dbc.Form([
         ],
         #label="Supports",
     ),
-    html.Br(),
-    reset_setting_button,
 ])
 
 option_content = dbc.Card(
     dbc.CardBody(
         [
-            option_combined,
+            dbc.Tabs([
+                dbc.Tab(option_general_tab, label="General Options"),
+                dbc.Tab(option_unit_tab, label="Unit Options"),
+            ]),
+            html.Br(),
+            reset_setting_button,
             html.Br(),
             dbc.Collapse(
                 [
@@ -1344,7 +1084,7 @@ content_first_row = html.Div(
                             dbc.Col(
                                 [
                                     dbc.Button(
-                                        "Clear Inputs",
+                                        "Clear Beam",
                                         id="clear-inputs-button",
                                         className="mb-3",
                                         color="info",
@@ -1397,7 +1137,6 @@ content = html.Div(
         calc_status,
         dcc.Store(id='input-json', storage_type='local'),
         html.Div(id='dummy-div', style=dict(display='none')),
-        html.Div(id='dummy-units', style=dict(display='none')),
         content_first_row,
         html.Hr(),
         copyright_
@@ -1419,7 +1158,92 @@ app.layout = html.Div([sidebar, content])
 # add tab title
 app.title = "IndeterminateBeam"
 
+# # update units store
+# unit_callback_input = [Input('SI_'+a,'value') for a in METRIC_UNITS.keys()]
+# unit_callback_input += [Input('metric_'+a,'value') for a in METRIC_UNITS.keys()]
+# unit_callback_input += [Input('imperial_'+a,'value') for a in IMPERIAL_UNITS.keys()]
+
+# @app.callback(
+#     Output('json-units', 'data'),
+#     [Input('submit_button', 'n_clicks')]+
+#     unit_callback_input,  
+# )
+# def unit_options_setup(
+#     n,
+#     SI_length,
+#     SI_force,
+#     SI_moment,
+#     SI_distributed,
+#     SI_stiffness,
+#     SI_A,
+#     SI_E,
+#     SI_I,
+#     SI_deflection,
+#     metric_length,
+#     metric_force,
+#     metric_moment,
+#     metric_distributed,
+#     metric_stiffness,
+#     metric_A,
+#     metric_E,
+#     metric_I,
+#     metric_deflection,
+#     imperial_length,
+#     imperial_force,
+#     imperial_moment,
+#     imperial_distributed,
+#     imperial_stiffness,
+#     imperial_A,
+#     imperial_E,
+#     imperial_I,
+#     imperial_deflection,
+#     ):
+
+#     units = {}
+
+#     units['SI'] = {
+#         'length':SI_length,
+#         'force':SI_force,
+#         'moment':SI_moment,
+#         'distributed':SI_distributed,
+#         'stiffness':SI_stiffness,
+#         'A':SI_A,
+#         'E':SI_E,
+#         'I':SI_I,
+#         'deflection':SI_deflection,
+#     }
+
+#     units['metric'] = {
+#         'length':metric_length,
+#         'force':metric_force,
+#         'moment':metric_moment,
+#         'distributed':metric_distributed,
+#         'stiffness':metric_stiffness,
+#         'A':metric_A,
+#         'E':metric_E,
+#         'I':metric_I,
+#         'deflection':metric_deflection,
+#     }
+
+#     units['imperial'] = {
+#         'length':imperial_length,
+#         'force':imperial_force,
+#         'moment':imperial_moment,
+#         'distributed':imperial_distributed,
+#         'stiffness':imperial_stiffness,
+#         'A':imperial_A,
+#         'E':imperial_E,
+#         'I':imperial_I,
+#         'deflection':imperial_deflection,
+#         }
+
+#     return json.dumps(units)
+
 # ANALYSIS
+unit_callback_state = [State('SI_'+a,'value') for a in METRIC_UNITS.keys()]
+unit_callback_state += [State('metric_'+a,'value') for a in METRIC_UNITS.keys()]
+unit_callback_state += [State('imperial_'+a,'value') for a in IMPERIAL_UNITS.keys()]
+
 @app.callback(
     [
         Output('graph_1', 'figure'),
@@ -1451,8 +1275,8 @@ app.title = "IndeterminateBeam"
         State('option_data_points', 'value'),
         State('option_result_table', 'value'),
         State('option_units', 'value'),
-        State('dummy-units','children')
-    ])
+    ] + unit_callback_state
+    )
 def analyse_beam(
         click,
         dummy_div,
@@ -1471,10 +1295,35 @@ def analyse_beam(
         data_points,
         option_result_table,
         option_units,
-        units):
-    units = json.loads(units)
-    print(units)
-    
+        SI_length,
+        SI_force,
+        SI_moment,
+        SI_distributed,
+        SI_stiffness,
+        SI_A,
+        SI_E,
+        SI_I,
+        SI_deflection,
+        metric_length,
+        metric_force,
+        metric_moment,
+        metric_distributed,
+        metric_stiffness,
+        metric_A,
+        metric_E,
+        metric_I,
+        metric_deflection,
+        imperial_length,
+        imperial_force,
+        imperial_moment,
+        imperial_distributed,
+        imperial_stiffness,
+        imperial_A,
+        imperial_E,
+        imperial_I,
+        imperial_deflection,
+        ):
+
     ctx = dash.callback_context
     button_id = ctx.triggered[0]['prop_id'].split('.')[0]
 
@@ -1483,6 +1332,44 @@ def analyse_beam(
         raise PreventUpdate
 
     t1 = time.perf_counter()
+
+    units = {}
+
+    units['SI'] = {
+        'length':SI_length,
+        'force':SI_force,
+        'moment':SI_moment,
+        'distributed':SI_distributed,
+        'stiffness':SI_stiffness,
+        'A':SI_A,
+        'E':SI_E,
+        'I':SI_I,
+        'deflection':SI_deflection,
+    }
+
+    units['metric'] = {
+        'length':metric_length,
+        'force':metric_force,
+        'moment':metric_moment,
+        'distributed':metric_distributed,
+        'stiffness':metric_stiffness,
+        'A':metric_A,
+        'E':metric_E,
+        'I':metric_I,
+        'deflection':metric_deflection,
+    }
+
+    units['imperial'] = {
+        'length':imperial_length,
+        'force':imperial_force,
+        'moment':imperial_moment,
+        'distributed':imperial_distributed,
+        'stiffness':imperial_stiffness,
+        'A':imperial_A,
+        'E':imperial_E,
+        'I':imperial_I,
+        'deflection':imperial_deflection,
+        }
 
     # jsonify all inputs
     input_json = json.dumps(
@@ -1497,17 +1384,9 @@ def analyse_beam(
             'adv_sup': option_support,
             'y': positive_y_direction,
             'data_points': data_points,
+            'option_units': option_units,
             'result_table': option_result_table,
-            # 'unit_option':option_units,
-            # 'length':units['length'],
-            # 'force':units['force'],
-            # 'moment':units['moment'],
-            # 'distributed':units['distributed'],
-            # 'spring':units['spring'],
-            # 'A':units['A'],
-            # 'E':units['E'],
-            # 'I':units['I'],
-            # 'deflection':units['deflection'],
+            'unit_dictionary': units,
         }
     )
 
@@ -1532,8 +1411,6 @@ def analyse_beam(
     else:
         supports = basic_supports
 
-
-
     # if all inputs the same as stored inputs then
     # no need to calculate again.
     # if clicks 0 then inputs are set to prev input
@@ -1542,168 +1419,180 @@ def analyse_beam(
     if input_json == prev_input and click > 0:
         raise PreventUpdate
 
-    try:
+    # try:
 
-        if positive_y_direction == 'up':
-            d_ = 1
-        else:
-            d_ = -1
+    if positive_y_direction == 'up':
+        d_ = 1
+    else:
+        d_ = -1
 
-        for row in beams:
-            beam = Beam(*(float(a) for a in row.values()))
+    for row in beams:
+        beam = Beam(*(float(a) for a in row.values()))
 
-        beam._DATA_POINTS = data_points
+    beam._DATA_POINTS = data_points
 
-        if supports:
-            for row in supports:
-                if row['X'] in ['r', 'R']:
-                    DOF_x = 1
-                    kx = 0
-                elif row['X'] in ['f', 'F']:
-                    DOF_x = 0
-                    kx = 0
-                elif float(row['X']) > 0:
-                    DOF_x = 0
-                    kx = float(row['X'])
-                else:
-                    raise ValueError(
-                        'input incorrect for x restraint of support')
 
-                if row['Y'] in ['r', 'R']:
-                    DOF_y = 1
-                    ky = 0
-                elif row['Y'] in ['f', 'F']:
-                    DOF_y = 0
-                    ky = 0
-                elif float(row['Y']) > 0:
-                    DOF_y = 0
-                    ky = float(row['Y'])
-                else:
-                    raise ValueError(
-                        'input incorrect for y restraint of support')
+    beam.update_units('length', units[option_units]['length'])
+    beam.update_units('force', units[option_units]['force'])
+    beam.update_units('moment', units[option_units]['moment'])
+    beam.update_units('distributed', units[option_units]['distributed'])
+    beam.update_units('stiffness', units[option_units]['stiffness'])
+    beam.update_units('A', units[option_units]['A'])
+    beam.update_units('E', units[option_units]['E'])
+    beam.update_units('I', units[option_units]['I'])
+    beam.update_units('deflection', units[option_units]['deflection'])
 
-                if row['M'] in ['r', 'R']:
-                    DOF_m = 1
-                elif row['M'] in ['f', 'F']:
-                    DOF_m = 0
-                else:
-                    raise ValueError(
-                        'input incorrect for m restraint of support')
+    if supports:
+        for row in supports:
+            if row['X'] in ['r', 'R']:
+                DOF_x = 1
+                kx = 0
+            elif row['X'] in ['f', 'F']:
+                DOF_x = 0
+                kx = 0
+            elif float(row['X']) > 0:
+                DOF_x = 0
+                kx = float(row['X'])
+            else:
+                raise ValueError(
+                    'input incorrect for x restraint of support')
 
-                beam.add_supports(
-                    Support(
-                        float(row['Coordinate (mm)']),
-                        (
-                            DOF_x,
-                            DOF_y,
-                            DOF_m
-                        ),
-                        ky=ky,
-                        kx=kx,
+            if row['Y'] in ['r', 'R']:
+                DOF_y = 1
+                ky = 0
+            elif row['Y'] in ['f', 'F']:
+                DOF_y = 0
+                ky = 0
+            elif float(row['Y']) > 0:
+                DOF_y = 0
+                ky = float(row['Y'])
+            else:
+                raise ValueError(
+                    'input incorrect for y restraint of support')
+
+            if row['M'] in ['r', 'R']:
+                DOF_m = 1
+            elif row['M'] in ['f', 'F']:
+                DOF_m = 0
+            else:
+                raise ValueError(
+                    'input incorrect for m restraint of support')
+
+            beam.add_supports(
+                Support(
+                    float(row['Coordinate']),
+                    (
+                        DOF_x,
+                        DOF_y,
+                        DOF_m
                     ),
+                    ky=ky,
+                    kx=kx,
+                ),
+            )
+    # TO DO: add capitals
+
+    if distributed_loads:
+        for row in distributed_loads:
+            beam.add_loads(
+                TrapezoidalLoad(
+                    force=(
+                        float(row['Start Load']),
+                        float(row['End Load'])
+                    ),
+                    span=(
+                        float(row['Start Coordinate']),
+                        float(row['End Coordinate'])
+                    ),
+                    angle=(d_ * 90)
                 )
-        # TO DO: add capitals
+            )
 
-        if distributed_loads:
-            for row in distributed_loads:
-                beam.add_loads(
-                    TrapezoidalLoad(
-                        force=(
-                            float(row['Start Load (N/mm)']),
-                            float(row['End Load (N/mm)'])
-                        ),
-                        span=(
-                            float(row['Start x_coordinate (mm)']),
-                            float(row['End x_coordinate (mm)'])
-                        ),
-                        angle=(d_ * 90)
-                    )
+    if point_loads:
+        for row in point_loads:
+            beam.add_loads(
+                PointLoad(
+                    float(row['Force']),
+                    float(row['Coordinate']),
+                    d_ * float(row['Angle (deg)'])
                 )
+            )
 
-        if point_loads:
-            for row in point_loads:
-                beam.add_loads(
-                    PointLoad(
-                        float(row['Force (N)']),
-                        float(row['Coordinate (mm)']),
-                        d_ * float(row['Angle (deg)'])
-                    )
+    if point_torques:
+        for row in point_torques:
+            beam.add_loads(
+                PointTorque(
+                    float(row['Torque']),
+                    float(row['Coordinate']),
                 )
+            )
 
-        if point_torques:
-            for row in point_torques:
-                beam.add_loads(
-                    PointTorque(
-                        float(row['Torque (N.mm)']),
-                        float(row['Coordinate (mm)']),
-                    )
-                )
+    beam.analyse()
 
-        beam.analyse()
+    if querys:
+        for row in querys:
+            beam.add_query_points(
+                float(row['Query coordinate']),
+            )
 
-        if querys:
-            for row in querys:
-                beam.add_query_points(
-                    float(row['Query coordinate (mm)']),
-                )
+    graph_1 = beam.plot_beam_external()
 
-        graph_1 = beam.plot_beam_external()
+    graph_2 = beam.plot_beam_internal()
 
-        graph_2 = beam.plot_beam_internal()
+    # results data is actually adding to the calc time significantly.
+    # Might be worth trying to find a more efficient method,
+    # for example getting max, min and x values all in one go could mean
+    # dont need to generate vectors multiple times, can save time.
 
-        # results data is actually adding to the calc time significantly.
-        # Might be worth trying to find a more efficient method,
-        # for example getting max, min and x values all in one go could mean
-        # dont need to generate vectors multiple times, can save time.
+    results_data = [
+        {
+            'val': 'Max',
+            'NF (' + units[option_units]['force'] +')': f'{beam.get_normal_force(return_max=True):.3f}',
+            'SF (' + units[option_units]['force'] +')': f'{beam.get_shear_force(return_max=True):.3f}',
+            'BM (' + units[option_units]['moment'] +')': f'{beam.get_bending_moment(return_max=True):.3f}',
+            'D (' + units[option_units]['deflection'] +')': f'{beam.get_deflection(return_max=True):.3f}',
+        },
+        {
+            'val': 'Min',
+            'NF (' + units[option_units]['force'] +')': f'{beam.get_normal_force(return_min=True):.3f}',
+            'SF (' + units[option_units]['force'] +')': f'{beam.get_shear_force(return_min=True):.3f}',
+            'BM (' + units[option_units]['moment'] +')': f'{beam.get_bending_moment(return_min=True):.3f}',
+            'D (' + units[option_units]['deflection'] +')': f'{beam.get_deflection(return_min=True):.3f}',
+        },
+    ]
 
-        results_data = [
-            {
-                'val': 'Max',
-                'NF': beam.get_normal_force(return_max=True),
-                'SF': beam.get_shear_force(return_max=True),
-                'BM': beam.get_bending_moment(return_max=True),
-                'D': beam.get_deflection(return_max=True)
-            },
-            {
-                'val': 'Min',
-                'NF': beam.get_normal_force(return_min=True),
-                'SF': beam.get_shear_force(return_min=True),
-                'BM': beam.get_bending_moment(return_min=True),
-                'D': beam.get_deflection(return_min=True)
-            },
-        ]
+    if querys:
+        for row in querys:
+            x_ = row['Query coordinate']
+            u_ = units[option_units]['length']
+            results_data.append(
+                {
+                    'val': f'x = {x_} {u_}',
+                    'NF (' + units[option_units]['force'] +')': f'{beam.get_normal_force(x_):.3f}',
+                    'SF (' + units[option_units]['force'] +')': f'{beam.get_shear_force(x_):.3f}',
+                    'BM (' + units[option_units]['moment'] +')': f'{beam.get_bending_moment(x_):.3f}',
+                    'D (' + units[option_units]['deflection'] +')': f'{beam.get_deflection(x_):.3f}',
+                },
+            )
 
-        if querys:
-            for row in querys:
-                x_ = row['Query coordinate (mm)']
-                results_data.append(
-                    {
-                        'val': f'x = {x_} mm',
-                        'NF': beam.get_normal_force(x_),
-                        'SF': beam.get_shear_force(x_),
-                        'BM': beam.get_bending_moment(x_),
-                        'D': beam.get_deflection(x_),
-                    },
-                )
+    t2 = time.perf_counter()
+    t = t2 - t1
+    dt = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
 
-        t2 = time.perf_counter()
-        t = t2 - t1
-        dt = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
+    color = "success"
+    message = f"Calculation completed in {t:.2f} seconds, at {dt}"
 
-        color = "success"
-        message = f"Calculation completed in {t:.2f} seconds, at {dt}"
-
-    except BaseException:
-        color = "danger"
-        e = sys.exc_info()[1]
-        message = f"Error with calculation. Please check inputs. \
-            The following error was observed: {e}"
-        results_data = [
-            {'type': 'Normal Force', 'max': 0, 'min': 0},
-            {'type': 'Shear Force', 'max': 0, 'min': 0},
-            {'type': 'Bending Moment', 'max': 0, 'min': 0},
-            {'type': 'Deflection', 'max': 0, 'min': 0},
-        ]
+    # except BaseException:
+    #     color = "danger"
+    #     e = sys.exc_info()[1]
+    #     message = f"Error with calculation. Please check inputs. \
+    #         The following error was observed: {e}"
+    #     results_data = [
+    #         {'type': 'Normal Force', 'max': 0, 'min': 0},
+    #         {'type': 'Shear Force', 'max': 0, 'min': 0},
+    #         {'type': 'Bending Moment', 'max': 0, 'min': 0},
+    #         {'type': 'Deflection', 'max': 0, 'min': 0},
+    #     ]
     # if click == 0 and button_id == 'dummy-div':
     #     color = "danger"
     #     message = "No analysis has been run."
@@ -1712,6 +1601,15 @@ def analyse_beam(
 
 # ADD ROWS AND RESTORE DATA AND CLEAR DATA
 # (ANYTHING TABLE RELATED)
+# update units store
+unit_output = [Output('SI_'+a,'value') for a in METRIC_UNITS.keys()]
+unit_output += [Output('metric_'+a,'value') for a in METRIC_UNITS.keys()]
+unit_output += [Output('imperial_'+a,'value') for a in IMPERIAL_UNITS.keys()]
+
+unit_state = [State('SI_'+a,'value') for a in METRIC_UNITS.keys()]
+unit_state += [State('metric_'+a,'value') for a in METRIC_UNITS.keys()]
+unit_state += [State('imperial_'+a,'value') for a in IMPERIAL_UNITS.keys()]
+    
 @app.callback(
     [
         Output('beam-table', 'data'),
@@ -1725,8 +1623,9 @@ def analyse_beam(
         Output('option_positive_direction_y', 'value'),
         Output('option_result_table', 'value'),
         Output('option_data_points', 'value'),
+        Output('option_units', 'value'),
         Output('dummy-div','children'),
-    ],
+    ] + unit_output,
     [
         Input('support-rows-button', 'n_clicks'),
         Input('basic-support-rows-button', 'n_clicks'),
@@ -1750,8 +1649,9 @@ def analyse_beam(
         State('option_positive_direction_y', 'value'),
         State('option_result_table', 'value'),
         State('option_data_points', 'value'),
+        State('option_units','value'),
         State('input-json', 'data'),
-    ]
+    ] + unit_state,
 )
 def update_tables(
     support_table_clicks,
@@ -1774,7 +1674,35 @@ def update_tables(
     option_positive_direction_y,
     option_result_table,
     option_data_points,
+    option_units,
     input_json_data,
+    SI_length,
+    SI_force,
+    SI_moment,
+    SI_distributed,
+    SI_stiffness,
+    SI_A,
+    SI_E,
+    SI_I,
+    SI_deflection,
+    metric_length,
+    metric_force,
+    metric_moment,
+    metric_distributed,
+    metric_stiffness,
+    metric_A,
+    metric_E,
+    metric_I,
+    metric_deflection,
+    imperial_length,
+    imperial_force,
+    imperial_moment,
+    imperial_distributed,
+    imperial_stiffness,
+    imperial_A,
+    imperial_E,
+    imperial_I,
+    imperial_deflection,
     ):
     #solution summary:
     # in order to automatically update tables to previously stored information
@@ -1789,11 +1717,54 @@ def update_tables(
     if not input_json_data:
         raise PreventUpdate
 
+    units = {}
+
+    units['SI'] = {
+        'length':SI_length,
+        'force':SI_force,
+        'moment':SI_moment,
+        'distributed':SI_distributed,
+        'stiffness':SI_stiffness,
+        'A':SI_A,
+        'E':SI_E,
+        'I':SI_I,
+        'deflection':SI_deflection,
+    }
+
+    units['metric'] = {
+        'length':metric_length,
+        'force':metric_force,
+        'moment':metric_moment,
+        'distributed':metric_distributed,
+        'stiffness':metric_stiffness,
+        'A':metric_A,
+        'E':metric_E,
+        'I':metric_I,
+        'deflection':metric_deflection,
+    }
+
+    units['imperial'] = {
+        'length':imperial_length,
+        'force':imperial_force,
+        'moment':imperial_moment,
+        'distributed':imperial_distributed,
+        'stiffness':imperial_stiffness,
+        'A':imperial_A,
+        'E':imperial_E,
+        'I':imperial_I,
+        'deflection':imperial_deflection,
+        }
+
+    units_values =[]
+    for a in units.keys():
+        units_values += [a for a in units[a].values()]
 
     ctx = dash.callback_context
     dummy_div = False
 
+    # website just started or triggered by uploading report
     if not ctx.triggered or ctx.triggered[0]['prop_id'].split('.')[0] == 'upload-data':
+        # website just started with no saved data
         if not input_json_data:
             return [
                 beam_table_rows,
@@ -1807,9 +1778,11 @@ def update_tables(
                 option_positive_direction_y,
                 option_result_table,
                 option_data_points,
-                dummy_div
-            ]
+                option_units,
+                dummy_div,
+            ] + units_values
 
+        # report uploaded
         elif ctx.triggered[0]['prop_id'].split('.')[0] == 'upload-data':
             data = upload_data.encode("utf8").split(b";base64,")[1]
             data = base64.b64decode(data)
@@ -1818,6 +1791,8 @@ def update_tables(
             data.replace('null', 'True')
             data.replace('None', 'True')
             data = json.loads(data)
+            
+        #website started with saved data
         else:
             data = json.loads(input_json_data)
 
@@ -1834,6 +1809,12 @@ def update_tables(
         option_positive_direction_y = data['y']
         option_result_table = data['result_table']
         option_data_points = data['data_points']
+        option_units = data['option_units']
+        units = data['unit_dictionary']
+
+        units_values = []
+        for a in units.keys():
+            units_values += [b for b in units[a].values()]
 
         return [
             beam_table_rows,
@@ -1847,9 +1828,11 @@ def update_tables(
             option_positive_direction_y,
             option_result_table,
             option_data_points,
+            option_units,
             dummy_div,
-        ]
+        ] + units_values
 
+    # triggered by adding in new row to table
     else:
         button_id = ctx.triggered[0]['prop_id'].split('.')[0]
 
@@ -1866,6 +1849,8 @@ def update_tables(
        distributed_load_table_rows.append(distributed_load_table_init)
     elif button_id == 'query-rows-button':
        query_table_rows.append(query_table_init)
+
+    # clear inputs but save options
     elif button_id == 'clear-inputs-button':
         return [
             [beam_table_init],
@@ -1879,24 +1864,32 @@ def update_tables(
             option_positive_direction_y,
             option_result_table,
             option_data_points,
+            option_units,
             True,
-        ]
+        ] + units_values
 
+    # clear options
     elif button_id == 'reset-options-button':
+        #use default unit properties 
+        units_values =[]
+        for a in default_units.keys():
+            units_values += [b for b in default_units[a].values()]
+
         return [
-            [beam_table_init],
-            [support_table_init],
-            [basic_support_table_init],
-            [point_load_table_init],
-            [point_torque_table_init],
-            [distributed_load_table_init],
-            [],
+            beam_table_rows,
+            advanced_support_table_rows,
+            basic_support_table_rows,
+            point_load_table_rows,
+            point_torque_table_rows,
+            distributed_load_table_rows,
+            query_table_rows,
             'basic',
             'down',
             'show',
             50,
+            "SI",
             True,
-        ]
+        ] + units_values
 
     return [
         beam_table_rows,
@@ -1910,8 +1903,9 @@ def update_tables(
         option_positive_direction_y,
         option_result_table,
         option_data_points,
+        option_units,
         dummy_div
-    ]
+    ] + units_values
 
 # options - support mode
 @app.callback(
@@ -1972,23 +1966,31 @@ def toggle_collapse(n, is_open):
         a = is_open
     return a, a, a, a, a, a, a, a
 
-# update units store
-unit_callback_input = [Input('option_units', 'value')]
-unit_callback_input += [Input('SI_'+a,'value') for a in METRIC_UNITS.keys()]
-unit_callback_input += [Input('metric_'+a,'value') for a in METRIC_UNITS.keys()]
-unit_callback_input += [Input('imperial_'+a,'value') for a in IMPERIAL_UNITS.keys()]
-
+# if any of the unit values change update the table columns
+unit_input = [Input('SI_'+a,'value') for a in METRIC_UNITS.keys()]
+unit_input += [Input('metric_'+a,'value') for a in METRIC_UNITS.keys()]
+unit_input += [Input('imperial_'+a,'value') for a in IMPERIAL_UNITS.keys()]
+    
 @app.callback(
-    Output('dummy-units', 'children'),
-    unit_callback_input,    
+    [
+        Output('beam-table', 'columns'),
+        Output('support-table', 'columns'),
+        Output('point-load-table', 'columns'),
+        Output('point-torque-table', 'columns'),
+        Output('distributed-load-table', 'columns'),
+        Output('query-table', 'columns'),
+        Output('results-table', 'columns'),
+    ],
+    [Input('option_units', 'value')] + unit_input,
+    State('input-json', 'data'),
 )
-def results_setup(
-    option,
+def update_tables(
+    option_units,
     SI_length,
     SI_force,
     SI_moment,
     SI_distributed,
-    SI_spring,
+    SI_stiffness,
     SI_A,
     SI_E,
     SI_I,
@@ -1997,7 +1999,7 @@ def results_setup(
     metric_force,
     metric_moment,
     metric_distributed,
-    metric_spring,
+    metric_stiffness,
     metric_A,
     metric_E,
     metric_I,
@@ -2006,51 +2008,172 @@ def results_setup(
     imperial_force,
     imperial_moment,
     imperial_distributed,
-    imperial_spring,
+    imperial_stiffness,
     imperial_A,
     imperial_E,
     imperial_I,
     imperial_deflection,
+    input_json_data,
     ):
-    if option == 'SI':
-        units = json.dumps({
-            'length':SI_length,
-            'force':SI_force,
-            'moment':SI_moment,
-            'distributed':SI_distributed,
-            'spring':SI_spring,
-            'A':SI_A,
-            'E':SI_E,
-            'I':SI_I,
-            'deflection':SI_deflection,
-        })
-        return units
-    elif option == 'metric':
-        units = json.dumps({
-            'length':metric_length,
-            'force':metric_force,
-            'moment':metric_moment,
-            'distributed':metric_distributed,
-            'spring':metric_spring,
-            'A':metric_A,
-            'E':metric_E,
-            'I':metric_I,
-            'deflection':metric_deflection,
-        })
-        return units
-    else:
-        units = json.dumps({
-            'length':imperial_length,
-            'force':imperial_force,
-            'moment':imperial_moment,
-            'distributed':imperial_distributed,
-            'spring':imperial_spring,
-            'A':imperial_A,
-            'E':imperial_E,
-            'I':imperial_I,
-            'deflection':imperial_deflection,
-        })
-        return units
+    if not input_json_data:
+        raise PreventUpdate
+    units = {}
+
+    units['SI'] = {
+        'length':SI_length,
+        'force':SI_force,
+        'moment':SI_moment,
+        'distributed':SI_distributed,
+        'stiffness':SI_stiffness,
+        'A':SI_A,
+        'E':SI_E,
+        'I':SI_I,
+        'deflection':SI_deflection,
+    }
+
+    units['metric'] = {
+        'length':metric_length,
+        'force':metric_force,
+        'moment':metric_moment,
+        'distributed':metric_distributed,
+        'stiffness':metric_stiffness,
+        'A':metric_A,
+        'E':metric_E,
+        'I':metric_I,
+        'deflection':metric_deflection,
+    }
+
+    units['imperial'] = {
+        'length':imperial_length,
+        'force':imperial_force,
+        'moment':imperial_moment,
+        'distributed':imperial_distributed,
+        'stiffness':imperial_stiffness,
+        'A':imperial_A,
+        'E':imperial_E,
+        'I':imperial_I,
+        'deflection':imperial_deflection,
+        }
+
+    #update table default propertie
+    beam_table_data['Length']['units'] = ' '+units[option_units]['length']
+    beam_table_data["Young's Modulus"]['units'] = ' ' +units[option_units]['E']
+    beam_table_data['Second Moment of Area']['units'] = ' '+units[option_units]['I']
+    beam_table_data['Cross-Sectional Area']['units'] = ' '+units[option_units]['A']
+
+    beam_table_columns = [
+        {
+            'name': d,
+            'id': d,
+            'deletable': False,
+            'renamable': False,
+            'type': beam_table_data[d]['type'],
+            'format': Format(
+                symbol=Symbol.yes,
+                symbol_suffix=beam_table_data[d]['units'])
+        } for d in beam_table_data.keys()
+    ]
+
+    support_table_data['Coordinate']['units'] = ' '+units[option_units]['length']
+    support_table_data['X']['units'] = ' '+units[option_units]['stiffness']
+    support_table_data['Y']['units'] = ' '+units[option_units]['stiffness']
+    support_table_data['M']['units'] = ' '+units[option_units]['stiffness']
+
+
+    support_table_columns =[
+        {
+            'name': d,
+            'id': d,
+            'deletable': False,
+            'renamable': False,
+            'type': support_table_data[d]['type'],
+            'format': Format(
+                symbol=Symbol.yes,
+                symbol_suffix=support_table_data[d]['units'])
+        } for d in support_table_data.keys()
+    ]
+
+    # Properties for point_load Tab
+    point_load_table_data['Coordinate']['units'] = ' '+units[option_units]['length']
+    point_load_table_data['Force']['units'] = ' '+units[option_units]['force']
+
+    point_load_table_columns= [
+        {
+            'name': d,
+            'id': d,
+            'deletable': False,
+            'renamable': False,
+            'type': point_load_table_data[d]['type'],
+            'format': Format(
+                symbol=Symbol.yes,
+                symbol_suffix=point_load_table_data[d]['units'])
+        } for d in point_load_table_data.keys()
+    ]
+
+    point_torque_table_data['Coordinate']['units'] = ' '+units[option_units]['length']
+    point_torque_table_data['Torque']['units'] = ' '+units[option_units]['moment']
+
+    point_torque_table_columns=[{
+            'name': d,
+            'id': d,
+            'deletable': False,
+            'renamable': False,
+            'type': point_torque_table_data[d]['type'],
+            'format': Format(
+                symbol=Symbol.yes,
+                symbol_suffix=point_torque_table_data[d]['units'])
+        } for d in point_torque_table_data.keys()
+    ]
+    
+    # Properties for distributed_load Tab
+    distributed_load_table_data['Start Coordinate']['units'] = ' '+units[option_units]['length']
+    distributed_load_table_data['End Coordinate']['units'] = ' '+units[option_units]['length']
+    distributed_load_table_data['Start Load']['units'] = ' '+units[option_units]['distributed']
+    distributed_load_table_data['End Load']['units'] = ' '+units[option_units]['distributed']
+
+    distributed_load_table_columns=[{
+            'name': d,
+            'id': d,
+            'deletable': False,
+            'renamable': False,
+            'type': distributed_load_table_data[d]['type'],
+            'format': Format(
+                symbol=Symbol.yes,
+                symbol_suffix=distributed_load_table_data[d]['units'])
+        } for d in distributed_load_table_data.keys()
+    ]
+
+    # Properties for query tab
+    query_table_columns= [
+        {
+            'name': i,
+            'id': i,
+            'deletable': False,
+            'renamable': False,
+            'type': 'numeric',
+            'format': Format(
+                symbol=Symbol.yes,
+                symbol_suffix=' '+units[option_units]['length'])
+        } for i in query_table_init.keys()
+    ]
+
+    results_table_columns = [
+        {"name": "", "id": "val"},
+        {"name": f"Normal Force ({units[option_units]['force']})", "id": 'NF (' + units[option_units]['force'] +')'},
+        {"name": f"Shear Force ({units[option_units]['force']})", "id": 'SF (' + units[option_units]['force'] +')'},
+        {"name": f"Bending Moment ({units[option_units]['moment']})", "id": 'BM (' + units[option_units]['moment'] +')'},
+        {"name": f"Deflection ({units[option_units]['deflection']})", "id": 'D (' + units[option_units]['deflection'] +')'},
+    ]
+
+    return [
+        beam_table_columns,
+        support_table_columns,
+        point_load_table_columns,
+        point_torque_table_columns,
+        distributed_load_table_columns,
+        query_table_columns,
+        results_table_columns,
+    ]
 
 # Generate Report
 @app.callback(
@@ -2061,22 +2184,28 @@ def results_setup(
      State('results-table', 'data'),
      State('input-json','data')]
 )
-def report(n, graph_1, graph_2, results, json):
+def report(n, graph_1, graph_2, results, input_json):
+    
     if not json:
         raise PreventUpdate
 
+    unit_information = json.loads(input_json)
+    option_units = unit_information['option_units']
+    units = unit_information['unit_dictionary']
+
     date = datetime.now().strftime("%d/%m/%Y")
     #if the botton has been clicked.
-    beam_data = "<!--" + json + "-->"
+    beam_data = "<!--" + input_json + "-->"
+
     if n > 0:
         # for each row in the results table,
         # write html table row
         table = [f"""<tr>
                 <td class="tg-baqh">{a['val']}</td>
-                <td class="tg-baqh">{a['NF']}</td>
-                <td class="tg-baqh">{a['SF']}</td>
-                <td class="tg-baqh">{a['BM']}</td>
-                <td class="tg-baqh">{a['D']}</td>
+                <td class="tg-baqh">{a['NF (' + units[option_units]['force'] +')']}</td>
+                <td class="tg-baqh">{a['SF (' + units[option_units]['force'] +')']}</td>
+                <td class="tg-baqh">{a['BM (' + units[option_units]['moment'] +')']}</td>
+                <td class="tg-baqh">{a['D (' + units[option_units]['deflection'] +')']}</td>
                 </tr>
                 """ for a in results]
 
@@ -2109,23 +2238,26 @@ def report(n, graph_1, graph_2, results, json):
             </style>
             <table class="tg">
             <thead>
-            <tr>
+            """+ 
+            f"""<tr>
                 <th class="tg-5gn2"></th>
-                <th class="tg-uqo3">Normal Force (N)</th>
-                <th class="tg-uqo3">Shear Force (N)</th>
-                <th class="tg-uqo3">Bending Moment (N.mm)</th>
-                <th class="tg-uqo3">Deflection (mm)</th>
+                <th class="tg-uqo3">Normal Force {units[option_units]['force']}</th>
+                <th class="tg-uqo3">Shear Force {units[option_units]['force']}</th>
+                <th class="tg-uqo3">Bending Moment {units[option_units]['moment']}</th>
+                <th class="tg-uqo3">Deflection {units[option_units]['deflection']}</th>
             </tr>""" + table + """</tbody>
             </table>
             """,
             to_html(fig=graph_2, full_html=False, include_plotlyjs='cdn'),
-            f'<i>Report generated at https://indeterminate-beam.herokuapp.com/ on {date}</i>',
+            f'<i>Report generated at https://indeterminate-beam.herokuapp.com/ {__version__} on {date}</i>',
             "</html>"
         ]
 
         content = "<br>".join(content)
 
-        return dict(content=content, filename="Report.html")
+        filename = "IndeterminateBeam_Report_"+ datetime.now().strftime("%d/%m/%Y") + ".html"
+
+        return dict(content=content, filename=filename)
 
 
 if __name__ == '__main__':

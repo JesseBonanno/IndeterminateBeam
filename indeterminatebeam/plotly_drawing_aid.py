@@ -261,7 +261,7 @@ def draw_arrow(fig, angle, force, x_sup, xoffset=0, yoffset=0, color='red',
             y=y0,
             xshift=x1,
             yshift=y1,
-            text=str(force)+" "+units,
+            text=f"{force:.3f} {units}",
             font_color=color,
             showarrow=False,
         )
@@ -453,7 +453,7 @@ def draw_moment(
             x=x_sup,
             y=0,
             yshift=-20,
-            text=str(moment)+" "+units,
+            text=f"{moment:.3f} {units}",
             font_color=color,
             showarrow=False,
         )
@@ -538,7 +538,7 @@ def draw_force(fig, load, row=None, col=None, units={'moment':'N.m', 'force':'N'
             # numpy array for x positions closely spaced (allow for graphing)
             x_vec = np.linspace(x0, x1, int(min((x1 - x0) * 100 + 1, 1e3)))
             y_lam = lambdify(x, expr, 'numpy')
-            y_vec = np.array([round(float(y_lam(t)), 3) for t in x_vec])
+            y_vec = np.array([round(float(y_lam(t)), 10) for t in x_vec])
 
         elif isinstance(load, UDL):
             name = 'UDL'
@@ -625,12 +625,12 @@ def draw_load_hoverlabel(fig, load, row=None, col=None, units={'length':'m','mom
 
         if isinstance(load, PointTorque):
             color = 'magenta'
-            hovertemplate = 'x: %{meta[1]} %{meta[2]}<br>Moment: %{meta[0]} %{meta[4]}'
+            hovertemplate = 'x: %{meta[1]:.3f} %{meta[2]}<br>Moment: %{meta[0]:.3f} %{meta[4]}'
             name = 'Point<br>Torque'
         elif isinstance(load, PointLoad):
             meta.append(load.angle)
-            hovertemplate = 'x: %{meta[1]} %{meta[2]}<br>Force: %{meta[0]} %{meta[3]}\
-            <br>Angle: %{meta[5]} deg'
+            hovertemplate = 'x: %{meta[1]:.3f} %{meta[2]}<br>Force: %{meta[0]:.3f} %{meta[3]}\
+            <br>Angle: %{meta[5]:.3f} deg'
             name = 'Point<br>Load'
 
         # Define hoverlabel as a marker with 0 opacity and a hovertemplate that
@@ -671,8 +671,8 @@ def draw_load_hoverlabel(fig, load, row=None, col=None, units={'length':'m','mom
         if isinstance(load, DistributedLoad):
             expr = load.expr
             meta = [
-                (x0, round(float(expr.subs(x, x0)), 3), angle),
-                (x1, round(float(expr.subs(x, x1)), 3), angle)
+                (x0, round(float(expr.subs(x, x0)), 10), angle),
+                (x1, round(float(expr.subs(x, x1)), 10), angle)
             ]
 
         elif isinstance(load, UDL):
@@ -687,8 +687,8 @@ def draw_load_hoverlabel(fig, load, row=None, col=None, units={'length':'m','mom
             ]
         
         
-        hovertemplate = 'x: %{meta[0]} %{meta[3]}<br>Force: %{meta[1]} %{meta[4]}\
-        <br>Angle: %{meta[2]} deg'
+        hovertemplate = 'x: %{meta[0]:.3f} %{meta[3]}<br>Force: %{meta[1]:.3f} %{meta[4]}\
+        <br>Angle: %{meta[2]:.3f} deg'
 
         for x_, y_, a_ in meta:
             trace = go.Scatter(
@@ -741,13 +741,13 @@ def draw_reaction_hoverlabel(fig, reactions, x_sup, row=None, col=None, units={'
     x_, y_, m_ = reactions
 
     # Write hovertemplate depending on support restraints
-    hovertemplate = "Reactions<br>x coord: %{x} %{meta[3]}"
+    hovertemplate = "Reactions<br>x coord: %{x:.3f} %{meta[3]}"
     if x_:
-        hovertemplate += "<br>x: %{meta[0]} %{meta[4]}"
+        hovertemplate += "<br>x: %{meta[0]:.3f} %{meta[4]}"
     if y_:
-        hovertemplate += "<br>y: %{meta[1]} %{meta[4]}"
+        hovertemplate += "<br>y: %{meta[1]:.3f} %{meta[4]}"
     if m_:
-        hovertemplate += "<br>m: %{meta[2]} %{meta[5]}"
+        hovertemplate += "<br>m: %{meta[2]:.3f} %{meta[5]}"
 
     # Create scatter object with opacity 0 for hovertemplate
     trace = go.Scatter(
@@ -770,7 +770,7 @@ def draw_reaction_hoverlabel(fig, reactions, x_sup, row=None, col=None, units={'
     return fig
 
 
-def draw_support_hoverlabel(fig, support, kx=0, ky=0, row=None, col=None, units={'length':'m','spring stiffness':"N/m"}):
+def draw_support_hoverlabel(fig, support, kx=0, ky=0, row=None, col=None, units={'length':'m','stiffness':"N/m"}):
     """Draw a reaction hoverlabel on a plotly figure
 
     Parameters
@@ -780,9 +780,9 @@ def draw_support_hoverlabel(fig, support, kx=0, ky=0, row=None, col=None, units=
     support : Support instance
         support to be represented on figure
     kx : int, optional
-        The spring stiffness of the support in the x direction, default 0
+        The stiffness of the support in the x direction, default 0
     ky : int, optional
-        The spring stiffness of the support in the y direction, default 0
+        The stiffness of the support in the y direction, default 0
     row : int or None,
         Row of subplot to draw line on. If None specified assumes a full plot,
         by default None.
@@ -791,7 +791,7 @@ def draw_support_hoverlabel(fig, support, kx=0, ky=0, row=None, col=None, units=
         plot, by default None.
     units : dict,
         unit dictionary associating the units with different properties of the beam.
-        default is {'length':'m','spring stiffness':"N/m"}.
+        default is {'length':'m','stiffness':"N/m"}.
 
     Returns
     -------
@@ -815,18 +815,18 @@ def draw_support_hoverlabel(fig, support, kx=0, ky=0, row=None, col=None, units=
         name = "Spring"
         color = 'orange'
         meta = [kx, ky, units['length'], units['distributed']]
-        hovertemplate = "x: %{x} %{meta[2]}"
+        hovertemplate = "x: %{x:.3f} %{meta[2]}"
         if kx:
-            hovertemplate += "<br>kx: %{meta[0]} %{meta[3]}"
+            hovertemplate += "<br>kx: %{meta[0]:.3f} %{meta[3]}"
         if ky:
-            hovertemplate += "<br>ky: %{meta[1]} %{meta[3]}"
+            hovertemplate += "<br>ky: %{meta[1]:.3f} %{meta[3]}"
 
     # Support
     else:
         name = "Support"
         color = 'blue'
         meta = [str(fixed), units['length']]
-        hovertemplate = "x: %{x} %{meta[1]}<br>Fixed: %{meta[0]}"
+        hovertemplate = "x: %{x:.3f} %{meta[1]}<br>Fixed: %{meta[0]}"
 
     # necessary for hover information, opacicity 0 so not visible otherwise
     # symbol is arbritrary since invisible
@@ -948,7 +948,7 @@ def draw_support_spring(
         Column of subplot to draw line on. If None specified assumes a full
         plot, by default None.
     units: str,
-        The units suffix drawn with the spring stiffness value. Default is 'N/m'.
+        The units suffix drawn with the stiffness value. Default is 'N/m'.
 
     Returns
     -------
@@ -1012,7 +1012,7 @@ def draw_support_spring(
                 y=0,
                 yshift=y0 * 1.5,
                 xshift=x0 * 2,
-                text=str(stiffness)+" "+units,
+                text=f"{stiffness:.3f} {units}",
                 font_color=color,
                 showarrow=False,
             )
@@ -1026,7 +1026,7 @@ def draw_support_spring(
     return fig
 
 
-def draw_support(fig, support, row=None, col=None, units = {'length':'m', 'spring stiffness':'N/m'}):
+def draw_support(fig, support, row=None, col=None, units = {'length':'m', 'stiffness':'N/m'}):
     """Draw a support on a plotly figure.
 
     Parameters
@@ -1043,7 +1043,7 @@ def draw_support(fig, support, row=None, col=None, units = {'length':'m', 'sprin
         plot, by default None.
     units : dict,
         unit dictionary associating the units with different properties of the beam.
-        default is {'length':'m', 'spring stiffness':'N/m'}.
+        default is {'length':'m', 'stiffness':'N/m'}.
 
     Returns
     -------
@@ -1167,7 +1167,7 @@ def draw_support(fig, support, row=None, col=None, units = {'length':'m', 'sprin
             orientation="right",
             row=row,
             col=col,
-            units=units['spring stiffness']
+            units=units['stiffness']
         )
 
     # if springy then draw a spring with up orientation
@@ -1178,7 +1178,7 @@ def draw_support(fig, support, row=None, col=None, units = {'length':'m', 'sprin
             orientation="up",
             row=row,
             col=col,
-            units=units['spring stiffness']
+            units=units['stiffness']
         )
 
     # draw hover label for springs

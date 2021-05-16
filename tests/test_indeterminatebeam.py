@@ -202,11 +202,9 @@ class BeamTestCase(unittest.TestCase):
         self.assertEqual(round(beam.get_bending_moment(0),1), 0)   
         self.assertEqual(round(beam.get_bending_moment(return_max=True),1), 4092.3)
             ##deflection
-        self.assertEqual(round(beam.get_deflection(3),3), 0.004)
-        self.assertEqual(round(beam.get_deflection(return_max=True),3), 0.004)
-        self.assertEqual(round(beam.get_deflection(return_min=True),3), -0.000) 
-        # rounding issue due to forcing 3dp in the analysis side. when units are
-        # absurd for the scenaria a lot of decimal places might be needed.
+        self.assertEqual(round(beam.get_deflection(3),4), 0.0036)
+        self.assertEqual(round(beam.get_deflection(return_max=True),4), 0.0041)
+        self.assertEqual(round(beam.get_deflection(return_min=True),4), -0.0003)
 
     def test_units(self):
         # test the validity of solutions when using the feature to change units

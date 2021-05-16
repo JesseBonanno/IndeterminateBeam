@@ -20,7 +20,7 @@ The package is based mainly on engineering concepts of statics as described in (
 
 The [package documentation](https://indeterminatebeam.readthedocs.io/en/main/theory.html) provides a brief overview of the theory behind the solutions used to calculate the forces on the indeterminate beam. The full package documentation can be accessed [here](https://indeterminatebeam.readthedocs.io/en/main/).
 
-A text-based example of the package can be found on this [Jupyter Notebook](https://colab.research.google.com/github/JesseBonanno/IndeterminateBeam/blob/main/docs/examples/readme_example.ipynb) and a web-based graphical user interface (GUI) is available at https://indeterminate-beam.herokuapp.com/.
+Text-based examples of the package presented in the [documentation](https://indeterminatebeam.readthedocs.io/en/main/examples.html) can be found on this [Jupyter Notebook](https://colab.research.google.com/github/JesseBonanno/IndeterminateBeam/blob/main/docs/examples/simple_demo.ipynb) and a web-based graphical user interface (GUI) is available at https://indeterminate-beam.herokuapp.com/.
 
 ## Project Purpose
 

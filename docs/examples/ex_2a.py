@@ -1,4 +1,4 @@
-# arbritrary example defined in README.md
+# Arbritrary example defined in README.md
 from indeterminatebeam import Beam, Support, PointLoadV, PointTorque, UDLV, DistributedLoadV
 beam = Beam(7)                          # Initialize a Beam object of length 7 m with E and I as defaults
 beam_2 = Beam(9,E=2000, I =100000)      # Initialize a Beam specifying some beam parameters

@@ -30,9 +30,9 @@ The ``indeterminatebeam`` `package repository <https://github.com/JesseBonanno/I
 
 .. toctree::
    :maxdepth: 2
-   :caption: Example
+   :caption: Examples
 
-   example
+   examples
 
 .. toctree::
    :maxdepth: 2

@@ -27,11 +27,17 @@ from sympy.abc import x
 from plotly.subplots import make_subplots
 import plotly.graph_objects as go
 
-# Local Application Imports
+# Local Application Imports'
+import os, sys
+sys.path.insert(0, os.path.abspath('../'))
+
 from indeterminatebeam.data_validation import (
     assert_number,
     assert_positive_number,
-    assert_strictly_positive_number, assert_length
+    assert_strictly_positive_number,
+    assert_length,
+    assert_list_contents,
+    assert_contents,
 )
 from indeterminatebeam.loading import (
     PointLoad,
@@ -64,7 +70,7 @@ from indeterminatebeam.plotly_drawing_aid import (
     draw_support
 )
 
-from indeterminatebeam.units import IMPERIAL_UNITS, METRIC_UNITS
+from indeterminatebeam.units import IMPERIAL_UNITS, METRIC_UNITS, UNIT_KEYS, UNIT_VALUES
 
 class Support:
     """
@@ -128,19 +134,10 @@ class Support:
             assert_positive_number(ky, 'ky')
 
         # validate fixed tuple elements
-        for a in fixed:
-            if a not in [0, 1]:
-                raise ValueError(
-                    "The provided fixed parameter, must be a tuple of " +
-                    "booleans of length 3"
-                )
+        assert_list_contents(fixed, (0,1), "fixed")
 
         # validate fixed tuple length
-        if len(fixed) != 3:
-            raise ValueError(
-                "The provided fixed parameter, must be a tuple of " +
-                "booleans of length 3"
-            )
+        assert_length(fixed, 3, "fixed")
 
         # Spring representation, set rigid to infinity instead of 1.
         # Otherwise set to 0
@@ -276,7 +273,7 @@ class Beam:
             'force': 'N',
             'moment': 'N.m',
             'distributed': 'N/m',
-            'spring stiffness': 'N/m',
+            'stiffness': 'N/m',
             'A': 'm2',
             "E": 'Pa',
             'I': 'm4',
@@ -304,7 +301,7 @@ class Beam:
         key: string, default 'length'
             Identifying property with unit to be changed.
             One of the following: 'length', 'force', 'moment',
-            'distributed', 'spring stiffness', 'A', 'E', 'I',
+            'distributed', 'stiffness', 'A', 'E', 'I',
             'deflection'
         unit: string, default 'm'
             unit to assign should contain a unit balanced representation
@@ -321,7 +318,7 @@ class Beam:
                 'force': 'N',
                 'moment': 'N.m',
                 'distributed': 'N/m',
-                'spring stiffness': 'N/m',
+                'stiffness': 'N/m',
                 'A': 'm2',
                 "E": 'Pa',
                 'I': 'm4',
@@ -329,19 +326,11 @@ class Beam:
             }
             self._analysis_reset()
         else:  
-            keys = [k for k in self._units.keys()]
-            if key not in keys:
-                _ = ", ".join(keys)
-                raise ValueError(f'key should be on of the following: {_}')
-            else:
-                units = [u for u in METRIC_UNITS[key].keys()]
-                units += [u for u in IMPERIAL_UNITS[key].keys()]
-                if unit not in units:
-                    _ = ", ".join(units)
-                    raise ValueError(f'unit for "{key}" should be on of the following: {_}')
-                else:
-                    self._units[key] = unit
-                    self._analysis_reset()
+            assert_contents(key,UNIT_KEYS,"key")
+            assert_contents(unit, UNIT_VALUES[key], "unit")
+
+            self._units[key] = unit
+            self._analysis_reset()
 
     def add_loads(self, *loads):
         """Associate load objects with the beam object.
@@ -528,7 +517,10 @@ class Beam:
         # i.e. the number that the input should be multiplied by to change to SI
         units = {}
         for key, val in self._units.items():
-            units[key] = METRIC_UNITS[key][val]
+            if val in METRIC_UNITS[key].keys():
+                units[key] = METRIC_UNITS[key][val]
+            else:
+                units[key] = IMPERIAL_UNITS[key][val]
         
         x1 = self._x1
 
@@ -710,7 +702,7 @@ class Beam:
             equations_ym.append(
                 v_EI.subs(x, reaction['position'])
                 / (self._E * units['E'] * self._I * units['I'])
-                + reaction['variable'] / (reaction['stiffness'] * units['spring stiffness'])
+                + reaction['variable'] / (reaction['stiffness'] * units['stiffness'])
             )
 
         # equation for normal forces
@@ -740,9 +732,9 @@ class Beam:
                         Nv_EA.subs(x, end['position']) -
                         Nv_EA.subs(x, start['position'])
                     ) / (self._E * units['E'] * self._A * units['A'])
-                    + start['variable'] / (start['stiffness'] * units['spring stiffness'])
+                    + start['variable'] / (start['stiffness'] * units['stiffness'])
                     # represents elongation displacment on right
-                    - end['variable'] / (end['stiffness'] * units['spring stiffness'])
+                    - end['variable'] / (end['stiffness'] * units['stiffness'])
                 )
 
         # compute analysis with linsolve
@@ -788,7 +780,7 @@ class Beam:
                 # as key, and using i for correct position in list.
                 # Note list for each supports reaction forces is of form
                 # [x,y,m].
-                self._reactions[position][i] = float(round(ans/units['force'], 5))
+                self._reactions[position][i] = float(round(ans/units['force'], 10))
 
         # set calculated beam equations on beam changing all singularity
         # functions to piecewise functions (see sympy_expr_to_piecewise
@@ -913,9 +905,8 @@ class Beam:
         # for the reaction force in that direction
         if direction:
             # check direction valid
-            if direction not in directions:
-                raise ValueError(
-                    "direction should be the value 'x', 'y' or 'm'")
+            assert_contents(direction, directions, "direction")
+
             # if direction valid return appropriate reaction fore
             return self._reactions[x_coord][directions.index(direction)]
 
@@ -987,8 +978,8 @@ class Beam:
                 l = p - 0.0000001
                 r = p + 0.0000001
 
-                a = round(float(y_lam(l)), 3)
-                b = round(float(y_lam(r)), 3)
+                a = round(float(y_lam(l)), 10)
+                b = round(float(y_lam(r)), 10)
 
                 c = max([a,b], key = abs)
                 x_.append(c)
@@ -1003,11 +994,11 @@ class Beam:
         max_ = float(y_vec.max())
 
         if return_max:
-            return round(max_, 3)
+            return round(max_, 10)
         elif return_min:
-            return round(min_, 3)
+            return round(min_, 10)
         else:
-            return round(max(abs(min_), max_), 3)
+            return round(max(abs(min_), max_), 10)
 
     def get_bending_moment(self, *x_coord, return_max=False,
                            return_min=False, return_absmax=False):
@@ -1475,9 +1466,9 @@ class Beam:
             fig.update_yaxes(visible=False, range=[-3, 3], fixedrange=True)
 
         for position, values in self._reactions.items():
-            x_ = round(values[0], 3)
-            y_ = round(values[1], 3)
-            m_ = round(values[2], 3)
+            x_ = round(values[0], 10)
+            y_ = round(values[1], 10)
+            m_ = round(values[2], 10)
 
             # if there are reaction forces
             if abs(x_) > 0 or abs(y_) > 0 or abs(m_) > 0:
@@ -1846,7 +1837,7 @@ class Beam:
 
                 annotation = dict(
                     x=q_res, y=q_val,
-                    text=f"{str(q_val)} {xunits}<br>{str(q_res)} {yunits}",
+                    text=f"{q_val:.3f} {xunits}<br>{q_res:.3f} {yunits}",
                     showarrow=True,
                     arrowhead=1,
                     xref='x',
@@ -1857,7 +1848,7 @@ class Beam:
             else:
                 annotation = dict(
                     x=q_val, y=q_res,
-                    text=f"{str(q_val)} {xunits}<br>{str(q_res)} {yunits}",
+                    text=f"{q_val:.3f} {xunits}<br>{q_res:.3f} {yunits}",
                     showarrow=True,
                     arrowhead=1,
                     xref='x',
@@ -1957,16 +1948,51 @@ if __name__ == "__main__":
     # if want to run directly from this file add the following
     # two lines at the start of this script:
 
-    beam = Beam(3)
 
-    a = Support(0,(1,1,1))
-    b = Support(3,(0,1,0))
+    # Lets define every possible degree of freedom combination for
+    # supports below, and view them on a plot:
+    support_0 = Support(0, (1,1,1))     # conventional fixed support
+    support_1 = Support(1, (1,1,0))     # conventional pin support
+    support_2 = Support(2, (1,0,1))     
+    support_3 = Support(3, (0,1,1))
+    support_4 = Support(4, (0,0,1))
+    support_5 = Support(5, (0,1,0))     # conventional roller support
+    support_6 = Support(6, (1,0,0))
 
-    load_1 = PointLoadV(-8000,1.5)
-    load_2 = UDLV(-6000, (0,3))
+    # Note we could also explicitly define parameters as follows:
+    support_0 = Support(coord=0, fixed=(1,1,1))
 
-    beam.add_supports(a,b)
-    beam.add_loads(load_1,load_2)
+    # Now lets define some spring supports
+    support_7 = Support(7, (0,0,0), kx = 10)    #spring in x direction only
+    support_8 = Support(8, (0,0,0), ky = 5)     # spring in y direction only
+    support_9 = Support(9, (0,0,0), kx = 100, ky = 100)     # spring in x and y direction
+
+    # Now lets define a support which is fixed in one degree of freedom
+    # but has a spring stiffness in another degree of freedom
+    support_10 = Support(10, (0,1,0), kx = 10) #spring in x direction, fixed in y direction
+    support_11 = Support(11, (0,1,1), kx = 10) #spring in x direction, fixed in y and m direction
+
+    # Note we could also do the following for the same result since the spring
+    # stiffness overides the fixed boolean in respective directions
+    support_10 = Support(10, (1,1,0), kx =10)
+
+    # Now lets plot all the supports we have created
+    beam = Beam(11)
+
+    beam.add_supports(
+        support_0,
+        support_1,
+        support_2,
+        support_3,
+        support_4,
+        support_5,
+        support_6,
+        support_7,
+        support_8,
+        support_9,
+        support_10,
+        support_11,
+    )
 
     beam.analyse()
 

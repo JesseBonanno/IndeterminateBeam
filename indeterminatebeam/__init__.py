@@ -14,5 +14,12 @@ from indeterminatebeam.loading import (
     UDLH,
     UDLV
 )
-from indeterminatebeam.data_validation import assert_length
+from indeterminatebeam.data_validation import (
+    assert_number,
+    assert_positive_number,
+    assert_strictly_positive_number,
+    assert_length,
+    assert_list_contents,
+    assert_contents,
+)
 from indeterminatebeam.units import METRIC_UNITS, IMPERIAL_UNITS
