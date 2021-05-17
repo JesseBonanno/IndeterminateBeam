@@ -718,6 +718,26 @@ option_support_input = dbc.FormGroup(
     row=True,
 )
 
+option_default_support = dbc.FormGroup(
+    [
+        dbc.Label("Default Support Type", html_for="option_default_support", width=3),
+        dbc.Col(
+            dbc.RadioItems(
+                id="option_default_support",
+                options=[
+                    {'label': 'Fixed', 'value': 'Fixed'},
+                    {'label': 'Pinned', 'value': 'Pinned'},
+                    {'label': 'Roller', 'value': 'Roller'},
+                ],
+                value='Fixed',
+                inline=True,
+            ),
+            width=8,
+        ),
+    ],
+    row=True,
+)
+
 
 option_positive_direction_y = dbc.FormGroup(
     [
@@ -903,6 +923,7 @@ option_general_tab = dbc.Form([
     html.Br(),
     option_result_table,
     option_support_input,
+    option_default_support,
     option_positive_direction_y,
     option_data_point,
 ])
@@ -1271,6 +1292,7 @@ unit_callback_state += [State('imperial_'+a,'value') for a in IMPERIAL_UNITS.key
         State('graph_2', 'figure'),
         State('input-json', 'data'),
         State('option_support_input', 'value'),
+        State('option_default_support','value'),
         State('option_positive_direction_y', 'value'),
         State('option_data_points', 'value'),
         State('option_result_table', 'value'),
@@ -1291,6 +1313,7 @@ def analyse_beam(
         graph_2,
         prev_input,
         option_support,
+        option_default_support,
         positive_y_direction,
         data_points,
         option_result_table,
@@ -1382,6 +1405,7 @@ def analyse_beam(
             'distributed_loads': distributed_loads,
             'querys': querys,
             'adv_sup': option_support,
+            'default_support':option_default_support,
             'y': positive_y_direction,
             'data_points': data_points,
             'option_units': option_units,
@@ -1620,6 +1644,7 @@ unit_state += [State('imperial_'+a,'value') for a in IMPERIAL_UNITS.keys()]
         Output('distributed-load-table', 'data'),
         Output('query-table', 'data'),
         Output('option_support_input', 'value'),
+        Output('option_default_support','value'),
         Output('option_positive_direction_y', 'value'),
         Output('option_result_table', 'value'),
         Output('option_data_points', 'value'),
@@ -1646,6 +1671,7 @@ unit_state += [State('imperial_'+a,'value') for a in IMPERIAL_UNITS.keys()]
         State('distributed-load-table', 'data'),
         State('query-table', 'data'),
         State('option_support_input', 'value'),
+        State('option_default_support','value'),
         State('option_positive_direction_y', 'value'),
         State('option_result_table', 'value'),
         State('option_data_points', 'value'),
@@ -1671,6 +1697,7 @@ def update_tables(
     distributed_load_table_rows,
     query_table_rows,
     option_support_input,
+    option_default_support,
     option_positive_direction_y,
     option_result_table,
     option_data_points,
@@ -1775,6 +1802,7 @@ def update_tables(
                 distributed_load_table_rows,
                 query_table_rows,
                 option_support_input,
+                option_default_support,
                 option_positive_direction_y,
                 option_result_table,
                 option_data_points,
@@ -1806,6 +1834,7 @@ def update_tables(
         distributed_load_table_rows = data['distributed_loads']
         query_table_rows = data['querys']
         option_support_input = data['adv_sup']
+        option_default_support = data['default_support']
         option_positive_direction_y = data['y']
         option_result_table = data['result_table']
         option_data_points = data['data_points']
@@ -1825,6 +1854,7 @@ def update_tables(
             distributed_load_table_rows,
             query_table_rows,
             option_support_input,
+            option_default_support,
             option_positive_direction_y,
             option_result_table,
             option_data_points,
@@ -1839,7 +1869,22 @@ def update_tables(
     if button_id == 'support-rows-button':
         advanced_support_table_rows.append(support_table_init)
     elif button_id == 'basic-support-rows-button':
-        basic_support_table_rows.append(basic_support_table_init)
+
+        bs_table_data = {
+            'Coordinate': {
+                'init': 0,
+            },
+            "Support": {
+                'init': option_default_support,
+            }
+        }
+
+        bs_table_init = {
+            k: v['init'] for k, v in bs_table_data.items()
+        }
+
+        basic_support_table_rows.append(bs_table_init)
+
     elif button_id == 'point-load-rows-button':
         point_load_table_rows.append(point_load_table_init)
 
@@ -1861,6 +1906,7 @@ def update_tables(
             [distributed_load_table_init],
             [],
             option_support_input,
+            option_default_support,
             option_positive_direction_y,
             option_result_table,
             option_data_points,
@@ -1884,6 +1930,7 @@ def update_tables(
             distributed_load_table_rows,
             query_table_rows,
             'basic',
+            'Fixed',
             'down',
             'show',
             50,
@@ -1900,6 +1947,7 @@ def update_tables(
         distributed_load_table_rows,
         query_table_rows,
         option_support_input,
+        option_default_support,
         option_positive_direction_y,
         option_result_table,
         option_data_points,
@@ -1975,13 +2023,16 @@ unit_input += [Input('imperial_'+a,'value') for a in IMPERIAL_UNITS.keys()]
     [
         Output('beam-table', 'columns'),
         Output('support-table', 'columns'),
+        Output('basic-support-table','columns'),
         Output('point-load-table', 'columns'),
         Output('point-torque-table', 'columns'),
         Output('distributed-load-table', 'columns'),
         Output('query-table', 'columns'),
         Output('results-table', 'columns'),
     ],
-    [Input('option_units', 'value')] + unit_input,
+    [
+        Input('option_units', 'value'),
+    ] + unit_input,
     State('input-json', 'data'),
 )
 def update_tables(
@@ -2071,14 +2122,46 @@ def update_tables(
             'format': Format(
                 symbol=Symbol.yes,
                 symbol_suffix=beam_table_data[d]['units'])
-        } for d in beam_table_data.keys()
-    ]
+        } for d in beam_table_data.keys()]
 
     support_table_data['Coordinate']['units'] = ' '+units[option_units]['length']
     support_table_data['X']['units'] = ' '+units[option_units]['stiffness']
     support_table_data['Y']['units'] = ' '+units[option_units]['stiffness']
     support_table_data['M']['units'] = ' '+units[option_units]['stiffness']
 
+    support_table_columns =[
+        {
+            'name': d,
+            'id': d,
+            'deletable': False,
+            'renamable': False,
+            'type': support_table_data[d]['type'],
+            'format': Format(
+                symbol=Symbol.yes,
+                symbol_suffix=support_table_data[d]['units'])
+        } for d in support_table_data.keys()]
+
+    basic_support_table_columns =[
+        {
+            'name': 'Coordinate',
+            'id': 'Coordinate',
+            'deletable': False,
+            'renamable': False,
+            'type': 'numeric',
+            'presentation': 'input',
+            'format': Format(
+                symbol=Symbol.yes,
+                symbol_suffix=' '+units[option_units]['length'])
+        },
+        {
+            'name': 'Support',
+            'id': 'Support',
+            'deletable': False,
+            'renamable': False,
+            'type': 'any',
+            'presentation': 'dropdown',
+        },
+    ]
 
     support_table_columns =[
         {
@@ -2092,6 +2175,7 @@ def update_tables(
                 symbol_suffix=support_table_data[d]['units'])
         } for d in support_table_data.keys()
     ]
+
 
     # Properties for point_load Tab
     point_load_table_data['Coordinate']['units'] = ' '+units[option_units]['length']
@@ -2168,6 +2252,7 @@ def update_tables(
     return [
         beam_table_columns,
         support_table_columns,
+        basic_support_table_columns,
         point_load_table_columns,
         point_torque_table_columns,
         distributed_load_table_columns,
