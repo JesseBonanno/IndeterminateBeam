@@ -80,9 +80,6 @@ For more, you can view the following:
 * [![Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/JesseBonanno/IndeterminateBeam/blob/main/docs/examples/simple_demo.ipynb)
    The Python based Jupyter Notebook examples
 * [![Article](https://img.shields.io/badge/Article-Complete-green.svg)](https://github.com/JesseBonanno/IndeterminateBeam/blob/main/IndeterminateBeam_Article.pdf)
-
-Note: As the Python package calculations are purely analytical calculation \
-times can be relatively slow.
 ''')
 
 # the content for the sidebar
@@ -114,6 +111,62 @@ copyright_ = dbc.Row(
     ])
 
 
+
+def create_table(id_, table, init, row_deletable = True):
+    if init:
+        data = [init]
+    # used to initialise no data for the query table
+    else:
+        data = []
+
+    table = dash_table.DataTable(
+        id=id_,
+        columns=[{
+            'name': d,
+            'id': d,
+            'deletable': False,
+            'renamable': False,
+            'type': table[d]['type'],
+            'format': Format(
+                symbol=Symbol.yes,
+                symbol_suffix=table[d]['units'])
+        } for d in table.keys()],
+        data=data,
+        editable=True,
+        row_deletable=row_deletable,
+    )
+    return table
+
+
+def create_content(instruction_name, instructions, table, button_label="", button_id="", add_button = True):
+    if add_button:
+        _ = [
+            table,
+            html.Br(),
+            html.Button(button_label, id=button_id, n_clicks=0),
+            dbc.Collapse(
+                dbc.Card(dbc.CardBody(instructions)),
+                id=instruction_name,
+            ),
+        ]
+    else:
+        _ = [
+            table,
+            html.Br(),
+            dbc.Collapse(
+                dbc.Card(dbc.CardBody(instructions)),
+                id=instruction_name,
+            ),
+        ]
+
+    card = dbc.Card(
+        dbc.CardBody(_),
+        className="mt-3",
+    )
+
+    return card
+
+            
 # Properties for Beam Tab
 
 beam_table_data = {
@@ -141,22 +194,7 @@ beam_table_data = {
 
 beam_table_init = {k: v['init'] for k, v in beam_table_data.items()}
 
-beam_table = dash_table.DataTable(
-    id='beam-table',
-    columns=[{
-        'name': d,
-        'id': d,
-        'deletable': False,
-        'renamable': False,
-        'type': beam_table_data[d]['type'],
-        'format': Format(
-            symbol=Symbol.yes,
-            symbol_suffix=beam_table_data[d]['units'])
-    } for d in beam_table_data.keys()],
-    data=[beam_table_init],
-    editable=True,
-    row_deletable=False,
-)
+beam_table = create_table('beam-table', beam_table_data, beam_table_init, row_deletable=False)
 
 beam_instructions = dcc.Markdown('''
 
@@ -173,19 +211,8 @@ beam_instructions = dcc.Markdown('''
             is specified E and A will affect the load distribution for the horizontal loads only.
             ''')
 
-beam_content = dbc.Card(
-    dbc.CardBody(
-        [
-            beam_table,
-            html.Br(),
-            dbc.Collapse(
-                dbc.Card(dbc.CardBody(beam_instructions)),
-                id="beam_instructions",
-            ),
-        ]
-    ),
-    className="mt-3",
-)
+beam_content = create_content('beam_instructions', beam_instructions, beam_table)
+
 
 # Properties for (Advanced) Support Tab
 # Just do as a table but let inputs be
@@ -217,22 +244,7 @@ support_table_data = {
 
 support_table_init = {k: v['init'] for k, v in support_table_data.items()}
 
-support_table = dash_table.DataTable(
-    id='support-table',
-    columns=[{
-        'name': d,
-        'id': d,
-        'deletable': False,
-        'renamable': False,
-        'type': support_table_data[d]['type'],
-        'format': Format(
-            symbol=Symbol.yes,
-            symbol_suffix=support_table_data[d]['units'])
-    } for d in support_table_data.keys()],
-    data=[support_table_init],
-    editable=True,
-    row_deletable=True,
-)
+support_table = create_table('support-table', support_table_data, support_table_init)
 
 support_instructions = dcc.Markdown('''
 
@@ -247,23 +259,7 @@ support_instructions = dcc.Markdown('''
 
             ''')
 
-support_content = dbc.Card(
-    dbc.CardBody(
-        [
-            support_table,
-            html.Br(),
-            html.Button('Add Support', id='support-rows-button', n_clicks=0),
-            dbc.Collapse(
-                [
-                    html.Br(),
-                    dbc.Card(dbc.CardBody(support_instructions))
-                ],
-                id="support_instructions",
-            ),
-        ]
-    ),
-    className="mt-3",
-)
+support_content = create_content('support_instructions', support_instructions, support_table, "Add Support", 'support-rows-button')
 
 # Basic support
 
@@ -274,7 +270,7 @@ basic_support_table_data = {
         'presentation': 'input',
     },
     "Support": {
-        'init': 'Fixed',
+        'init': 'fixed',
         'type': 'any',
         'presentation': 'dropdown',
     }
@@ -283,6 +279,7 @@ basic_support_table_data = {
 
 basic_support_table_init = {k: v['init']
                             for k, v in basic_support_table_data.items()}
+
 
 basic_support_table = dash_table.DataTable(
     id='basic-support-table',
@@ -300,9 +297,9 @@ basic_support_table = dash_table.DataTable(
     dropdown={
         "Support": {
             'options': [
-                {'label': 'Fixed', 'value': 'Fixed'},
-                {'label': 'Pinned', 'value': 'Pinned'},
-                {'label': 'Roller', 'value': 'Roller'},
+                {'label': 'Fixed', 'value': 'fixed'},
+                {'label': 'Pinned', 'value': 'pinned'},
+                {'label': 'Roller', 'value': 'roller'},
             ]
         }
     },
@@ -366,22 +363,7 @@ point_load_table_data = {
 point_load_table_init = {k: v['init']
                          for k, v in point_load_table_data.items()}
 
-point_load_table = dash_table.DataTable(
-    id='point-load-table',
-    columns=[{
-        'name': d,
-        'id': d,
-        'deletable': False,
-        'renamable': False,
-        'type': point_load_table_data[d]['type'],
-        'format': Format(
-            symbol=Symbol.yes,
-            symbol_suffix=point_load_table_data[d]['units'])
-    } for d in point_load_table_data.keys()],
-    data=[point_load_table_init],
-    editable=True,
-    row_deletable=True,
-)
+point_load_table = create_table('point-load-table', point_load_table_data, point_load_table_init)
 
 point_load_instructions = dcc.Markdown('''
 
@@ -396,26 +378,7 @@ point_load_instructions = dcc.Markdown('''
 
             ''')
 
-point_load_content = dbc.Card(
-    dbc.CardBody(
-        [
-            point_load_table,
-            html.Br(),
-            html.Button(
-                'Add Point Load',
-                id='point-load-rows-button',
-                n_clicks=0),
-            dbc.Collapse(
-                [
-                    html.Br(),
-                    dbc.Card(dbc.CardBody(point_load_instructions))
-                ],
-                id="point_load_instructions",
-            ),
-        ]
-    ),
-    className="mt-3",
-)
+point_load_content = create_content('point_load_instructions', point_load_instructions, point_load_table, 'Add Point Load', 'point-load-rows-button')
 
 # Properties for point_torque Tab
 point_torque_table_data = {
@@ -434,22 +397,7 @@ point_torque_table_data = {
 point_torque_table_init = {k: v['init']
                            for k, v in point_torque_table_data.items()}
 
-point_torque_table = dash_table.DataTable(
-    id='point-torque-table',
-    columns=[{
-        'name': d,
-        'id': d,
-        'deletable': False,
-        'renamable': False,
-        'type': point_torque_table_data[d]['type'],
-        'format': Format(
-            symbol=Symbol.yes,
-            symbol_suffix=point_torque_table_data[d]['units'])
-    } for d in point_torque_table_data.keys()],
-    data=[point_torque_table_init],
-    editable=True,
-    row_deletable=True,
-)
+point_torque_table = create_table('point-torque-table', point_torque_table_data, point_load_table_init)
 
 point_torque_instructions = dcc.Markdown('''
 
@@ -462,26 +410,7 @@ point_torque_instructions = dcc.Markdown('''
 
             ''')
 
-point_torque_content = dbc.Card(
-    dbc.CardBody(
-        [
-            point_torque_table,
-            html.Br(),
-            html.Button(
-                'Add Point Torque',
-                id='point-torque-rows-button',
-                n_clicks=0),
-            dbc.Collapse(
-                [
-                    html.Br(),
-                    dbc.Card(dbc.CardBody(point_torque_instructions))
-                ],
-                id="point_torque_instructions",
-            ),
-        ]
-    ),
-    className="mt-3",
-)
+point_torque_content = create_content('point_torque_instructions', point_torque_instructions, point_torque_table, 'Add Point Torque', 'point-torque-rows-button')
 
 # Properties for distributed_load Tab
 
@@ -512,22 +441,7 @@ distributed_load_table_data = {
 distributed_load_table_init = {k: v['init']
                                for k, v in distributed_load_table_data.items()}
 
-distributed_load_table = dash_table.DataTable(
-    id='distributed-load-table',
-    columns=[{
-        'name': d,
-        'id': d,
-        'deletable': False,
-        'renamable': False,
-        'type': distributed_load_table_data[d]['type'],
-        'format': Format(
-            symbol=Symbol.yes,
-            symbol_suffix=distributed_load_table_data[d]['units'])
-    } for d in distributed_load_table_data.keys()],
-    data=[distributed_load_table_init],
-    editable=True,
-    row_deletable=True,
-)
+distributed_load_table = create_table('distributed-load-table', distributed_load_table_data, distributed_load_table_init)
 
 distributed_load_instructions = dcc.Markdown('''
 
@@ -541,50 +455,28 @@ distributed_load_instructions = dcc.Markdown('''
 
             ''')
 
-distributed_load_content = dbc.Card(
-    dbc.CardBody(
-        [
-            distributed_load_table,
-            html.Br(),
-            html.Button(
-                'Add Distributed Load',
-                id='distributed-load-rows-button',
-                n_clicks=0),
-            html.Br(),
-            dbc.Collapse(
-                [
-                    html.Br(),
-                    dbc.Card(dbc.CardBody(distributed_load_instructions))
-                ],
-                id="distributed_load_instructions",
-            ),
-
-        ]
-    ),
-    className="mt-3",
-)
+distributed_load_content = create_content(
+    'distributed_load_instructions',
+    distributed_load_instructions,
+    distributed_load_table,
+    'Add Distributed Load',
+    'distributed-load-rows-button'
+    )
 
 # Properties for query tab
 query_table_init = {
     'Query coordinate': 0
 }
 
-query_table = dash_table.DataTable(
-    id='query-table',
-    columns=[{
-        'name': i,
-        'id': i,
-        'deletable': False,
-        'renamable': False,
-        'type': 'numeric',
-        'format': Format(
-            symbol=Symbol.yes,
-            symbol_suffix=' m')
-    } for i in query_table_init.keys()],
-    data=[],
-    editable=True,
-    row_deletable=True,
-)
+query_table_data = {
+    'Query coordinate': {
+        'init': 0,
+        'units': ' m',
+        'type': 'numeric'
+    },
+}
+
+query_table = create_table('query-table',query_table_data, None)
 
 query_instructions = dcc.Markdown('''
 
@@ -594,24 +486,7 @@ query_instructions = dcc.Markdown('''
 
             ''')
 
-query_content = dbc.Card(
-    dbc.CardBody(
-        [
-            query_table,
-            html.Br(),
-            html.Button('Add Query', id='query-rows-button', n_clicks=0),
-            dbc.Collapse(
-                [
-                    html.Br(),
-                    dbc.Card(dbc.CardBody(query_instructions))
-                ],
-                id="query_instructions",
-            ),
-
-        ]
-    ),
-    className="mt-3",
-)
+query_content = create_content('query_instructions', query_instructions, query_table, 'Add Query', 'query-rows-button')
 
 # Properties for results section
 results_columns = [
@@ -699,83 +574,50 @@ option_instructions = dcc.Markdown('''
                results in longer calculation speeds.
             ''')
 
-option_support_input = dbc.FormGroup(
-    [
-        dbc.Label("Support Mode", html_for="option_support_input", width=3),
-        dbc.Col(
-            dbc.RadioItems(
-                id="option_support_input",
-                options=[
-                    {'label': 'Basic', 'value': 'basic'},
-                    {'label': 'Advanced', 'value': 'advanced'},
-                ],
-                value='basic',
-                inline=True,
+def create_option(label, id_, options=[],default=None):
+    option = dbc.FormGroup(
+        [
+            dbc.Label(label, html_for=id_, width=3),
+            dbc.Col(
+                dbc.RadioItems(
+                    id=id_,
+                    options=[{'label':a, 'value':a.lower()} for a in options],
+                    value=default,
+                    inline=True,
+                ),
+                width=8,
             ),
-            width=8,
-        ),
-    ],
-    row=True,
+        ],
+        row=True,
+    )
+    return option
+
+
+option_support_input = create_option(
+    'Support Mode',
+    "option_support_input",
+    ['Basic', 'Advanced'],
+    'basic'
 )
 
-option_default_support = dbc.FormGroup(
-    [
-        dbc.Label("Default Support Type", html_for="option_default_support", width=3),
-        dbc.Col(
-            dbc.RadioItems(
-                id="option_default_support",
-                options=[
-                    {'label': 'Fixed', 'value': 'Fixed'},
-                    {'label': 'Pinned', 'value': 'Pinned'},
-                    {'label': 'Roller', 'value': 'Roller'},
-                ],
-                value='Fixed',
-                inline=True,
-            ),
-            width=8,
-        ),
-    ],
-    row=True,
+option_default_support = create_option(
+    'Default Support Type',
+    'option_default_support',
+    ['Fixed', 'Pinned', 'Roller'],
+    'fixed'
 )
 
-
-option_positive_direction_y = dbc.FormGroup(
-    [
-        dbc.Label("Positive y direction", html_for='option_positive_direction_y', width=3),
-        dbc.Col(
-            dbc.RadioItems(
-                id='option_positive_direction_y',
-                options=[
-                    {'label': 'Up', 'value': 'up'},
-                    {'label': 'Down', 'value': 'down'},
-                ],
-                value='down',
-                inline=True,
-            ),
-            width=8,
-        ),
-    ],
-    row=True,
+option_positive_direction_y = create_option(
+    'Positive y direction',
+    'option_positive_direction_y',
+    ['Up', 'Down'],
+    'down'
 )
-
-
-option_result_table = dbc.FormGroup(
-    [
-        dbc.Label("Result Table", html_for="option_result_table", width=3),
-        dbc.Col(
-            dbc.RadioItems(
-                id="option_result_table",
-                options=[
-                    {'label': 'Hide', 'value': 'hide'},
-                    {'label': 'Show', 'value': 'show'},
-                ],
-                value='show',
-                inline=True,
-            ),
-            width=8,
-        ),
-    ],
-    row=True,
+option_result_table = create_option(
+    'Result Table',
+    'option_result_table',
+    ['Hide', 'Show'],
+    'show'
 )
 
 option_data_point = dbc.FormGroup(
@@ -1416,15 +1258,15 @@ def analyse_beam(
 
     for i, s in enumerate(basic_supports):
         sup = s.pop('Support')
-        if sup == 'Fixed':
+        if sup == 'fixed':
             s['X'] = 'R'
             s['Y'] = 'R'
             s['M'] = 'R'
-        elif sup == 'Pinned':
+        elif sup == 'pinned':
             s['X'] = 'R'
             s['Y'] = 'R'
             s['M'] = 'F'
-        elif sup == 'Roller':
+        elif sup == 'roller':
             s['X'] = 'F'
             s['Y'] = 'R'
             s['M'] = 'F'
@@ -1930,7 +1772,7 @@ def update_tables(
             distributed_load_table_rows,
             query_table_rows,
             'basic',
-            'Fixed',
+            'fixed',
             'down',
             'show',
             50,
