@@ -39,9 +39,49 @@ IMPERIAL_UNITS = {
 'deflection': {'in':inch, 'ft':ft},
 }
 
-UNIT_KEYS = [k for k in METRIC_UNITS.keys()]
-UNIT_VALUES = {}
+default_units = {}
 
+default_units['SI'] = {
+    'length': 'm',
+    'force': 'N',
+    'moment': 'N.m',
+    'distributed': 'N/m',
+    'stiffness': 'N/m',
+    'A': 'm2',
+    'E': 'Pa',
+    'I': 'm4',
+    'deflection': 'm',
+}
+
+default_units['metric'] = {
+    'length': 'm',
+    'force': 'kN',
+    'moment': 'kN.m',
+    'distributed': 'kN/m',
+    'stiffness': 'kN/mm',
+    'A': 'mm2',
+    'E': 'MPa',
+    'I': 'mm4',
+    'deflection': 'mm',
+}
+
+default_units['imperial'] = {
+    'length': 'ft',
+    'force': 'kip',
+    'moment': 'kip.ft',
+    'distributed': 'kip/ft',
+    'stiffness': 'kip/ft',
+    'A': 'in2',
+    'E': 'kip/in2',
+    'I': 'in4',
+    'deflection': 'in',    
+}
+
+# get all available keys
+UNIT_KEYS = [k for k in METRIC_UNITS.keys()]
+
+# get all available units that can be assigned to a key
+UNIT_VALUES = {}
 for a in UNIT_KEYS:
     UNIT_VALUES[a] = [u for u in METRIC_UNITS[a].keys()]
     UNIT_VALUES[a] += [u for u in IMPERIAL_UNITS[a].keys()]

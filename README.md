@@ -1,6 +1,6 @@
 # Indeterminate Beam
 
-[![Version](https://img.shields.io/badge/version-v2.1.1-blue.svg)](https://github.com/JesseBonanno/IndeterminateBeam/releases/tag/v2.1.1)
+[![Version](https://img.shields.io/badge/version-v2.1.2-blue.svg)](https://github.com/JesseBonanno/IndeterminateBeam/releases/tag/v2.1.2)
 [![License](https://img.shields.io/badge/license-MIT-lightgreen.svg)](https://github.com/JesseBonanno/IndeterminateBeam/blob/main/LICENSE.txt)
 [![Documentation Status](https://readthedocs.org/projects/indeterminatebeam/badge/?version=main)](https://indeterminatebeam.readthedocs.io/en/main/?badge=main)
 [![Build Status](https://travis-ci.org/JesseBonanno/IndeterminateBeam.svg?branch=main)](https://travis-ci.org/JesseBonanno/IndeterminateBeam)
@@ -47,8 +47,7 @@ A typical use case of the ```IndeterminateBeam``` package involves the following
 You can follow along with the example below in this web-based [Jupyter Notebook](https://colab.research.google.com/github/JesseBonanno/IndeterminateBeam/blob/main/docs/examples/readme_example.ipynb). 
 Alternatively, you can download the jupyter-notebook for this example [here](https://raw.githubusercontent.com/JesseBonanno/IndeterminateBeam/main/docs/examples/readme_example.ipynb), or the python file for this code [here](https://raw.githubusercontent.com/JesseBonanno/IndeterminateBeam/main/docs/examples/readme_example.py).
 
-Units and load direction conventions are described in the [package documentation](https://indeterminatebeam.readthedocs.io/en/main/theory.html).
-
+The units used throughout the python package are the base SI Units (Newtons and metres), but can be updated using the `update_units` method. Units and load direction conventions are described in the [package documentation](https://indeterminatebeam.readthedocs.io/en/main/theory.html#sign-convention).
 
 ### Creating a Beam
 

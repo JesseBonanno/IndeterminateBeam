@@ -1,5 +1,3 @@
-import sys
-import os
 import base64
 import json
 import dash
@@ -20,12 +18,8 @@ from indeterminatebeam.loading import (
 from datetime import datetime
 import time
 from indeterminatebeam.version import __version__
-from indeterminatebeam.units import IMPERIAL_UNITS, METRIC_UNITS, UNIT_KEYS, UNIT_VALUES
+from indeterminatebeam.units import IMPERIAL_UNITS, METRIC_UNITS, UNIT_KEYS, UNIT_VALUES, default_units
 from indeterminatebeam.data_validation import (
-    assert_number,
-    assert_positive_number,
-    assert_strictly_positive_number,
-    assert_length,
     assert_list_contents,
     assert_contents,
 )
@@ -574,14 +568,18 @@ option_instructions = dcc.Markdown('''
                results in longer calculation speeds.
             ''')
 
-def create_option(label, id_, options=[],default=None):
+def create_option(label, id_, options=[],default=None,option_dict = None):
+    if option_dict:
+        options = option_dict
+    else:
+        options=[{'label':a, 'value':a.lower()} for a in options]
     option = dbc.FormGroup(
         [
             dbc.Label(label, html_for=id_, width=3),
             dbc.Col(
                 dbc.RadioItems(
                     id=id_,
-                    options=[{'label':a, 'value':a.lower()} for a in options],
+                    options=options,
                     value=default,
                     inline=True,
                 ),
@@ -644,43 +642,6 @@ option_data_point = dbc.FormGroup(
 )
 
 # unit option implementation
-default_units = {}
-
-default_units['SI'] = {
-    'length': 'm',
-    'force': 'N',
-    'moment': 'N.m',
-    'distributed': 'N/m',
-    'stiffness': 'N/m',
-    'A': 'm2',
-    'E': 'Pa',
-    'I': 'm4',
-    'deflection': 'm',
-}
-
-default_units['metric'] = {
-    'length': 'm',
-    'force': 'kN',
-    'moment': 'kN.m',
-    'distributed': 'kN/m',
-    'stiffness': 'kN/mm',
-    'A': 'mm2',
-    'E': 'MPa',
-    'I': 'mm4',
-    'deflection': 'mm',
-}
-
-default_units['imperial'] = {
-    'length': 'ft',
-    'force': 'kip',
-    'moment': 'kip.ft',
-    'distributed': 'kip/ft',
-    'stiffness': 'kip/ft',
-    'A': 'in2',
-    'E': 'kip/in2',
-    'I': 'in4',
-    'deflection': 'in',    
-}
 
 def unit_option_formgroup(group='SI',label='length',units=('m'),default ='m'):
     """Define formgroup for a single unit option"""
@@ -739,27 +700,18 @@ for label in UNIT_KEYS:
     )
 
 #option to change units for inputs and outputs
-option_units = dbc.FormGroup(
-    [
-        dbc.Label("Units", html_for='option_units', width=3),
-        dbc.Col(
-            [
-                dbc.RadioItems(
-                    id='option_units',
-                    options=[
-                        {'label': 'SI', 'value': 'SI'},
-                        {'label': 'Metric (Custom)', 'value': 'metric'},
-                        {'label': 'Imperial (Custom)', 'value': 'imperial'},
-                    ],
-                    value='SI',
-                    inline=True,
-                ),
-            ],
-            width=8,
-        ),
-    ],
-    row=True,
+option_units = create_option(
+    'Units',
+    'option_units',
+    None,
+    default = 'SI',
+    option_dict=[
+        {'label': 'SI', 'value': 'SI'},
+        {'label': 'Metric (Custom)', 'value': 'metric'},
+        {'label': 'Imperial (Custom)', 'value': 'imperial'},
+    ]
 )
+
 
 option_general_tab = dbc.Form([
     html.Br(),
@@ -791,7 +743,6 @@ option_unit_tab = dbc.Form([
                 is_open=False
             ),
         ],
-        #label="Supports",
     ),
 ])
 
@@ -892,7 +843,7 @@ report_upload_section = dbc.Row(
     ]
 )
 # Assemble main application content
-content_first_row = html.Div(
+main_content = html.Div(
     dbc.Row(
         [
             dbc.Col(
@@ -1000,7 +951,7 @@ content = html.Div(
         calc_status,
         dcc.Store(id='input-json', storage_type='local'),
         html.Div(id='dummy-div', style=dict(display='none')),
-        content_first_row,
+        main_content,
         html.Hr(),
         copyright_
     ],

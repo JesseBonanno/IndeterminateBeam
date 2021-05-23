@@ -28,9 +28,6 @@ from plotly.subplots import make_subplots
 import plotly.graph_objects as go
 
 # Local Application Imports'
-import os, sys
-sys.path.insert(0, os.path.abspath('../'))
-
 from indeterminatebeam.data_validation import (
     assert_number,
     assert_positive_number,
@@ -653,7 +650,6 @@ class Beam:
         # by length conversion after integrating
         F_i_1 = sum(load._y1 for load in self._loads if isinstance(load, PointLoad)) * units['force'] \
             + sum(load._y1 for load in self._loads if isinstance(load, (UDL, TrapezoidalLoad))) * units['distributed'] * units['length'] \
-            + sum(load._y1 for load in self._loads if isinstance(load, PointTorque)) * units['moment'] / units['length'] \
             + sum([a['force'] for a in unknowns['y']])
         
         F_i_2 = sum(load._y1 for load in self._loads if isinstance(load,DistributedLoad)) * units['distributed'] * units['length']
@@ -670,6 +666,7 @@ class Beam:
         # as a SingularityFunction of power -1 (the point moments are
         # therefore only considered once the integration below takes place)
         M_i_1 = integrate(F_i_1, x) * units['length'] \
+            + integrate(sum(load._y1 for load in self._loads if isinstance(load, PointTorque)), x) * units['moment'] \
             - sum([a['torque'] for a in unknowns['m']])
 
         M_i_2 = integrate(F_i_2, x) * units['length']
@@ -1945,59 +1942,10 @@ class Beam:
 
 
 if __name__ == "__main__":
-    # if want to run directly from this file add the following
-    # two lines at the start of this script:
-
-
-    # Lets define every possible degree of freedom combination for
-    # supports below, and view them on a plot:
-    support_0 = Support(0, (1,1,1))     # conventional fixed support
-    support_1 = Support(1, (1,1,0))     # conventional pin support
-    support_2 = Support(2, (1,0,1))     
-    support_3 = Support(3, (0,1,1))
-    support_4 = Support(4, (0,0,1))
-    support_5 = Support(5, (0,1,0))     # conventional roller support
-    support_6 = Support(6, (1,0,0))
-
-    # Note we could also explicitly define parameters as follows:
-    support_0 = Support(coord=0, fixed=(1,1,1))
-
-    # Now lets define some spring supports
-    support_7 = Support(7, (0,0,0), kx = 10)    #spring in x direction only
-    support_8 = Support(8, (0,0,0), ky = 5)     # spring in y direction only
-    support_9 = Support(9, (0,0,0), kx = 100, ky = 100)     # spring in x and y direction
-
-    # Now lets define a support which is fixed in one degree of freedom
-    # but has a spring stiffness in another degree of freedom
-    support_10 = Support(10, (0,1,0), kx = 10) #spring in x direction, fixed in y direction
-    support_11 = Support(11, (0,1,1), kx = 10) #spring in x direction, fixed in y and m direction
-
-    # Note we could also do the following for the same result since the spring
-    # stiffness overides the fixed boolean in respective directions
-    support_10 = Support(10, (1,1,0), kx =10)
-
-    # Now lets plot all the supports we have created
-    beam = Beam(11)
-
-    beam.add_supports(
-        support_0,
-        support_1,
-        support_2,
-        support_3,
-        support_4,
-        support_5,
-        support_6,
-        support_7,
-        support_8,
-        support_9,
-        support_10,
-        support_11,
+    beam = Beam(5)
+    beam.add_supports(Support(0))
+    beam.add_loads(
+        PointLoadV(2,2),
+        PointTorque(1,5)
     )
-
     beam.analyse()
-
-    fig1 = beam.plot_beam_internal()
-    fig1.show()
-
-    fig2 = beam.plot_beam_external()
-    fig2.show()
