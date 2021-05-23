@@ -10,7 +10,7 @@ with open(os.path.join(_here, 'indeterminatebeam', 'version.py')) as f:
     exec(f.read(), version)
 
 # Store the README.md file
-with open(os.path.join(here, "README.md"), encoding="utf-8") as f:
+with open(os.path.join(_here, "README.md"), encoding="utf-8") as f:
     longDescription = f.read()
 
 
