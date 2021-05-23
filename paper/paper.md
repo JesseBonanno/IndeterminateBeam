@@ -96,9 +96,7 @@ beam_2 = Beam(9, E=2000, I =10**6, A = 3000)
 ### Defining Supports
 `Support` objects are created separately from the `Beam` object, and are defined by an x-coordinate (m) and the beams translational and rotational degrees of freedom.
 
-Degrees of freedom are represented by a tuple of 3 booleans, representing the x , y , and m directions respectively. A `1` indicates the support is fixed in a direction and a `0` indicates it is free.
-
-Optionally, stiffness can be specified in either of the translational directions, which overrides the boolean specified.
+Degrees of freedom are represented by a tuple of 3 booleans, representing the x , y , and m directions respectively. A `1` indicates the support is fixed in a direction and a `0` indicates it is free. Optionally, stiffness can be specified in either of the translational directions, which overrides the boolean specified.
 
 ```python
 from indeterminatebeam import Support
