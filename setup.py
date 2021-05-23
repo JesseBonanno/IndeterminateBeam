@@ -4,9 +4,14 @@ import sys
 
 _here = os.path.abspath(os.path.dirname(__file__))
 
+# Read the verison number
 version = {}
 with open(os.path.join(_here, 'indeterminatebeam', 'version.py')) as f:
     exec(f.read(), version)
+
+# Store the README.md file
+with open(os.path.join(here, "README.md"), encoding="utf-8") as f:
+    longDescription = f.read()
 
 
 setup(
@@ -15,6 +20,9 @@ setup(
   version = version['__version__'],      # Start with a small number and increase it with every change you make
   license='MIT',        # Chose a license from here: https://help.github.com/articles/licensing-a-repository
   description = 'A solver for 1D indeterminate beams',   # Give a short description about your library
+  # Long descriptionf from README.md
+  long_description=longDescription,
+  long_description_content_type="text/markdown",
   author = 'Jesse Bonanno',                   # Type in your name
   author_email = 'jessebonanno@gmail.com',      # Type in your E-Mail
   url = 'https://github.com/JesseBonanno/IndeterminateBeam',   # Provide either the link to your github or to your website
