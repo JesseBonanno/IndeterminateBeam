@@ -1,6 +1,5 @@
-from distutils.core import setup
+from setuptools import setup
 import os
-import sys
 
 _here = os.path.abspath(os.path.dirname(__file__))
 
@@ -20,7 +19,7 @@ setup(
   version = version['__version__'],      # Start with a small number and increase it with every change you make
   license='MIT',        # Chose a license from here: https://help.github.com/articles/licensing-a-repository
   description = 'A solver for 1D indeterminate beams',   # Give a short description about your library
-  # Long descriptionf from README.md
+  # Long description from README.md
   long_description=longDescription,
   long_description_content_type="text/markdown",
   author = 'Jesse Bonanno',                   # Type in your name
