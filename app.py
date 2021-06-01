@@ -73,7 +73,8 @@ For more, you can view the following:
    The sign conventions used
 * [![Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/JesseBonanno/IndeterminateBeam/blob/main/docs/examples/simple_demo.ipynb)
    The Python based Jupyter Notebook examples
-* [![Article](https://img.shields.io/badge/Article-Complete-green.svg)](https://github.com/JesseBonanno/IndeterminateBeam/blob/main/IndeterminateBeam_Article.pdf)
+* [![DOI](https://jose.theoj.org/papers/10.21105/jose.00111/status.svg)](https://doi.org/10.21105/jose.00111)
+   JOSE Article
 ''')
 
 # the content for the sidebar
@@ -205,7 +206,7 @@ beam_instructions = dcc.Markdown('''
             is specified E and A will affect the load distribution for the horizontal loads only.
             ''')
 
-beam_content = create_content('beam_instructions', beam_instructions, beam_table)
+beam_content = create_content('beam_instructions', beam_instructions, beam_table, add_button=False)
 
 
 # Properties for (Advanced) Support Tab
