@@ -2064,8 +2064,8 @@ def update_tables(
      State('input-json','data')]
 )
 def report(n, graph_1, graph_2, results, input_json):
-    
-    if not json:
+
+    if not json or n==0:
         raise PreventUpdate
 
     unit_information = json.loads(input_json)
@@ -2140,4 +2140,4 @@ def report(n, graph_1, graph_2, results, input_json):
 
 
 if __name__ == '__main__':
-    app.run_server(debug=True)
+    app.run_server()
