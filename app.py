@@ -392,7 +392,7 @@ point_torque_table_data = {
 point_torque_table_init = {k: v['init']
                            for k, v in point_torque_table_data.items()}
 
-point_torque_table = create_table('point-torque-table', point_torque_table_data, point_load_table_init)
+point_torque_table = create_table('point-torque-table', point_torque_table_data, point_torque_table_init)
 
 point_torque_instructions = dcc.Markdown('''
 
