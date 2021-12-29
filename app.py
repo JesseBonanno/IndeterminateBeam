@@ -629,11 +629,26 @@ option_data_point = dbc.FormGroup(
                 max=500,
                 value=50,
                 step=50,
-                marks={
-                    50: {'label': '50'},
-                    250: {'label': '250'},
-                    500: {'label': '500'}
-                },
+                tooltip={"placement": "bottom", "always_visible": True},
+                included=True,
+            ),
+            width=8,
+        ),
+    ],
+    row=True,
+)
+
+option_precision = dbc.FormGroup(
+    [
+        dbc.Label("Graph Decimal Precision", html_for="option_precision", width=3),
+        dbc.Col(
+            dcc.Slider(
+                id='option_precision',
+                min=0,
+                max=10,
+                value=3,
+                step=1,
+                tooltip={"placement": "bottom", "always_visible": True},
                 included=True,
             ),
             width=8,
@@ -721,6 +736,7 @@ option_general_tab = dbc.Form([
     option_default_support,
     option_positive_direction_y,
     option_data_point,
+    option_precision,
 ])
 
 option_unit_tab = dbc.Form([
@@ -973,87 +989,6 @@ app.layout = html.Div([sidebar, content])
 # add tab title
 app.title = "IndeterminateBeam"
 
-# # update units store
-# unit_callback_input = [Input('SI_'+a,'value') for a in METRIC_UNITS.keys()]
-# unit_callback_input += [Input('metric_'+a,'value') for a in METRIC_UNITS.keys()]
-# unit_callback_input += [Input('imperial_'+a,'value') for a in IMPERIAL_UNITS.keys()]
-
-# @app.callback(
-#     Output('json-units', 'data'),
-#     [Input('submit_button', 'n_clicks')]+
-#     unit_callback_input,  
-# )
-# def unit_options_setup(
-#     n,
-#     SI_length,
-#     SI_force,
-#     SI_moment,
-#     SI_distributed,
-#     SI_stiffness,
-#     SI_A,
-#     SI_E,
-#     SI_I,
-#     SI_deflection,
-#     metric_length,
-#     metric_force,
-#     metric_moment,
-#     metric_distributed,
-#     metric_stiffness,
-#     metric_A,
-#     metric_E,
-#     metric_I,
-#     metric_deflection,
-#     imperial_length,
-#     imperial_force,
-#     imperial_moment,
-#     imperial_distributed,
-#     imperial_stiffness,
-#     imperial_A,
-#     imperial_E,
-#     imperial_I,
-#     imperial_deflection,
-#     ):
-
-#     units = {}
-
-#     units['SI'] = {
-#         'length':SI_length,
-#         'force':SI_force,
-#         'moment':SI_moment,
-#         'distributed':SI_distributed,
-#         'stiffness':SI_stiffness,
-#         'A':SI_A,
-#         'E':SI_E,
-#         'I':SI_I,
-#         'deflection':SI_deflection,
-#     }
-
-#     units['metric'] = {
-#         'length':metric_length,
-#         'force':metric_force,
-#         'moment':metric_moment,
-#         'distributed':metric_distributed,
-#         'stiffness':metric_stiffness,
-#         'A':metric_A,
-#         'E':metric_E,
-#         'I':metric_I,
-#         'deflection':metric_deflection,
-#     }
-
-#     units['imperial'] = {
-#         'length':imperial_length,
-#         'force':imperial_force,
-#         'moment':imperial_moment,
-#         'distributed':imperial_distributed,
-#         'stiffness':imperial_stiffness,
-#         'A':imperial_A,
-#         'E':imperial_E,
-#         'I':imperial_I,
-#         'deflection':imperial_deflection,
-#         }
-
-#     return json.dumps(units)
-
 # ANALYSIS
 unit_callback_state = [State('SI_'+a,'value') for a in METRIC_UNITS.keys()]
 unit_callback_state += [State('metric_'+a,'value') for a in METRIC_UNITS.keys()]
@@ -1089,6 +1024,7 @@ unit_callback_state += [State('imperial_'+a,'value') for a in IMPERIAL_UNITS.key
         State('option_default_support','value'),
         State('option_positive_direction_y', 'value'),
         State('option_data_points', 'value'),
+        State('option_precision','value'),
         State('option_result_table', 'value'),
         State('option_units', 'value'),
     ] + unit_callback_state
@@ -1110,6 +1046,7 @@ def analyse_beam(
         option_default_support,
         positive_y_direction,
         data_points,
+        option_precision,
         option_result_table,
         option_units,
         SI_length,
@@ -1202,6 +1139,7 @@ def analyse_beam(
             'default_support':option_default_support,
             'y': positive_y_direction,
             'data_points': data_points,
+            'option_precision': option_precision,
             'option_units': option_units,
             'result_table': option_result_table,
             'unit_dictionary': units,
@@ -1248,6 +1186,7 @@ def analyse_beam(
         beam = Beam(*(float(a) for a in row.values()))
 
     beam._DATA_POINTS = data_points
+    beam.update_decimal_precision(option_precision)
 
 
     beam.update_units('length', units[option_units]['length'])
@@ -1362,20 +1301,23 @@ def analyse_beam(
     # for example getting max, min and x values all in one go could mean
     # dont need to generate vectors multiple times, can save time.
 
+    # get precision for display and assign to p
+    p = option_precision
+
     results_data = [
         {
             'val': 'Max',
-            'NF (' + units[option_units]['force'] +')': f'{beam.get_normal_force(return_max=True):.3f}',
-            'SF (' + units[option_units]['force'] +')': f'{beam.get_shear_force(return_max=True):.3f}',
-            'BM (' + units[option_units]['moment'] +')': f'{beam.get_bending_moment(return_max=True):.3f}',
-            'D (' + units[option_units]['deflection'] +')': f'{beam.get_deflection(return_max=True):.3f}',
+            'NF (' + units[option_units]['force'] +')': f'{beam.get_normal_force(return_max=True):.{p}f}',
+            'SF (' + units[option_units]['force'] +')': f'{beam.get_shear_force(return_max=True):.{p}f}',
+            'BM (' + units[option_units]['moment'] +')': f'{beam.get_bending_moment(return_max=True):.{p}f}',
+            'D (' + units[option_units]['deflection'] +')': f'{beam.get_deflection(return_max=True):.{p}f}',
         },
         {
             'val': 'Min',
-            'NF (' + units[option_units]['force'] +')': f'{beam.get_normal_force(return_min=True):.3f}',
-            'SF (' + units[option_units]['force'] +')': f'{beam.get_shear_force(return_min=True):.3f}',
-            'BM (' + units[option_units]['moment'] +')': f'{beam.get_bending_moment(return_min=True):.3f}',
-            'D (' + units[option_units]['deflection'] +')': f'{beam.get_deflection(return_min=True):.3f}',
+            'NF (' + units[option_units]['force'] +')': f'{beam.get_normal_force(return_min=True):.{p}f}',
+            'SF (' + units[option_units]['force'] +')': f'{beam.get_shear_force(return_min=True):.{p}f}',
+            'BM (' + units[option_units]['moment'] +')': f'{beam.get_bending_moment(return_min=True):.{p}f}',
+            'D (' + units[option_units]['deflection'] +')': f'{beam.get_deflection(return_min=True):.{p}f}',
         },
     ]
 
@@ -1386,10 +1328,10 @@ def analyse_beam(
             results_data.append(
                 {
                     'val': f'x = {x_} {u_}',
-                    'NF (' + units[option_units]['force'] +')': f'{beam.get_normal_force(x_):.3f}',
-                    'SF (' + units[option_units]['force'] +')': f'{beam.get_shear_force(x_):.3f}',
-                    'BM (' + units[option_units]['moment'] +')': f'{beam.get_bending_moment(x_):.3f}',
-                    'D (' + units[option_units]['deflection'] +')': f'{beam.get_deflection(x_):.3f}',
+                    'NF (' + units[option_units]['force'] +')': f'{beam.get_normal_force(x_):.{p}f}',
+                    'SF (' + units[option_units]['force'] +')': f'{beam.get_shear_force(x_):.{p}f}',
+                    'BM (' + units[option_units]['moment'] +')': f'{beam.get_bending_moment(x_):.{p}f}',
+                    'D (' + units[option_units]['deflection'] +')': f'{beam.get_deflection(x_):.{p}f}',
                 },
             )
 
@@ -1442,6 +1384,7 @@ unit_state += [State('imperial_'+a,'value') for a in IMPERIAL_UNITS.keys()]
         Output('option_positive_direction_y', 'value'),
         Output('option_result_table', 'value'),
         Output('option_data_points', 'value'),
+        Output('option_precision', 'value'),
         Output('option_units', 'value'),
         Output('dummy-div','children'),
     ] + unit_output,
@@ -1469,6 +1412,7 @@ unit_state += [State('imperial_'+a,'value') for a in IMPERIAL_UNITS.keys()]
         State('option_positive_direction_y', 'value'),
         State('option_result_table', 'value'),
         State('option_data_points', 'value'),
+        State('option_precision', 'value'),
         State('option_units','value'),
         State('input-json', 'data'),
     ] + unit_state,
@@ -1495,6 +1439,7 @@ def update_tables(
     option_positive_direction_y,
     option_result_table,
     option_data_points,
+    option_precision,
     option_units,
     input_json_data,
     SI_length,
@@ -1600,6 +1545,7 @@ def update_tables(
                 option_positive_direction_y,
                 option_result_table,
                 option_data_points,
+                option_precision,
                 option_units,
                 dummy_div,
             ] + units_values
@@ -1632,6 +1578,7 @@ def update_tables(
         option_positive_direction_y = data['y']
         option_result_table = data['result_table']
         option_data_points = data['data_points']
+        option_precision = data['option_precision']
         option_units = data['option_units']
         units = data['unit_dictionary']
 
@@ -1652,6 +1599,7 @@ def update_tables(
             option_positive_direction_y,
             option_result_table,
             option_data_points,
+            option_precision,
             option_units,
             dummy_div,
         ] + units_values
@@ -1704,6 +1652,7 @@ def update_tables(
             option_positive_direction_y,
             option_result_table,
             option_data_points,
+            option_precision,
             option_units,
             True,
         ] + units_values
@@ -1728,6 +1677,7 @@ def update_tables(
             'down',
             'show',
             50,
+            3,
             "SI",
             True,
         ] + units_values
@@ -1745,6 +1695,7 @@ def update_tables(
         option_positive_direction_y,
         option_result_table,
         option_data_points,
+        option_precision,
         option_units,
         dummy_div
     ] + units_values

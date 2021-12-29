@@ -121,6 +121,7 @@ class Support:
             stiffness of y support (default unit N/m), if set will overide the
             value placed in the fixed tuple. (default = None)
         """
+
         # validate coordinate
         assert_positive_number(coord, 'coordinate')
 
@@ -265,6 +266,8 @@ class Beam:
         self._query = []
 
         self._DATA_POINTS = 200
+        self.update_decimal_precision(3)
+
         self._units = {
             'length': 'm',
             'force': 'N',
@@ -1390,18 +1393,18 @@ class Beam:
         # needed for the drawing
         if row and col:
             for support in self._supports:
-                fig = draw_support(fig, support, row=row, col=col, units=self._units)
+                fig = draw_support(fig, support, row=row, col=col, units=self._units, precision=self.decimal_precision)
 
             for load in self._loads:
-                fig = draw_force(fig, load, row=row, col=col, units=self._units)
-                fig = draw_load_hoverlabel(fig, load, row=row, col=col, units=self._units)
+                fig = draw_force(fig, load, row=row, col=col, units=self._units, precision=self.decimal_precision)
+                fig = draw_load_hoverlabel(fig, load, row=row, col=col, units=self._units, precision=self.decimal_precision)
         else:
             for support in self._supports:
-                fig = draw_support(fig, support, units=self._units)
+                fig = draw_support(fig, support, units=self._units, precision=self.decimal_precision)
 
             for load in self._loads:
-                fig = draw_force(fig, load,units=self._units)
-                fig = draw_load_hoverlabel(fig, load, units=self._units)
+                fig = draw_force(fig, load,units=self._units, precision=self.decimal_precision)
+                fig = draw_load_hoverlabel(fig, load, units=self._units, precision=self.decimal_precision)
 
         return fig
 
@@ -1477,7 +1480,8 @@ class Beam:
                         x_sup=position,
                         row=row,
                         col=col,
-                        units=self._units
+                        units=self._units,
+                        precision=self.decimal_precision
                     )
 
                     if abs(x_) > 0:
@@ -1486,7 +1490,8 @@ class Beam:
                             PointLoad(x_, position, 0),
                             row=row,
                             col=col,
-                            units=self._units
+                            units=self._units,
+                            precision=self.decimal_precision,
                         )
                     if abs(y_) > 0:
                         fig = draw_force(
@@ -1494,29 +1499,33 @@ class Beam:
                             PointLoad(y_, position, 90),
                             row=row,
                             col=col,
-                            units=self._units)
+                            units=self._units,
+                            precision=self.decimal_precision,
+                        )
                     if abs(m_) > 0:
                         fig = draw_force(
                             fig,
                             PointTorque(m_, position),
                             row=row,
                             col=col,
-                            units=self._units
+                            units=self._units,
+                            precision=self.decimal_precision,
                         )
                 else:
                     fig = draw_reaction_hoverlabel(
                         fig,
                         reactions=[x_, y_, m_],
                         x_sup=position,
-                        units=self._units
+                        units=self._units,
+                        precision=self.decimal_precision,
                     )
 
                     if abs(x_) > 0:
-                        fig = draw_force(fig, PointLoad(x_, position, 0),units=self._units)
+                        fig = draw_force(fig, PointLoad(x_, position, 0),units=self._units, precision=self.decimal_precision)
                     if abs(y_) > 0:
-                        fig = draw_force(fig, PointLoad(y_, position, 90),units=self._units)
+                        fig = draw_force(fig, PointLoad(y_, position, 90),units=self._units, precision=self.decimal_precision)
                     if abs(m_) > 0:
-                        fig = draw_force(fig, PointTorque(m_, position),units=self._units)
+                        fig = draw_force(fig, PointTorque(m_, position),units=self._units, precision=self.decimal_precision)
 
         return fig
 
@@ -1773,6 +1782,9 @@ class Beam:
         figure : `plotly.graph_objs._figure.Figure`
             Returns a handle to a figure with the deflection diagram.
         """
+        # get precision for display and assign to p
+        p = self.decimal_precision
+
         # numpy array for x positions closely spaced (allow for graphing)
         x_vec = self._plotting_vectors['x']
         y_vec = self._plotting_vectors[func]['y_vec']
@@ -1796,7 +1808,7 @@ class Beam:
             line=dict(color=color, width=1),
             fill=fill,
             name=ylabel,
-            hovertemplate="x: %{x:.3f} %{meta[0]}<br>f(x): %{y:.3f} %{meta[1]}"
+            hovertemplate=f"x: %{{x:.{p}f}} %{{meta[0]}}<br>f(x): %{{y:.{p}f}} %{{meta[1]}}"
         )
 
         if row and col and fig:
@@ -1834,7 +1846,7 @@ class Beam:
 
                 annotation = dict(
                     x=q_res, y=q_val,
-                    text=f"{q_val:.3f} {xunits}<br>{q_res:.3f} {yunits}",
+                    text=f"{q_val:.{p}f} {xunits}<br>{q_res:.{p}f} {yunits}",
                     showarrow=True,
                     arrowhead=1,
                     xref='x',
@@ -1845,7 +1857,7 @@ class Beam:
             else:
                 annotation = dict(
                     x=q_val, y=q_res,
-                    text=f"{q_val:.3f} {xunits}<br>{q_res:.3f} {yunits}",
+                    text=f"{q_val:.{p}f} {xunits}<br>{q_res:.{p}f} {yunits}",
                     showarrow=True,
                     arrowhead=1,
                     xref='x',
@@ -1859,6 +1871,20 @@ class Beam:
                 fig.add_annotation(annotation)
 
         return fig
+
+    def update_decimal_precision(self,n):
+        """Updates the decimal precision to show on graphs.
+
+        Parameters
+        ----------
+        n : int
+            Number of decimal places to be shown
+        """
+
+        # make sure input is integer
+        assert(type(n) is int)
+        self.decimal_precision = n
+
 
     def __str__(self):
         return f"""--------------------------------

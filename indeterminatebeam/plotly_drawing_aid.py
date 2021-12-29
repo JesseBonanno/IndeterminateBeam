@@ -158,7 +158,7 @@ def draw_arrowhead(fig, angle, x_sup, length=5, xoffset=0, yoffset=0,
 
 def draw_arrow(fig, angle, force, x_sup, xoffset=0, yoffset=0, color='red',
                line_width=2, arrowhead=5, arrowlength=40, show_values=True,
-               row=None, col=None,units="N"):
+               row=None, col=None,units="N", precision=3):
     """Draw an anchored arrow on a plotly figure.
 
     Parameters
@@ -196,6 +196,8 @@ def draw_arrow(fig, angle, force, x_sup, xoffset=0, yoffset=0, color='red',
         plot, by default None.
     units: str,
         The units suffix drawn with the force value.
+    precision: int,
+        The decimal precision to be displayed for annotations, by default 3.
 
     Returns
     -------
@@ -203,6 +205,8 @@ def draw_arrow(fig, angle, force, x_sup, xoffset=0, yoffset=0, color='red',
         Returns the plotly figure passed into function with the arrow
         appended to it.
     """
+    # get precision as p
+    p = precision
 
     # Factor to switch arrow direction based on force sign
     if force > 0:
@@ -261,7 +265,7 @@ def draw_arrow(fig, angle, force, x_sup, xoffset=0, yoffset=0, color='red',
             y=y0,
             xshift=x1,
             yshift=y1,
-            text=f"{force:.3f} {units}",
+            text=f"{force:.{p}f} {units}",
             font_color=color,
             showarrow=False,
         )
@@ -391,7 +395,8 @@ def draw_moment(
         show_values=True,
         row=None,
         col=None,
-        units="N.m"):
+        units="N.m",
+        precision=3):
     """Draw a moment (torque) shape (circular arrow) on a plotly figure.
 
     Parameters
@@ -414,6 +419,8 @@ def draw_moment(
         plot, by default None.
     units: str,
         The units suffix drawn with the moment value. Default is 'N.m'.
+    precision: int,
+        The number of decimal places to display on annotation, by default 3.
 
     Returns
     -------
@@ -445,6 +452,9 @@ def draw_moment(
     else:
         fig.add_annotation(annotation)
 
+    # get precision and name as p
+    p = precision
+
     # Add text if show_values is true
     if show_values:
 
@@ -453,7 +463,7 @@ def draw_moment(
             x=x_sup,
             y=0,
             yshift=-20,
-            text=f"{moment:.3f} {units}",
+            text=f"{moment:.{p}f} {units}",
             font_color=color,
             showarrow=False,
         )
@@ -467,7 +477,13 @@ def draw_moment(
     return fig
 
 
-def draw_force(fig, load, row=None, col=None, units={'moment':'N.m', 'force':'N','distributed':"N/m"}):
+def draw_force(
+    fig,
+    load,
+    row=None,
+    col=None,
+    units={'moment':'N.m', 'force':'N','distributed':"N/m"},
+    precision=3):
     """Draw a force (for load or reaction) on a plotly figure
 
     Parameters
@@ -485,6 +501,9 @@ def draw_force(fig, load, row=None, col=None, units={'moment':'N.m', 'force':'N'
     units : dict,
         unit dictionary associating the units with different properties of the beam.
         default is {'moment':'N.m', 'force':'N','distributed':"N/m"}.
+    precision: int,
+        The number of decimal places to display on annotation, by default 3.
+
 
     Returns
     -------
@@ -501,7 +520,8 @@ def draw_force(fig, load, row=None, col=None, units={'moment':'N.m', 'force':'N'
             x_sup,
             row=row,
             col=col,
-            units=units['moment'])
+            units=units['moment'],
+            precision=precision)
 
     elif isinstance(load, PointLoad):
         force, x_sup, angle = load.force, load.position, load.angle
@@ -513,7 +533,9 @@ def draw_force(fig, load, row=None, col=None, units={'moment':'N.m', 'force':'N'
             x_sup,
             row=row,
             col=col,
-            units=units['force'])
+            units=units['force'],
+            precision=precision,
+            )
 
     elif isinstance(load, (DistributedLoad, UDL, TrapezoidalLoad)):
         angle = load.angle
@@ -592,7 +614,14 @@ def draw_force(fig, load, row=None, col=None, units={'moment':'N.m', 'force':'N'
     return fig
 
 
-def draw_load_hoverlabel(fig, load, row=None, col=None, units={'length':'m','moment':'N.m', 'force':'N','distributed':"N/m"} ):
+def draw_load_hoverlabel(
+    fig,
+    load,
+    row=None,
+    col=None,
+    units={'length':'m','moment':'N.m', 'force':'N','distributed':"N/m"},
+    precision=3,
+    ):
     """Draw a load hoverlabel on a plotly figure
 
     Parameters
@@ -610,6 +639,8 @@ def draw_load_hoverlabel(fig, load, row=None, col=None, units={'length':'m','mom
     units : dict,
         unit dictionary associating the units with different properties of the beam.
         default is {'length':'m','moment':'N.m', 'force':'N','distributed':"N/m"}.
+    precision: int,
+        The number of decimal places to display on annotation, by default 3.
 
     Returns
     -------
@@ -618,6 +649,9 @@ def draw_load_hoverlabel(fig, load, row=None, col=None, units={'length':'m','mom
     """
     y_sup = 0
 
+    # get precision and name as p
+    p = precision
+
     if isinstance(load, (PointLoad, PointTorque)):
         x_sup = load.position
         color = 'red'
@@ -625,12 +659,12 @@ def draw_load_hoverlabel(fig, load, row=None, col=None, units={'length':'m','mom
 
         if isinstance(load, PointTorque):
             color = 'magenta'
-            hovertemplate = 'x: %{meta[1]:.3f} %{meta[2]}<br>Moment: %{meta[0]:.3f} %{meta[4]}'
+            hovertemplate = f'x: %{{meta[1]:.{p}f}} %{{meta[2]}}<br>Moment: %{{meta[0]:.{p}f}} %{{meta[4]}}'
             name = 'Point<br>Torque'
         elif isinstance(load, PointLoad):
             meta.append(load.angle)
-            hovertemplate = 'x: %{meta[1]:.3f} %{meta[2]}<br>Force: %{meta[0]:.3f} %{meta[3]}\
-            <br>Angle: %{meta[5]:.3f} deg'
+            hovertemplate = f'x: %{{meta[1]:.{p}f}} %{{meta[2]}}<br>Force: %{{meta[0]:.{p}f}} %{{meta[3]}}\
+            <br>Angle: %{{meta[5]:.{p}f}} deg'
             name = 'Point<br>Load'
 
         # Define hoverlabel as a marker with 0 opacity and a hovertemplate that
@@ -687,8 +721,8 @@ def draw_load_hoverlabel(fig, load, row=None, col=None, units={'length':'m','mom
             ]
         
         
-        hovertemplate = 'x: %{meta[0]:.3f} %{meta[3]}<br>Force: %{meta[1]:.3f} %{meta[4]}\
-        <br>Angle: %{meta[2]:.3f} deg'
+        hovertemplate = f'x: %{{meta[0]:.{p}f}} %{{meta[3]}}<br>Force: %{{meta[1]:.{p}f}} %{{meta[4]}}\
+        <br>Angle: %{{meta[2]:.{p}f}} deg'
 
         for x_, y_, a_ in meta:
             trace = go.Scatter(
@@ -710,7 +744,15 @@ def draw_load_hoverlabel(fig, load, row=None, col=None, units={'length':'m','mom
     return fig
 
 
-def draw_reaction_hoverlabel(fig, reactions, x_sup, row=None, col=None, units={'length':'m','moment':'N.m', 'force':'N','distributed':"N/m"}):
+def draw_reaction_hoverlabel(
+    fig,
+    reactions,
+    x_sup,
+    row=None,
+    col=None,
+    units={'length':'m','moment':'N.m', 'force':'N','distributed':"N/m"},
+    precision=3
+    ):
     """Draw a reaction hoverlabel on a plotly figure
 
     Parameters
@@ -731,6 +773,8 @@ def draw_reaction_hoverlabel(fig, reactions, x_sup, row=None, col=None, units={'
     units : dict,
         unit dictionary associating the units with different properties of the beam.
         default is {'length':'m','moment':'N.m', 'force':'N','distributed':"N/m"}.
+    precision: int,
+        The number of decimal places to display on annotation, by default 3.
 
     Returns
     -------
@@ -740,14 +784,17 @@ def draw_reaction_hoverlabel(fig, reactions, x_sup, row=None, col=None, units={'
     # reactions should be [x,y,m]
     x_, y_, m_ = reactions
 
+    # get precision as p
+    p = precision
+
     # Write hovertemplate depending on support restraints
-    hovertemplate = "Reactions<br>x coord: %{x:.3f} %{meta[3]}"
+    hovertemplate = f"Reactions<br>x coord: %{{x:.{p}f}} %{{meta[3]}}"
     if x_:
-        hovertemplate += "<br>x: %{meta[0]:.3f} %{meta[4]}"
+        hovertemplate += f"<br>x: %{{meta[0]:.{p}f}} %{{meta[4]}}"
     if y_:
-        hovertemplate += "<br>y: %{meta[1]:.3f} %{meta[4]}"
+        hovertemplate += f"<br>y: %{{meta[1]:.{p}f}} %{{meta[4]}}"
     if m_:
-        hovertemplate += "<br>m: %{meta[2]:.3f} %{meta[5]}"
+        hovertemplate += f"<br>m: %{{meta[2]:.{p}f}} %{{meta[5]}}"
 
     # Create scatter object with opacity 0 for hovertemplate
     trace = go.Scatter(
@@ -770,7 +817,16 @@ def draw_reaction_hoverlabel(fig, reactions, x_sup, row=None, col=None, units={'
     return fig
 
 
-def draw_support_hoverlabel(fig, support, kx=0, ky=0, row=None, col=None, units={'length':'m','stiffness':"N/m"}):
+def draw_support_hoverlabel(
+    fig,
+    support,
+    kx=0,
+    ky=0,
+    row=None,
+    col=None,
+    units={'length':'m','stiffness':"N/m"},
+    precision=3,
+    ):
     """Draw a reaction hoverlabel on a plotly figure
 
     Parameters
@@ -792,6 +848,8 @@ def draw_support_hoverlabel(fig, support, kx=0, ky=0, row=None, col=None, units=
     units : dict,
         unit dictionary associating the units with different properties of the beam.
         default is {'length':'m','stiffness':"N/m"}.
+    precision: int,
+        The number of decimal places to display on annotation, by default 3.
 
     Returns
     -------
@@ -810,23 +868,26 @@ def draw_support_hoverlabel(fig, support, kx=0, ky=0, row=None, col=None, units=
     fixed = support._fixed
     x_sup = support._position
 
+    # get p as precison
+    p = precision
+
     # Spring
     if kx or ky:
         name = "Spring"
         color = 'orange'
         meta = [kx, ky, units['length'], units['distributed']]
-        hovertemplate = "x: %{x:.3f} %{meta[2]}"
+        hovertemplate = f"x: %{{x:.{p}f}} %{{meta[2]}}"
         if kx:
-            hovertemplate += "<br>kx: %{meta[0]:.3f} %{meta[3]}"
+            hovertemplate += f"<br>kx: %{{meta[0]:.{p}f}} %{{meta[3]}}"
         if ky:
-            hovertemplate += "<br>ky: %{meta[1]:.3f} %{meta[3]}"
+            hovertemplate += f"<br>ky: %{{meta[1]:.{p}f}} %{{meta[3]}}"
 
     # Support
     else:
         name = "Support"
         color = 'blue'
         meta = [str(fixed), units['length']]
-        hovertemplate = "x: %{x:.3f} %{meta[1]}<br>Fixed: %{meta[0]}"
+        hovertemplate = f"x: %{{x:.{p}f}} %{{meta[1]}}<br>Fixed: %{{meta[0]}}"
 
     # necessary for hover information, opacicity 0 so not visible otherwise
     # symbol is arbritrary since invisible
@@ -926,7 +987,9 @@ def draw_support_spring(
         show_values=True,
         row=None,
         col=None,
-        units="N/m"):
+        units="N/m",
+        precision=3
+        ):
     """Draw an anchored spring shape on a plotly figure.
 
     Parameters
@@ -949,12 +1012,17 @@ def draw_support_spring(
         plot, by default None.
     units: str,
         The units suffix drawn with the stiffness value. Default is 'N/m'.
+    precision: int,
+        The number of decimal places to display on annotation, by default 3.
 
     Returns
     -------
     plotly figure
         Returns the plotly figure passed into function with the spring shape
         appended to it."""
+
+    # get precision as p
+    p = precision
 
     x_sup = support._position
 
@@ -1012,7 +1080,7 @@ def draw_support_spring(
                 y=0,
                 yshift=y0 * 1.5,
                 xshift=x0 * 2,
-                text=f"{stiffness:.3f} {units}",
+                text=f"{stiffness:.{p}f} {units}",
                 font_color=color,
                 showarrow=False,
             )
@@ -1026,7 +1094,13 @@ def draw_support_spring(
     return fig
 
 
-def draw_support(fig, support, row=None, col=None, units = {'length':'m', 'stiffness':'N/m'}):
+def draw_support(
+    fig,
+    support,
+    row=None,
+    col=None,
+    units = {'length':'m', 'stiffness':'N/m'},
+    precision=3):
     """Draw a support on a plotly figure.
 
     Parameters
@@ -1044,6 +1118,8 @@ def draw_support(fig, support, row=None, col=None, units = {'length':'m', 'stiff
     units : dict,
         unit dictionary associating the units with different properties of the beam.
         default is {'length':'m', 'stiffness':'N/m'}.
+    precision: int,
+        The number of decimal places to display on annotation, by default 3.
 
     Returns
     -------
@@ -1066,7 +1142,7 @@ def draw_support(fig, support, row=None, col=None, units = {'length':'m', 'stiff
     if fixed == [0, 0, 0]:
         fig = fig
     else:
-        fig = draw_support_hoverlabel(fig, support, row=row, col=col)
+        fig = draw_support_hoverlabel(fig, support, row=row, col=col, precision=precision)
 
         if fixed == [0, 0, 1]:
             fig = draw_moment(
@@ -1167,7 +1243,8 @@ def draw_support(fig, support, row=None, col=None, units = {'length':'m', 'stiff
             orientation="right",
             row=row,
             col=col,
-            units=units['stiffness']
+            units=units['stiffness'],
+            precision=precision,
         )
 
     # if springy then draw a spring with up orientation
@@ -1178,7 +1255,8 @@ def draw_support(fig, support, row=None, col=None, units = {'length':'m', 'stiff
             orientation="up",
             row=row,
             col=col,
-            units=units['stiffness']
+            units=units['stiffness'],
+            precision=precision,
         )
 
     # draw hover label for springs
@@ -1190,6 +1268,7 @@ def draw_support(fig, support, row=None, col=None, units = {'length':'m', 'stiff
             ky=support._stiffness[1],
             row=row,
             col=col,
-            units=units)
+            units=units,
+            precision=precision)
 
     return fig

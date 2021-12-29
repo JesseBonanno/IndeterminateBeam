@@ -210,7 +210,12 @@ class BeamTestCase(unittest.TestCase):
         # test the validity of solutions when using the feature to change units
         # use read me example
         beam = Beam(7000, E = 200 * 10 **6, I = 9.05 * 10 **6)                          # Initialize a Beam object of length 9 m with E and I as defaults
-        
+
+        # update the decimal precision to ensure no error is caused
+        # difficult to validate in unit test since is a visual change to graphs
+        # not a change to actual calculated values
+        beam.update_decimal_precision(5)
+
         beam.update_units('length', 'mm')
         beam.update_units('force', 'kN')
         beam.update_units('distributed', 'kN/m')
@@ -256,8 +261,43 @@ class BeamTestCase(unittest.TestCase):
             ##deflection
         self.assertEqual(round(beam.get_deflection(3000),1), 3.6)
         self.assertEqual(round(beam.get_deflection(return_max=True),1), 4.1)
-        self.assertEqual(round(beam.get_deflection(return_min=True),1), -0.3) 
+        self.assertEqual(round(beam.get_deflection(return_min=True),1), -0.3)
+    
+    def test_sympy(self):
+        # A solving error was observed for sympy version 1.8
+        # test that this error does not occur for the installed version of sympy
 
+        beam = Beam(span=7000)
+
+        beam.update_units('length', 'mm')
+        beam.update_units('force', 'N')
+        beam.update_units('moment', 'N.mm')
+
+        beam.add_supports(
+            Support(0, (1,1,0)),            # Defines a pin support at location x = 0 m
+            Support(7000, (1,1,0)),             # Defines a pin support at location x = 7 m
+        )
+
+        beam.add_loads(PointLoadV(1000,3500))
+
+        beam.analyse()
+        
+        # check plotting valid
+        fig = beam.plot_beam_external()
+        fig = beam.plot_beam_internal()
+
+        fig = beam.plot_beam_diagram()
+        fig = beam.plot_reaction_force()
+
+        fig = beam.plot_normal_force()
+        fig = beam.plot_shear_force()
+        fig = beam.plot_bending_moment()
+        fig = beam.plot_deflection()
+
+        beam.get_normal_force(1)
+        beam.get_shear_force(1)
+        beam.get_bending_moment(1)
+        beam.get_deflection(1)
         
 if __name__ == '__main__':
     unittest.main(verbosity=2)

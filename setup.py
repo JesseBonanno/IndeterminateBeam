@@ -30,7 +30,7 @@ setup(
   install_requires=[            
           'matplotlib',
           'numpy',
-          'sympy>=1.4,<1.8',
+          'sympy>=1.9',
           'plotly>=4.14.1',
       ],
   classifiers=[
