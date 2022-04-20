@@ -61,7 +61,7 @@ from indeterminatebeam import Beam
 # Create 7 m beam with E, I, A as defaults
 beam = Beam(7)                          
 # Create 9 m beam with E, I, and A assigned by user
-beam_2 = Beam(9, E=2000, I =10**6, A = 3000)     
+beam_2 = Beam(9, E=2000, I=10**6, A=3000)     
 ```
 
 ### Defining Supports
