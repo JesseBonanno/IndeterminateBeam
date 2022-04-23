@@ -4,8 +4,8 @@
   "clones": [
     {
       "timestamp": "2022-04-09T00:00:00Z",
-      "count": 22,
-      "uniques": 10
+      "count": 15,
+      "uniques": 8
     },
     {
       "timestamp": "2022-04-10T00:00:00Z",
@@ -69,8 +69,8 @@
     },
     {
       "timestamp": "2022-04-22T00:00:00Z",
-      "count": 14,
-      "uniques": 8
+      "count": 21,
+      "uniques": 10
     }
   ]
 }
