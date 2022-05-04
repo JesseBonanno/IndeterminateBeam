@@ -9,7 +9,7 @@
 [![Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/JesseBonanno/IndeterminateBeam/blob/main/docs/examples/simple_demo.ipynb)
 [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/JesseBonanno/IndeterminateBeam/main?filepath=docs%2Fexamples%2Fsimple_demo.ipynb)
 [![Website](https://img.shields.io/badge/website-up-brightgreen)](https://indeterminate-beam.herokuapp.com/)
-[![GitHub Clones](https://img.shields.io/badge/dynamic/json?color=success&label=Clone&query=count&url=https://github.com/JesseBonanno/IndeterminateBeam/blob/main/clone.json?raw=True&logo=github)](https://github.com/JesseBonanno/IndeterminateBeam/releases/tag/v2.2.0)
+[![Downloads](https://pepy.tech/badge/indeterminatebeam)](https://pepy.tech/project/indeterminatebeam)
 
 
 IndeterminateBeam is a Python Package aiming to serve as a foundation for civil and structural engineering projects in Python. The module can also serve as a stand-alone program and is useful for determining:
