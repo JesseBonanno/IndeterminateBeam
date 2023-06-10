@@ -32,3 +32,4 @@ indeterminatebeam.egg-info/SOURCES.txt
 indeterminatebeam.egg-info/top_level.txt
 indeterminatebeam.egg-info/requires.txt
 indeterminatebeam-2.1.4/README.md
+tests/speed_benchmark.py

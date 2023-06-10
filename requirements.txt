@@ -1,7 +1,7 @@
 numpy>=1.19.2 # for numerical calculations
 sphinx>=3.3.1  # generating documentation
 sphinx_rtd_theme>=0.4.3  # docs theme
-sympy>=1.9  # for analytical integration
+sympy>=1.10  # for analytical integration
 sphinxcontrib-bibtex ##for sphinx bib importing
 plotly>=4.14.1
 #kaleido # for saving figures, removed to make loading in google colab faster
