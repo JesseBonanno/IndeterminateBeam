@@ -2,11 +2,11 @@ import base64
 import json
 import dash
 import dash_bootstrap_components as dbc
-import dash_core_components as dcc
-import dash_html_components as html
+from dash import dcc
+from dash import html
 from dash.dependencies import Input, Output, State
-import dash_table
-from dash_table.Format import Format, Scheme, Sign, Symbol
+from dash import dash_table
+from dash.dash_table.Format import Format, Scheme, Sign, Symbol
 from indeterminatebeam.indeterminatebeam import (
     Beam, Support
 )

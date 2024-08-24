@@ -5,13 +5,14 @@ sympy>=1.10  # for analytical integration
 sphinxcontrib-bibtex ##for sphinx bib importing
 plotly>=4.14.1
 #kaleido # for saving figures, removed to make loading in google colab faster
-dash==1.18.1
-dash-bootstrap-components==0.11.1
-dash-core-components==1.14.1
-dash-html-components==1.1.1
-dash-renderer==1.8.3
-dash-table==4.11.1
+dash
+dash-bootstrap-components
+dash-core-components
+dash-html-components
+dash-renderer
+dash-table
 gunicorn
-dash-extensions>=0.0.44
+dash-extensions
 pytest
 jupyter>=1.0.0
+Werkzeug
