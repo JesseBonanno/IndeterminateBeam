@@ -29,6 +29,16 @@ from dash.exceptions import PreventUpdate
 from plotly.io import to_html
 import plotly.graph_objects as go
 
+# set up background task to run every 14 minutes so server stays live
+from apscheduler.schedulers.background import BackgroundScheduler
+
+def my_task():
+    i = 1
+
+scheduler = BackgroundScheduler()
+scheduler.add_job(my_task, 'interval', minutes=14)  # Run every minute
+scheduler.start()
+
 # the style arguments for the sidebar.
 SIDEBAR_STYLE = {
     'position': 'fixed',
