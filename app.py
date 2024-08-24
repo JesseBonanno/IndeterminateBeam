@@ -2073,7 +2073,7 @@ def report(n, graph_1, graph_2, results, input_json):
             </table>
             """,
             to_html(fig=graph_2, full_html=False, include_plotlyjs='cdn'),
-            f'<i>Report generated at https://indeterminate-beam.herokuapp.com/ {__version__} on {date}</i>',
+            f'<i>Report generated at https://indeterminatebeam.onrender.com/ {__version__} on {date}</i>',
             "</html>"
         ]
 

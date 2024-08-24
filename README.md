@@ -8,7 +8,7 @@
 [![CodeFactor](https://www.codefactor.io/repository/github/jessebonanno/indeterminatebeam/badge)](https://www.codefactor.io/repository/github/jessebonanno/indeterminatebeam)
 [![Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/JesseBonanno/IndeterminateBeam/blob/main/docs/examples/simple_demo.ipynb)
 [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/JesseBonanno/IndeterminateBeam/main?filepath=docs%2Fexamples%2Fsimple_demo.ipynb)
-[![Website](https://img.shields.io/badge/website-up-brightgreen)](https://civils.ai/1/free-beam-calculator)
+[![Website](https://img.shields.io/website?url=https%3A%2F%2Findeterminatebeam.onrender.com)](https://indeterminatebeam.onrender.com)
 [![Downloads](https://pepy.tech/badge/indeterminatebeam)](https://pepy.tech/project/indeterminatebeam)
 
 
@@ -23,12 +23,12 @@ The package is based mainly on engineering concepts of statics as described in (
 
 The [package documentation](https://indeterminatebeam.readthedocs.io/en/main/theory.html) provides a brief overview of the theory behind the solutions used to calculate the forces on the indeterminate beam. The full package documentation can be accessed [here](https://indeterminatebeam.readthedocs.io/en/main/).
 
-Text-based examples of the package presented in the [documentation](https://indeterminatebeam.readthedocs.io/en/main/examples.html) can be found on this [Jupyter Notebook](https://colab.research.google.com/github/JesseBonanno/IndeterminateBeam/blob/main/docs/examples/simple_demo.ipynb) and a web-based graphical user interface (GUI) is available at https://civils.ai/1/free-beam-calculator.
+Text-based examples of the package presented in the [documentation](https://indeterminatebeam.readthedocs.io/en/main/examples.html) can be found on this [Jupyter Notebook](https://colab.research.google.com/github/JesseBonanno/IndeterminateBeam/blob/main/docs/examples/simple_demo.ipynb) and a web-based graphical user interface (GUI) is available at https://indeterminatebeam.onrender.com .
 
 ## Project Purpose
 
 The purpose of this project is two-fold:
-1.	Create a [free website](https://civils.ai/1/free-beam-calculator) that has more features than paid and free beam calculators that exist on the web.
+1.	Create a [free website](https://indeterminatebeam.onrender.com) that has more features than paid and free beam calculators that exist on the web.
 2.	Provide a foundation for civil and structural engineers who want to create higher order engineering Python programs.
 
 Several (mostly paid) beam calculator websites currently exist online, providing the same service as this package, with web traffic in the hundreds of thousands per month (Similiarweb, 2021). Despite this, no online service exists (to the authors knowledge) that has all the features of `IndeterminateBeam` and is also free.

@@ -19,8 +19,8 @@ In order to effectively use the package online you should first run the cell tha
 
 You can also approach the problems using the web-based graphical user interface |website|
 
-.. |website| image:: https://img.shields.io/website?down_color=lightgrey&down_message=offline&up_color=green&up_message=up&url=https%3A%2F%2Findeterminate-beam.herokuapp.com%2F
-   :target: https://indeterminate-beam.herokuapp.com/
+.. |website| image:: https://img.shields.io/website?url=https%3A%2F%2Findeterminatebeam.onrender.com
+   :target: https://indeterminatebeam.onrender.com
 
 
 2. Basic Usage (Readme example)

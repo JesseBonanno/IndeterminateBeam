@@ -41,7 +41,7 @@ The package can be used by:
    - students who want to observe the effect minor geometry changes can have on forces
    - students, teachers or engineers who want to create higher order engineering projects using this project as a starting point
 
-The ```IndeterminateBeam``` [package repository](https://github.com/JesseBonanno/IndeterminateBeam) can be found on Github and is ready for installation using `pip`. A text-based example of the package can be found on this [Jupyter Notebook](https://colab.research.google.com/github/JesseBonanno/IndeterminateBeam/blob/main/docs/examples/readme_example.ipynb) and a web-based graphical user interface (GUI) is available at https://indeterminate-beam.herokuapp.com/.
+The ```IndeterminateBeam``` [package repository](https://github.com/JesseBonanno/IndeterminateBeam) can be found on Github and is ready for installation using `pip`. A text-based example of the package can be found on this [Jupyter Notebook](https://colab.research.google.com/github/JesseBonanno/IndeterminateBeam/blob/main/docs/examples/readme_example.ipynb) and a web-based graphical user interface (GUI) is available at https://indeterminatebeam.onrender.com.
 
 # Statement of Need
 Statics is fundamental to many fields of engineering such as civil, structural and mechanical engineering. This package aims to help student understanding in two ways:
