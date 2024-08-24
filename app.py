@@ -156,7 +156,7 @@ def create_content(instruction_name, instructions, table, button_label="", butto
 
     card = dbc.Card(
         dbc.CardBody(_),
-        className="mt-3",
+        className="d-grid gap-2",
     )
 
     return card
@@ -331,7 +331,7 @@ basic_support_content = dbc.Card(
                 id="basic_support_instructions",
             ),
         ]),
-    className="mt-3",
+    className="d-grid gap-2",
 )
 
 
@@ -517,7 +517,7 @@ results_content = dbc.Collapse(
                     results_table,
                 ]
             ),
-            className="mt-3",
+            className="d-grid gap-2",
         ),
     ],
     id='results-collapse'
@@ -532,10 +532,9 @@ reset_setting_button = dbc.Col(
         dbc.Button(
             "Reset Options",
             id="reset-options-button",
-            className="mb-3",
+            className="d-grid gap-2",
             color="info",
             n_clicks=0,
-            block=True,
         ),
     ],
     width=12
@@ -783,7 +782,7 @@ option_content = dbc.Card(
 
         ]
     ),
-    className="mt-3",
+    className="d-grid gap-2",
 )
 
 # Assemble different input tabs
@@ -820,7 +819,7 @@ submit_button = dbc.Button(
     n_clicks=0,
     children='Analyse',
     color='primary',
-    block=True,
+    className="d-grid gap-2",
     disabled=False,
 )
 
@@ -885,48 +884,33 @@ main_content = html.Div(
                         )
                     ),
                     html.Br(),
-                    dbc.Row(
+                    dbc.ButtonGroup(
                         [
-                            dbc.Col(
+                            dbc.Button(
+                                "Toggle Instructions",
+                                id="instruction-button",
+                                className="d-grid gap-2",
+                                color="info",
+                                n_clicks=0,
+                            ),
+                            dbc.Button(
+                                "Generate Report",
+                                id="report-button",
+                                className="d-grid gap-2",
+                                color="info",
+                                n_clicks=0,
+                            ),
                                 dbc.Button(
-                                    "Toggle Instructions",
-                                    id="instruction-button",
-                                    className="mb-3",
-                                    color="info",
-                                    n_clicks=0,
-                                    block=True,
-                                ),
-                                width=4
-                            ),
-                            dbc.Col(
-                                [
-                                    dbc.Button(
-                                        "Generate Report",
-                                        id="report-button",
-                                        className="mb-3",
-                                        color="info",
-                                        n_clicks=0,
-                                        block=True,
-                                    ),
-                                    Download(id='report'),
-                                ],
-                                width=4
-                            ),
-                            dbc.Col(
-                                [
-                                    dbc.Button(
-                                        "Clear Beam",
-                                        id="clear-inputs-button",
-                                        className="mb-3",
-                                        color="info",
-                                        n_clicks=0,
-                                        block=True,
-                                    ),
-                                ],
-                                width=4
+                                "Clear Beam",
+                                id="clear-inputs-button",
+                                className="d-grid gap-2",
+                                color="info",
+                                n_clicks=0,
                             ),
                         ],
+                        className='my-btn-group', # <---------- Added this
                     ),
+                  
                     dbc.Row(
                         dbc.Col(
                             dbc.Spinner(submit_button),
