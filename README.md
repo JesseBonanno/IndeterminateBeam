@@ -25,6 +25,10 @@ The [package documentation](https://indeterminatebeam.readthedocs.io/en/main/the
 
 Text-based examples of the package presented in the [documentation](https://indeterminatebeam.readthedocs.io/en/main/examples.html) can be found on this [Jupyter Notebook](https://colab.research.google.com/github/JesseBonanno/IndeterminateBeam/blob/main/docs/examples/simple_demo.ipynb) and a web-based graphical user interface (GUI) is available at https://indeterminatebeam.onrender.com .
 
+## Getting Started Video
+
+[![Getting Started](https://img.youtube.com/vi/YoqzWvItNNE/0.jpg)](https://www.youtube.com/watch?v=YoqzWvItNNE)
+
 ## Project Purpose
 
 The purpose of this project is two-fold:
