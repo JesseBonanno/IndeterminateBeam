@@ -186,6 +186,8 @@ class Beam:
     _x1 :float
         Right end coordinate of beam (default unit m).
 
+    _G: float
+        Shear Modulus of the beam (default unit N/m2 or Pa)
     _E: float
         Young's Modulus of the beam (default unit N/m2 or Pa)
     _I: float
@@ -231,7 +233,7 @@ class Beam:
     * The default unit for spring support stiffness is N/m
     """
 
-    def __init__(self, span: float = 5, E=200 * 10**9, I=9.05 * 10**-6, A=0.23):
+    def __init__(self, span: float = 5, G=80 * 10**9 , E=200 * 10**9, I=9.05 * 10**-6, A=0.23):
         """Initializes a Beam object of a given length.
 
         Parameters
@@ -240,6 +242,9 @@ class Beam:
             Length of the beam span (default unit m). Must be positive, and the pinned
             and rolling supports can only be placed within this span.
             The default value is 5 m.
+        G: float
+            Shear modulus for the beam (default unit Pa). The default value is
+            80 GPa, which is the shear modulus for steel.    
         E: float
             Youngs modulus for the beam (default unit Pa). The default value is
             200 GPa, which is the youngs modulus for steel.
@@ -256,6 +261,7 @@ class Beam:
         """
         # Validate inputs for span and beam properties.
         assert_strictly_positive_number(span, "span")
+        assert_strictly_positive_number(G, "Shear Modulus (G)")
         assert_strictly_positive_number(E, "Young's Modulus (E)")
         assert_strictly_positive_number(I, "Second Moment of Area (I)")
         assert_strictly_positive_number(A, "Area (A)")
@@ -264,6 +270,7 @@ class Beam:
         self._x0 = 0
         self._x1 = span
 
+        self._G = G
         self._E = E
         self._I = I
         self._A = A
@@ -283,6 +290,7 @@ class Beam:
             "distributed": "N/m",
             "stiffness": "N/m",
             "A": "m2",
+            "G": "Pa",
             "E": "Pa",
             "I": "m4",
             "deflection": "m",
@@ -309,7 +317,7 @@ class Beam:
         key: string, default 'length'
             Identifying property with unit to be changed.
             One of the following: 'length', 'force', 'moment',
-            'distributed', 'stiffness', 'A', 'E', 'I',
+            'distributed', 'stiffness', 'A', 'G', 'E', 'I',
             'deflection'
         unit: string, default 'm'
             unit to assign should contain a unit balanced representation
@@ -328,6 +336,7 @@ class Beam:
                 "distributed": "N/m",
                 "stiffness": "N/m",
                 "A": "m2",
+                "G": "Pa",
                 "E": "Pa",
                 "I": "m4",
                 "deflection": "m",
@@ -769,6 +778,11 @@ class Beam:
         v_EI_2 = integrate(dv_EI_2, x) * units["length"]
         v_EI = v_EI_1 + v_EI_2
 
+        # integrate F/GA for shear deflection equation
+        v_GA_1 = - integrate(F_i_1 / (self._G * self._A), x) * units["length"]
+        v_GA_2 = - integrate(F_i_2 / (self._G * self._A), x) * units["length"] 
+        v_GA = v_GA_1 + v_GA_2
+ 
         # create a list of equations for tangential direction
         equations_ym = [F_Ry, M_R]
 
@@ -836,6 +850,7 @@ class Beam:
             F_i_1 = F_i_1.subs(var, ans)  # complete shear force equation
             M_i_1 = M_i_1.subs(var, ans)  # complete moment equation
             v_EI_1 = v_EI_1.subs(var, ans)  # complete deflection equation
+            v_GA_1 = v_GA_1.subs(var, ans) # complete shear deflection equation
             Nv_EA = Nv_EA.subs(var, ans)  # complete axial deformation equation
             if N_i_2:
                 N_i_2 = N_i_2.subs(var, ans)  # complete normal force equation
@@ -843,6 +858,7 @@ class Beam:
                 F_i_2 = F_i_2.subs(var, ans)  # complete shear force
                 M_i_2 = M_i_2.subs(var, ans)  # complete moment equation
                 v_EI_2 = v_EI_2.subs(var, ans)  # complete deflection equation
+                v_GA_2 = v_GA_2.subs(var, ans) # complete shear deflection equation
 
             # create self._reactions to allow for plotting of reaction
             # forces if wanted and for use with get_reaction method.
@@ -881,7 +897,8 @@ class Beam:
         # moment unit is in base units. E and I are already base units.
         self._deflection_equation = (
             (self.sympy_expr_to_piecewise(v_EI_1) + v_EI_2)
-            / (self._E * units["E"] * self._I * units["I"])
+            / (self._E * units["E"] * self._I * units["I"]) +
+            (self.sympy_expr_to_piecewise(v_GA_1) + v_GA_2)
         ) / units["deflection"]
 
         self._set_plotting_vectors()
