@@ -1,6 +1,6 @@
 # Indeterminate Beam
 
-[![Version](https://img.shields.io/badge/version-v2.2.2-blue.svg)](https://github.com/JesseBonanno/IndeterminateBeam/releases/tag/v2.2.2)
+[![Version](https://img.shields.io/badge/version-v2.3.0-blue.svg)](https://github.com/JesseBonanno/IndeterminateBeam/releases/tag/v2.3.0)
 [![License](https://img.shields.io/badge/license-MIT-lightgreen.svg)](https://github.com/JesseBonanno/IndeterminateBeam/blob/main/LICENSE.txt)
 [![DOI](https://jose.theoj.org/papers/10.21105/jose.00111/status.svg)](https://doi.org/10.21105/jose.00111)
 [![Documentation Status](https://readthedocs.org/projects/indeterminatebeam/badge/?version=main)](https://indeterminatebeam.readthedocs.io/en/main/?badge=main)
@@ -18,6 +18,7 @@ IndeterminateBeam is a Python Package aiming to serve as a foundation for civil 
   - internal forces for indeterminate beams (shear, bending, axial)
   - deflections of beams due to resulting forces
   - axial force, shear force, bending moment and deflection diagrams.
+  - Euler-Bernoulli or Timoshenko beam deflections
 
 The package is based mainly on engineering concepts of statics as described in (Hibbeler, 2013), and Python packages Sympy (Meurer et al., 2017) and Plotly (Plotly Technologies Inc, 2015). 
 
@@ -58,7 +59,7 @@ The units used throughout the Python package are the base SI units (newtons and 
 
 ### Creating a Beam
 
-The creation of a `Beam` instance involves the input of the beam length (m) and optionally the input of the Young's Modulus (E), second moment of area (I), and cross-sectional area (A). E, I and A are optional and by default are the properties of a steel 150UB18.0. For a beam with constant properties, these parameters will only affect the deflections calculated and not the distribution of forces, unless spring supports are specified.
+The creation of a `Beam` instance involves the input of the beam length (m) and optionally the input of the Young's modulus (E), second moment of area (I), shear modulus (G) and cross-sectional area (A). E, I, G and A are optional and by default are the properties of a steel 150UB18.0 (except G which is infinity). For a beam with constant properties, these parameters will only affect the deflections calculated and not the distribution of forces, unless spring supports are specified. If G is not specified an infinite shear stiffness is used which corresponds to the Euler-Bernoulli beam method. If G is finite then timoshenko beam theory is applied and shear deformations are considered.
 
 ```python
 from indeterminatebeam import Beam

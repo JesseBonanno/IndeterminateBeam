@@ -431,3 +431,66 @@ Code
 ----
 
 .. literalinclude:: examples/ex_8.py
+
+
+
+9. Timoshenko Beam Theory
+============================================================
+
+This example is a comparison of the Timoshenko beam theory and the Euler-Bernoulli beam theory for a multispan beam.
+
+Specifications
+---------------
+
+A beam is split up into a 2 m, 5 m and 3 m segment all pin supported. The outer spans have a 10 kN/m load and the middle span has a central point load of 25 kN. Show the deformations given the following section properties and compare to the Euler-Bernoulli beam theory:
+
+   #. E = 24.8 GPa
+   #. I = 11600 cm4
+   #. A = 74 cm2
+   #. G = 3.6 GPa
+
+A diagram of the problem is shown below.
+
+.. figure:: examples/ex_9_diagram.png
+  :width: 700
+  :alt: ex_9_diagram
+
+Results
+--------
+
+The expected deflections using the SCIA software are as shown in the image below.
+
+.. figure:: examples/ex_9_SCIA.png
+  :width: 700
+  :alt: ex_9_SCIA
+
+We observe that for timoshenko beam theory we get the same deflection as SCIA of 9mm. When using the Euler-Bernoulli beam theory we get a lower deflection of 7.6 mm and we can observe different reaction forces since the beam stiffness affects the distribution of forces in an indeterminate beam.
+
+A plot of the reactions is shown below when using the Timoshenko beam theory.
+
+.. figure:: examples/ex_9_timoshenko_reaction.png
+  :width: 700
+  :alt: ex_9_timoshenko_reaction
+
+A plot of the axial force, shear force, and bending moments is shown below using the Timoshenko beam theory.
+
+.. figure:: examples/ex_9_timoshenko_internal.png
+  :width: 700
+  :alt: ex_9_timoshenko_internal
+
+A plot of the reactions is shown below when using the Euler-Bernoulli beam theory.
+
+.. figure:: examples/ex_9_euler_reaction.png
+  :width: 700
+  :alt: ex_9_euler_reaction
+
+A plot of the axial force, shear force, and bending moments is shown below using the Euler-Bernoulli beam theory.
+
+.. figure:: examples/ex_9_euler_internal.png
+  :width: 700
+  :alt: ex_9_euler_internal
+
+Code
+----
+
+.. literalinclude:: examples/ex_9.py

@@ -233,7 +233,7 @@ class Beam:
     * The default unit for spring support stiffness is N/m
     """
 
-    def __init__(self, span: float = 5, G=80 * 10**9 , E=200 * 10**9, I=9.05 * 10**-6, A=0.23):
+    def __init__(self, span: float = 5, G=float("inf") , E=200 * 10**9, I=9.05 * 10**-6, A=0.23):
         """Initializes a Beam object of a given length.
 
         Parameters
@@ -244,7 +244,7 @@ class Beam:
             The default value is 5 m.
         G: float
             Shear modulus for the beam (default unit Pa). The default value is
-            80 GPa, which is the shear modulus for steel.    
+            Infinity, such that Euler-Bernoulli deflections are considered.    
         E: float
             Youngs modulus for the beam (default unit Pa). The default value is
             200 GPa, which is the youngs modulus for steel.
@@ -512,6 +512,8 @@ class Beam:
         # delete it.
 
     def analyse(self):
+
+        
         """Solve the beam structure for reaction and internal forces"""
         # Foreword: As a result of sympify not working on SingularityFunctions
         # for the current version of sympy the solution had to become more
@@ -614,6 +616,8 @@ class Beam:
             )
 
         # external reaction equations
+
+        
 
         # sum contribution of loads and contribution of supports.
         # for loads ._x1 represents the load distribution integrated,
@@ -772,16 +776,17 @@ class Beam:
         dv_EI = dv_EI_1 + dv_EI_2
 
         # integrate M_i twice for deflection equation
-        v_EI_1 = (
-            integrate(dv_EI_1, x) * units["length"] + C2
+        v_1 = (
+            integrate(dv_EI_1, x) * units["length"] / (self._E * units["E"] * self._I * units["I"]) 
+            - integrate(F_i_1, x) * units["length"] / (self._G * units["G"] * self._A * units["A"]) 
+            + C2
         )  # should c2 be multiplied by the value
-        v_EI_2 = integrate(dv_EI_2, x) * units["length"]
-        v_EI = v_EI_1 + v_EI_2
+        v_2 = (
+            integrate(dv_EI_2, x) * units["length"] / (self._E * units["E"] * self._I * units["I"]) 
+            - integrate(F_i_2, x) * units["length"] / (self._G * units["G"] * self._A * units["A"]) 
+        )
+        v = v_1 + v_2
 
-        # integrate F/GA for shear deflection equation
-        v_GA_1 = - integrate(F_i_1 / (self._G * self._A), x) * units["length"]
-        v_GA_2 = - integrate(F_i_2 / (self._G * self._A), x) * units["length"] 
-        v_GA = v_GA_1 + v_GA_2
  
         # create a list of equations for tangential direction
         equations_ym = [F_Ry, M_R]
@@ -797,8 +802,7 @@ class Beam:
         # all units are in N and m, deflection is in m.
         for reaction in unknowns["y"]:
             equations_ym.append(
-                v_EI.subs(x, reaction["position"])
-                / (self._E * units["E"] * self._I * units["I"])
+                v.subs(x, reaction["position"])                
                 + reaction["variable"] / (reaction["stiffness"] * units["stiffness"])
             )
 
@@ -849,16 +853,14 @@ class Beam:
             N_i_1 = N_i_1.subs(var, ans)  # complete normal force equation
             F_i_1 = F_i_1.subs(var, ans)  # complete shear force equation
             M_i_1 = M_i_1.subs(var, ans)  # complete moment equation
-            v_EI_1 = v_EI_1.subs(var, ans)  # complete deflection equation
-            v_GA_1 = v_GA_1.subs(var, ans) # complete shear deflection equation
+            v_1 = v_1.subs(var, ans)  # complete deflection equation
             Nv_EA = Nv_EA.subs(var, ans)  # complete axial deformation equation
             if N_i_2:
                 N_i_2 = N_i_2.subs(var, ans)  # complete normal force equation
             if F_i_2:
                 F_i_2 = F_i_2.subs(var, ans)  # complete shear force
                 M_i_2 = M_i_2.subs(var, ans)  # complete moment equation
-                v_EI_2 = v_EI_2.subs(var, ans)  # complete deflection equation
-                v_GA_2 = v_GA_2.subs(var, ans) # complete shear deflection equation
+                v_2 = v_2.subs(var, ans)  # complete deflection equation
 
             # create self._reactions to allow for plotting of reaction
             # forces if wanted and for use with get_reaction method.
@@ -895,11 +897,9 @@ class Beam:
         ]
 
         # moment unit is in base units. E and I are already base units.
-        self._deflection_equation = (
-            (self.sympy_expr_to_piecewise(v_EI_1) + v_EI_2)
-            / (self._E * units["E"] * self._I * units["I"]) +
-            (self.sympy_expr_to_piecewise(v_GA_1) + v_GA_2)
-        ) / units["deflection"]
+        self._deflection_equation = (self.sympy_expr_to_piecewise(v_1) + self.sympy_expr_to_piecewise(v_2)) / units[
+            "deflection"
+        ]
 
         self._set_plotting_vectors()
 
