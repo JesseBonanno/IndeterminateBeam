@@ -1,6 +1,6 @@
 # Indeterminate Beam
 
-[![Version](https://img.shields.io/badge/version-v2.3.0-blue.svg)](https://github.com/JesseBonanno/IndeterminateBeam/releases/tag/v2.3.0)
+[![Version](https://img.shields.io/badge/version-v2.4.0-blue.svg)](https://github.com/JesseBonanno/IndeterminateBeam/releases/tag/v2.4.0)
 [![License](https://img.shields.io/badge/license-MIT-lightgreen.svg)](https://github.com/JesseBonanno/IndeterminateBeam/blob/main/LICENSE.txt)
 [![DOI](https://jose.theoj.org/papers/10.21105/jose.00111/status.svg)](https://doi.org/10.21105/jose.00111)
 [![Documentation Status](https://readthedocs.org/projects/indeterminatebeam/badge/?version=main)](https://indeterminatebeam.readthedocs.io/en/main/?badge=main)
@@ -127,6 +127,18 @@ The script above produces the following figures:
 ![example_1 beam diagram plot](https://github.com/JesseBonanno/IndeterminateBeam/blob/main/docs/examples/readme_example_external_HD.png)
 ![example_1 beam internal plot](https://github.com/JesseBonanno/IndeterminateBeam/blob/main/docs/examples/readme_example_internal_HD.png)
 
+### Exporting results
+After the beam has been analysed we can also export the results as table.
+
+We can choose to print the table or export as a csv file.
+
+```python
+# print results as a table with 10 points
+beam.print_results_table(num_points=10)
+
+# export as a csv with 100 points
+beam.export_results_csv(filename="beam_results.csv", num_points=100)
+```
 
 ## Installing the package
 

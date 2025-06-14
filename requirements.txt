@@ -16,3 +16,5 @@ pytest
 jupyter>=1.0.0
 Werkzeug
 APScheduler
+pandas
+nbformat>=4.2.0

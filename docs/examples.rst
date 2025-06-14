@@ -126,6 +126,28 @@ Code
 
 
 
+2.4 Exporting Results
+------------------------
+
+Specifications
++++++++++++++++++++
+
+The beam results from 2(a) can also be exported to a table via printing or by exporting to excel.
+
+Results
++++++++++++++++++++
+
+.. csv-table:: Results
+   :file: examples/beam_results.csv
+   :widths: 20,20,20,20,20
+   :header-rows: 1
+
+Code
++++++++++++++++++++
+
+.. literalinclude:: examples/ex_2d.py
+
+
 
 3. Support class breakdown
 ============================================================

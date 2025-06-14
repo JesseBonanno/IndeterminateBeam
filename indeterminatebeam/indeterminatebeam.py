@@ -36,6 +36,7 @@ from sympy import (
 from sympy.abc import x
 from plotly.subplots import make_subplots
 import plotly.graph_objects as go
+import pandas as pd
 
 # Local Application Imports'
 from indeterminatebeam.data_validation import (
@@ -1274,7 +1275,98 @@ class Beam:
             return_absmax=return_absmax,
         )
 
-    # SECTION - PLOTTING
+    # SECTION - TABLES
+    def print_results_table(self, num_points=20, max_dp=3):
+        """
+        Print a table of beam results at evenly spaced points.
+
+        Parameters
+        ----------
+        num_points : int, optional
+            Number of points along the beam to evaluate and display (default is 20).
+        max_dp : int, optional
+            Maximum number of decimal places for display.
+
+        Returns
+        -------
+        None
+            Prints a table of results to the console, including:
+            - x-coordinate
+            - Shear force (V)
+            - Bending moment (M)
+            - Axial force (N)
+            - Deflection (d)
+            All values are shown with units in the column headers.
+        """
+        x_vals = np.linspace(self._x0, self._x1, num_points)
+        sf_func = self._plotting_vectors["sf"]["y_lam"]
+        bm_func = self._plotting_vectors["bm"]["y_lam"]
+        nf_func = self._plotting_vectors["nf"]["y_lam"]
+        d_func = self._plotting_vectors["d"]["y_lam"]
+
+        x_unit = self._units.get("length", "m")
+        v_unit = self._units.get("force", "N")
+        m_unit = self._units.get("moment", "N.m")
+        n_unit = self._units.get("force", "N")
+        d_unit = self._units.get("deflection", "m")
+
+        data = {
+            f"x [{x_unit}]": [round(x, max_dp) for x in x_vals],
+            f"Axial [{n_unit}]": [round(nf_func(x), max_dp) for x in x_vals],
+            f"Shear [{v_unit}]": [round(sf_func(x), max_dp) for x in x_vals],
+            f"Moment [{m_unit}]": [round(bm_func(x), max_dp) for x in x_vals],
+            f"Deflection [{d_unit}]": [round(d_func(x), max_dp) for x in x_vals],
+        }
+        df = pd.DataFrame(data)
+        print(df.to_string(index=False))
+
+    def export_results_csv(self, filename="beam_results.csv", num_points=20, max_dp=10):
+        """
+        Export beam results to a CSV file at evenly spaced points.
+
+        Parameters
+        ----------
+        filename : str, optional
+            Name of the CSV file to export results to (default is "beam_results.csv").
+        num_points : int, optional
+            Number of points along the beam to evaluate and export (default is 100).
+        max_dp : int, optional
+            Maximum number of decimal places for display.
+
+        Returns
+        -------
+        None
+            Writes a CSV file with columns for:
+            - x-coordinate
+            - Shear force (V)
+            - Bending moment (M)
+            - Axial force (N)
+            - Deflection (d)
+            All values are shown with units in the column headers.
+        """
+        x_vals = np.linspace(self._x0, self._x1, num_points)
+        sf_func = self._plotting_vectors["sf"]["y_lam"]
+        bm_func = self._plotting_vectors["bm"]["y_lam"]
+        nf_func = self._plotting_vectors["nf"]["y_lam"]
+        d_func = self._plotting_vectors["d"]["y_lam"]
+
+        x_unit = self._units.get("length", "m")
+        v_unit = self._units.get("force", "N")
+        m_unit = self._units.get("moment", "N.m")
+        n_unit = self._units.get("force", "N")
+        d_unit = self._units.get("deflection", "m")
+
+        data = {
+            f"x [{x_unit}]": [round(x, max_dp) for x in x_vals],
+            f"Axial [{n_unit}]": [round(nf_func(x), max_dp) for x in x_vals],
+            f"Shear [{v_unit}]": [round(sf_func(x), max_dp) for x in x_vals],
+            f"Moment [{m_unit}]": [round(bm_func(x), max_dp) for x in x_vals],
+            f"Deflection [{d_unit}]": [round(d_func(x), max_dp) for x in x_vals],
+        }
+        df = pd.DataFrame(data)
+        df.to_csv(filename, index=False)
+        print(f"Results exported to {filename}")
+        # SECTION - PLOTTING
 
     def add_query_points(self, *x_coords):
         """Document the forces on a beam at position x_coord when
