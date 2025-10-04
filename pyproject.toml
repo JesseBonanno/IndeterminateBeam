@@ -1,0 +1,44 @@
+[project]
+name = "indeterminatebeam"
+dynamic = ["version", "readme"]
+description = "A solver for 1D indeterminate beams"
+license = "MIT"
+authors = [
+    { name = "Jesse Bonanno", email = "jessebonanno@gmail.com" },
+]
+keywords = [
+    "statics",
+    "indeterminate",
+    "beam",
+    "civil",
+    "structural",
+    "shear-force",
+    "bending-moment",
+    "deflection",
+]
+requires-python = ">=3.9"
+dependencies = [
+    "matplotlib",
+    "numpy",
+    "sympy>=1.13",
+    "plotly>=4.14.1",
+]
+
+[project.urls]
+Homepage = "https://github.com/JesseBonanno/IndeterminateBeam"
+Repository = "https://github.com/JesseBonanno/IndeterminateBeam"
+
+[build-system]
+requires = ["setuptools>=61", "setuptools-scm>=8"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools_scm]
+version_scheme = "guess-next-dev"
+local_scheme = "no-local-version"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["indeterminatebeam*"]
+
+[tool.setuptools.dynamic]
+readme = { file = "README.md", content-type = "text/markdown" }

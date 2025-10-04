@@ -17,7 +17,6 @@ from indeterminatebeam.loading import (
 )
 from datetime import datetime
 import time
-from indeterminatebeam.version import __version__
 from indeterminatebeam.units import IMPERIAL_UNITS, METRIC_UNITS, UNIT_KEYS, UNIT_VALUES, default_units
 from indeterminatebeam.data_validation import (
     assert_list_contents,
@@ -75,8 +74,7 @@ This webpage is a graphical user interface (GUI) for the opensource \
 
 For more, you can view the following:
 
-* [![Python Package](https://img.shields.io/badge/version-{__version__}-blue.svg)](https://github.com/JesseBonanno/IndeterminateBeam)
-   The Python package
+* [![PyPi](https://img.shields.io/pypi/v/indeterminatebeam.svg)](https://pypi.org/project/indeterminatebeam/)
 * [![Package Documentation](https://readthedocs.org/projects/indeterminatebeam/badge/?version=main)](https://indeterminatebeam.readthedocs.io/en/main/?badge=main)
    The package documentation
 * [![Sign Conventions](https://readthedocs.org/projects/indeterminatebeam/badge/?version=main)](https://indeterminatebeam.readthedocs.io/en/main/theory.html#sign-convention)
@@ -2073,7 +2071,7 @@ def report(n, graph_1, graph_2, results, input_json):
             </table>
             """,
             to_html(fig=graph_2, full_html=False, include_plotlyjs='cdn'),
-            f'<i>Report generated at https://indeterminatebeam.onrender.com/ {__version__} on {date}</i>',
+            f'<i>Report generated at https://indeterminatebeam.onrender.com/  on {date}</i>',
             "</html>"
         ]
 
