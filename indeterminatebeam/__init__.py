@@ -23,3 +23,4 @@ from indeterminatebeam.data_validation import (
     assert_contents,
 )
 from indeterminatebeam.units import METRIC_UNITS, IMPERIAL_UNITS
+from indeterminatebeam.report import generate_determinate_report

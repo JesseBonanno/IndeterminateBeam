@@ -92,11 +92,11 @@ beam.add_supports(a,b,c)
 `Load` objects are created separately from the `Beam` object, and are generally defined by a force value and then a coordinate value, however this varies slightly for different types of loading classes.
 
 ```python
-from indeterminatebeam import PointLoadV, PointTorque, DistributedLoadV
+from indeterminatebeam import PointLoadV, PointTorque, UDLV
 # Create a 1000 N point load at x = 2 m
 load_1 = PointLoadV(1000, 2)
 # Create a 2000 N/m UDL from x = 1 m to x = 4 m
-load_2 = DistributedLoadV(2000, (1, 4))
+load_2 = UDLV(2000, (1, 4))
 # Defines a 2 kN.m point torque at x = 3.5 m
 load_3 = PointTorque(2*10**3, 3.5)
 # Assign the load objects to the beam object
@@ -139,6 +139,16 @@ beam.print_results_table(num_points=10)
 # export as a csv with 100 points
 beam.export_results_csv(filename="beam_results.csv", num_points=100)
 ```
+
+### Generating hand calculation reports
+
+This feature is only available for determinate beams and allows a report showing how the calculations could be performed by hand.
+
+```
+beam.generate_determinate_report(filename='test_explicit_cmd', path='.', compile_pdf=True)
+```
+
+The readme example without support c becomes statically determinate, this is an example report: ![https://github.com/JesseBonanno/IndeterminateBeam/blob/main/docs/examples/Readme_Example.pdf](Readme_Example.pdf)
 
 ## Installing the package
 

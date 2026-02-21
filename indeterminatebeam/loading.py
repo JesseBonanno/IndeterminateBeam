@@ -12,7 +12,7 @@ from indeterminatebeam.data_validation import (
     assert_length,
     assert_number,
     assert_positive_number,
-    assert_strictly_positive_number
+    assert_strictly_positive_number,
 )
 
 
@@ -62,7 +62,7 @@ class PointTorque(Load):
     Parameters:
     -----------
     force: float
-        Torque load (default units N.m), (named force for consistency 
+        Torque load (default units N.m), (named force for consistency
         with other load types)
     coord: float
         x coordinate of torque on beam (default units m)
@@ -78,13 +78,13 @@ class PointTorque(Load):
 
     def __init__(self, force=0, coord=0):
         # Data Validation.
-        assert_number(force, 'force')
-        assert_positive_number(coord, 'coordinate')
+        assert_number(force, "force")
+        assert_positive_number(coord, "coordinate")
 
         # load as a function of x (non-directional)
         # the minus is to rectify sign convention, since
         # a positive shear causes a negative moment
-        expr =  - force * SingularityFunction(x, coord, -2)
+        expr = -force * SingularityFunction(x, coord, -2)
 
         # add load as a function of x (directional)
         # and add integration of this function to object.
@@ -127,9 +127,9 @@ class PointLoad(Load):
 
     def __init__(self, force=0, coord=0, angle=0):
         # Data Validation for inputs
-        assert_number(force, 'force')
-        assert_positive_number(coord, 'coordinate')
-        assert_number(angle, 'angle')
+        assert_number(force, "force")
+        assert_positive_number(coord, "coordinate")
+        assert_number(angle, "angle")
 
         # load as a function of x (non-directional)
         expr = force * SingularityFunction(x, coord, -1)
@@ -173,23 +173,21 @@ class UDL(Load):
     def __init__(self, force=0, span=(0, 0), angle=0):
 
         # Validate span input
-        assert_length(span, 2, 'span')
-        assert_positive_number(span[0], 'span start')
+        assert_length(span, 2, "span")
+        assert_positive_number(span[0], "span start")
         assert_strictly_positive_number(
-            round(span[1] - span[0],5),
-            'span start minus span end'
+            round(span[1] - span[0], 5), "span start minus span end"
         )
 
         # validate angle input
-        assert_number(angle, 'angle')
+        assert_number(angle, "angle")
 
         # validate force input
-        assert_number(force, 'force')
+        assert_number(force, "force")
 
         # load as a function of x (non-directional)
         expr = force * (
-            SingularityFunction(x, span[0], 0)
-            - SingularityFunction(x, span[1], 0)
+            SingularityFunction(x, span[0], 0) - SingularityFunction(x, span[1], 0)
         )
 
         # add load as a function of x (directional)
@@ -230,22 +228,22 @@ class TrapezoidalLoad(Load):
     --------
     >>> # trapezoidal load starting at 2000 N/m at 1 m and ending at 3000 N/m
     >>> # at 4 m (vertical)
-    >>> self_weight = UDL((2000, 3000), (1, 4), 90) 
+    >>> self_weight = UDL((2000, 3000), (1, 4), 90)
     """
 
     def __init__(self, force=(0, 0), span=(0, 0), angle=0):
         # Validate force input
-        assert_length(force, 2, 'force')
+        assert_length(force, 2, "force")
 
         # Validate span input
-        assert_length(span, 2, 'span')
-        assert_positive_number(span[0], 'span start')
+        assert_length(span, 2, "span")
+        assert_positive_number(span[0], "span start")
         assert_strictly_positive_number(
-            round(span[1] - span[0],5),
-            'span start minus span end')
+            round(span[1] - span[0], 5), "span start minus span end"
+        )
 
         # validate angle input
-        assert_number(angle, 'angle')
+        assert_number(angle, "angle")
 
         # Assign intermediate variables
         xa, xb = span[0], span[1]
@@ -256,8 +254,7 @@ class TrapezoidalLoad(Load):
         # load as a function of x (non-directional).
         # (1) UDL/rectangle Component
         UDL_component = force[0] * (
-            SingularityFunction(x, span[0], 0)
-            - SingularityFunction(x, span[1], 0)
+            SingularityFunction(x, span[0], 0) - SingularityFunction(x, span[1], 0)
         )
 
         # (2) triangular component
@@ -269,11 +266,13 @@ class TrapezoidalLoad(Load):
             # triangular component is negative if slope is down,
             # as need to cut away from UDL. If slope is up/positive
             # then triangular component is positive as need to add to UDL.
-            triangular_component = sum([
-                + slope * SingularityFunction(x, xa, 1),
-                - b * SingularityFunction(x, xb, 0),
-                - slope * SingularityFunction(x, xb, 1),
-            ])
+            triangular_component = sum(
+                [
+                    +slope * SingularityFunction(x, xa, 1),
+                    -b * SingularityFunction(x, xb, 0),
+                    -slope * SingularityFunction(x, xb, 1),
+                ]
+            )
 
         else:
             triangular_component = 0
@@ -329,23 +328,24 @@ class DistributedLoad(Load):
         try:
             expr = sympify(expr)
             expr = Piecewise((0, x < span[0]), (0, x > span[1]), (expr, True))
-            
+
         except BaseException:
-            print("Can not convert expression to sympy function. "+
-            "Function should only contain variable x, should be " +
-            "encapsulated by quotations, and should have * between x " +
-            "and coefficients i.e 2 * x rather than 2x"
+            print(
+                "Can not convert expression to sympy function. "
+                + "Function should only contain variable x, should be "
+                + "encapsulated by quotations, and should have * between x "
+                + "and coefficients i.e 2 * x rather than 2x"
             )
 
         # Validate span input
-        assert_length(span, 2, 'span')
-        assert_positive_number(span[0], 'span start')
+        assert_length(span, 2, "span")
+        assert_positive_number(span[0], "span start")
         assert_strictly_positive_number(
-            round(span[1] - span[0],5),
-            'span start minus span end')
+            round(span[1] - span[0], 5), "span start minus span end"
+        )
 
         # validate angle input
-        assert_number(angle, 'angle')
+        assert_number(angle, "angle")
 
         # load as a function of x (directional).
         self._add_load_functions(angle, expr)
@@ -358,7 +358,9 @@ class DistributedLoad(Load):
         self.expr = expr
         self.angle = angle
 
+
 # simplified load types- vertical and horizontal direction classes
+
 
 class PointLoadV(PointLoad):
     """Vertical Point Load.
@@ -406,7 +408,7 @@ class PointLoadH(PointLoad):
 
 class UDLV(UDL):
     """Vertical Uniformly Distributed Load.
-    
+
     Parameters
     ----------
     Force: float
@@ -429,7 +431,7 @@ class UDLV(UDL):
 
 class UDLH(UDL):
     """Horizontal Uniformly Distributed Load.
-    
+
     Parameters
     ----------
     Force: float
@@ -477,7 +479,7 @@ class TrapezoidalLoadV(TrapezoidalLoad):
 
 class TrapezoidalLoadH(TrapezoidalLoad):
     """Horizontal Trapezoidal Distributed Load.
-    
+
     Parameters
     ----------
     force : tuple of floats
@@ -501,7 +503,7 @@ class TrapezoidalLoadH(TrapezoidalLoad):
 
 
 class DistributedLoadV(DistributedLoad):
-    """Vertical distributed load, described by its functional form, 
+    """Vertical distributed load, described by its functional form,
     application interval and the angle of the load relative to the beam.
 
     Parameters:
@@ -513,7 +515,7 @@ class DistributedLoadV(DistributedLoad):
     span: tuple of floats
         A tuple containing the starting and ending coordinate that
          the function is applied to (default units m).
-   
+
     Examples
     --------
     >>> # Linearly growing load (acting down) for 0 < x < 2 m
@@ -527,7 +529,7 @@ class DistributedLoadV(DistributedLoad):
 
 
 class DistributedLoadH(DistributedLoad):
-    """Horizontal distributed load, described by its functional form, 
+    """Horizontal distributed load, described by its functional form,
     application interval and the angle of the load relative to the beam.
 
     Parameters:
@@ -539,7 +541,7 @@ class DistributedLoadH(DistributedLoad):
     span: tuple of floats
         A tuple containing the starting and ending coordinate that
          the function is applied to (default units m).
-   
+
     Examples
     --------
     >>> # Linearly growing load (acting right) for 0 < x < 2 m

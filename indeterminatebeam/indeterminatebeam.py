@@ -234,7 +234,9 @@ class Beam:
     * The default unit for spring support stiffness is N/m
     """
 
-    def __init__(self, span: float = 5, G=float("inf") , E=200 * 10**9, I=9.05 * 10**-6, A=0.23):
+    def __init__(
+        self, span: float = 5, G=float("inf"), E=200 * 10**9, I=9.05 * 10**-6, A=0.23
+    ):
         """Initializes a Beam object of a given length.
 
         Parameters
@@ -245,7 +247,7 @@ class Beam:
             The default value is 5 m.
         G: float
             Shear modulus for the beam (default unit Pa). The default value is
-            Infinity, such that Euler-Bernoulli deflections are considered.    
+            Infinity, such that Euler-Bernoulli deflections are considered.
         E: float
             Youngs modulus for the beam (default unit Pa). The default value is
             200 GPa, which is the youngs modulus for steel.
@@ -481,6 +483,213 @@ class Beam:
                     f"This coordinate {support._position} already has a support associated with it"
                 )
 
+    def is_determinate(self):
+        """Check whether the beam is statically determinate and solvable.
+
+        A 2D beam is statically determinate when the total number of
+        reaction components (axial, shear, moment) equals the number of
+        equilibrium equations (3: sum Fx, sum Fy, sum M). The structure
+        is only considered determinate if it is also solvable: there
+        must be at least one x restraint if there are any horizontal
+        loads, and at least two y/m restraints if there are any vertical
+        (or moment) loads.
+
+        Returns
+        -------
+        bool
+            True if the beam has exactly three reaction unknowns, at
+            least one support, and restraints are consistent with
+            applied loads; False otherwise (indeterminate or unsolvable).
+
+        Examples
+        --------
+        >>> beam = Beam(6)
+        >>> beam.add_supports(Support(0, (1, 1, 0)), Support(6, (0, 1, 0)))
+        >>> beam.is_determinate()
+        True
+        >>> beam.add_supports(Support(3, (0, 1, 0)))
+        >>> beam.is_determinate()
+        False
+        """
+        if not self._supports:
+            return False
+        n_x = sum(1 for s in self._supports if s._stiffness[0] != 0)
+        n_y = sum(1 for s in self._supports if s._stiffness[1] != 0)
+        n_m = sum(1 for s in self._supports if s._stiffness[2] != 0)
+        total_unknowns = n_x + n_y + n_m
+        if total_unknowns != 3:
+            return False
+
+        # Solvability: need x restraint if there are horizontal loads
+        has_x_loads = False
+        for load in self._loads:
+            if isinstance(load, PointLoad):
+                if isinstance(load, PointLoadH) or load.angle not in (90, 270):
+                    has_x_loads = True
+                    break
+            elif isinstance(load, (UDL, DistributedLoad, TrapezoidalLoad)):
+                if getattr(load, "angle", 90) not in (90, 270):
+                    has_x_loads = True
+                    break
+        if has_x_loads and n_x < 1:
+            return False
+
+        # Solvability: need at least two y/m restraints if there are vertical (or moment) loads
+        has_y_loads = False
+        for load in self._loads:
+            if isinstance(load, PointTorque):
+                has_y_loads = True
+                break
+            if isinstance(load, PointLoad):
+                if isinstance(load, PointLoadV) or load.angle in (90, 270):
+                    has_y_loads = True
+                    break
+            elif isinstance(load, (UDL, DistributedLoad, TrapezoidalLoad)):
+                if getattr(load, "angle", 90) in (90, 270):
+                    has_y_loads = True
+                    break
+        if has_y_loads and (n_y + n_m) < 2:
+            return False
+
+        return True
+
+    def _build_equilibrium_equations(self):
+        """Build the three equilibrium equations (sum Fx, sum Fy, sum M) and
+        reaction symbols. Used for determinate report generation.
+
+        Returns
+        -------
+        tuple
+            (F_Rx, F_Ry, M_R, reaction_vars, unknowns_dict)
+            - F_Rx, F_Ry, M_R: sympy expressions (equilibrium = 0).
+            - reaction_vars: list of sympy symbols for all reactions.
+            - unknowns_dict: dict with keys 'x', 'y', 'm', each a list of
+              dicts with 'position', 'variable', and optionally 'stiffness'.
+        """
+        units = {}
+        for key, val in self._units.items():
+            if val in METRIC_UNITS[key].keys():
+                units[key] = METRIC_UNITS[key][val]
+            else:
+                units[key] = IMPERIAL_UNITS[key][val]
+
+        x1 = self._x1
+        supports = sorted(self._supports, key=lambda item: item._position)
+
+        unknowns = {"x": [], "y": [], "m": []}
+        for a in supports:
+            if a._stiffness[0] != 0:
+                unknowns["x"].append(
+                    {
+                        "position": a._position,
+                        "stiffness": a._stiffness[0],
+                        "force": symbols("x_" + str(a._position))
+                        * SingularityFunction(x, a._position, 0),
+                        "variable": symbols("x_" + str(a._position)),
+                    }
+                )
+            if a._stiffness[1] != 0:
+                unknowns["y"].append(
+                    {
+                        "position": a._position,
+                        "stiffness": a._stiffness[1],
+                        "force": symbols("y_" + str(a._position))
+                        * SingularityFunction(x, a._position, 0),
+                        "variable": symbols("y_" + str(a._position)),
+                    }
+                )
+            if a._stiffness[2] != 0:
+                unknowns["m"].append(
+                    {
+                        "position": a._position,
+                        "torque": symbols("m_" + str(a._position))
+                        * SingularityFunction(x, a._position, 0),
+                        "variable": symbols("m_" + str(a._position)),
+                    }
+                )
+
+        F_Rx = (
+            sum(
+                load._x1.subs(x, x1)
+                for load in self._loads
+                if isinstance(load, PointLoad)
+            )
+            * units["force"]
+            + sum(
+                load._x1.subs(x, x1)
+                for load in self._loads
+                if isinstance(load, (UDL, DistributedLoad, TrapezoidalLoad))
+            )
+            * units["distributed"]
+            * units["length"]
+            + sum(a["variable"] for a in unknowns["x"])
+        )
+
+        F_Ry = (
+            sum(
+                load._y1.subs(x, x1)
+                for load in self._loads
+                if isinstance(load, PointLoad)
+            )
+            * units["force"]
+            + sum(
+                load._y1.subs(x, x1)
+                for load in self._loads
+                if isinstance(load, (UDL, DistributedLoad, TrapezoidalLoad))
+            )
+            * units["distributed"]
+            * units["length"]
+            + sum(a["variable"] for a in unknowns["y"])
+        )
+
+        M_R = (
+            sum(load._m0 for load in self._loads if isinstance(load, PointLoad))
+            * units["force"]
+            * units["length"]
+            + sum(
+                load._m0
+                for load in self._loads
+                if isinstance(load, (UDL, DistributedLoad, TrapezoidalLoad))
+            )
+            * units["distributed"]
+            * units["length"] ** 2
+            + sum(load._m0 for load in self._loads if isinstance(load, PointTorque))
+            * units["moment"]
+            + sum(a["variable"] for a in unknowns["m"])
+            + sum(a["variable"] * a["position"] for a in unknowns["y"])
+            * units["length"]
+        )
+
+        reaction_vars = (
+            [a["variable"] for a in unknowns["x"]]
+            + [a["variable"] for a in unknowns["y"]]
+            + [a["variable"] for a in unknowns["m"]]
+        )
+        return F_Rx, F_Ry, M_R, reaction_vars, unknowns
+
+    def generate_determinate_report(
+        self,
+        filename="beam_report",
+        path=".",
+        compile_pdf=True,
+        title="Determinate Beam Calculation Report",
+    ):
+        """Generate a step-by-step LaTeX report for this beam (determinate only).
+
+        Requires the beam to be statically determinate and already analysed.
+        See :func:`indeterminatebeam.report.generate_determinate_report` for
+        parameters and return value.
+        """
+        from indeterminatebeam.report import generate_determinate_report as _gen
+
+        return _gen(
+            self,
+            filename=filename,
+            path=path,
+            compile_pdf=compile_pdf,
+            title=title,
+        )
+
     def remove_supports(self, *supports, remove_all=False):
         """Unassociate support objects with the beam object.
 
@@ -513,8 +722,6 @@ class Beam:
         # delete it.
 
     def analyse(self):
-
-        
         """Solve the beam structure for reaction and internal forces"""
         # Foreword: As a result of sympify not working on SingularityFunctions
         # for the current version of sympy the solution had to become more
@@ -617,8 +824,6 @@ class Beam:
             )
 
         # external reaction equations
-
-        
 
         # sum contribution of loads and contribution of supports.
         # for loads ._x1 represents the load distribution integrated,
@@ -778,17 +983,21 @@ class Beam:
 
         # integrate M_i twice for deflection equation
         v_1 = (
-            integrate(dv_EI_1, x) * units["length"] / (self._E * units["E"] * self._I * units["I"]) 
-            - integrate(F_i_1, x) * units["length"] / (self._G * units["G"] * self._A * units["A"]) 
+            integrate(dv_EI_1, x)
+            * units["length"]
+            / (self._E * units["E"] * self._I * units["I"])
+            - integrate(F_i_1, x)
+            * units["length"]
+            / (self._G * units["G"] * self._A * units["A"])
             + C2
         )  # should c2 be multiplied by the value
-        v_2 = (
-            integrate(dv_EI_2, x) * units["length"] / (self._E * units["E"] * self._I * units["I"]) 
-            - integrate(F_i_2, x) * units["length"] / (self._G * units["G"] * self._A * units["A"]) 
+        v_2 = integrate(dv_EI_2, x) * units["length"] / (
+            self._E * units["E"] * self._I * units["I"]
+        ) - integrate(F_i_2, x) * units["length"] / (
+            self._G * units["G"] * self._A * units["A"]
         )
         v = v_1 + v_2
 
- 
         # create a list of equations for tangential direction
         equations_ym = [F_Ry, M_R]
 
@@ -803,7 +1012,7 @@ class Beam:
         # all units are in N and m, deflection is in m.
         for reaction in unknowns["y"]:
             equations_ym.append(
-                v.subs(x, reaction["position"])                
+                v.subs(x, reaction["position"])
                 + reaction["variable"] / (reaction["stiffness"] * units["stiffness"])
             )
 
@@ -898,9 +1107,9 @@ class Beam:
         ]
 
         # moment unit is in base units. E and I are already base units.
-        self._deflection_equation = (self.sympy_expr_to_piecewise(v_1) + self.sympy_expr_to_piecewise(v_2)) / units[
-            "deflection"
-        ]
+        self._deflection_equation = (
+            self.sympy_expr_to_piecewise(v_1) + self.sympy_expr_to_piecewise(v_2)
+        ) / units["deflection"]
 
         self._set_plotting_vectors()
 
