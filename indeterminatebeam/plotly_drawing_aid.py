@@ -428,11 +428,13 @@ def draw_moment(
         Returns the plotly figure passed into function with the circular
         arrow appended to it.
     """
-    # Choose symbol based on direction given
+    # Choose symbol based on direction given. Use the more widely supported
+    # U+21BA/U+21BB arrows rather than U+2B6E/U+2B6F, which can render as
+    # missing-glyph squares in browsers/environments without Noto Symbols 2.
     if moment < 0:
-        d = "⭮"
+        d = "↻"
     elif moment > 0:
-        d = "⭯"
+        d = "↺"
     else:
         return fig
 
@@ -442,7 +444,7 @@ def draw_moment(
         text=d,
         showarrow=False,
         yshift=0,
-        font_size=26,
+        font_size=28,
         font_color=color,
     )
 

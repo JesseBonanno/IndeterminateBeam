@@ -159,6 +159,19 @@ class BeamTestCase(unittest.TestCase):
         fig = beam.plot_beam_external()
         fig = beam.plot_beam_internal()
 
+        torque_beam = Beam(5)
+        torque_beam.add_supports(Support(0, (1, 1, 1)), Support(5, (1, 1, 1)))
+        torque_beam.add_loads(PointTorque(10, 2.5))
+        fig = torque_beam.plot_beam_external()
+        annotation_text = [annotation.text for annotation in fig.layout.annotations]
+        self.assertIn("↺", annotation_text)
+
+        torque_beam.remove_loads(remove_all=True)
+        torque_beam.add_loads(PointTorque(-10, 2.5))
+        fig = torque_beam.plot_beam_external()
+        annotation_text = [annotation.text for annotation in fig.layout.annotations]
+        self.assertIn("↻", annotation_text)
+
         fig = beam.plot_beam_diagram()
         fig = beam.plot_reaction_force()
 
